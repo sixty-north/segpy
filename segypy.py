@@ -14,10 +14,10 @@ segy.readSegy		: Read SEGY file
 # (C) Thomas Mejer Hansen, 2005
 #
 
-#import struct
-from struct import *
+import struct
 from Numeric import *
 #from numarray import *
+from pylab import *
 
 # SOME GLOBAL PARAMETERS
 segypy_version=0.1
@@ -34,6 +34,66 @@ l_ushort = struct.calcsize('H')
 l_char = struct.calcsize('c')
 l_uchar = struct.calcsize('B')
 l_float = struct.calcsize('f')
+
+##############
+# FUNCTIONS
+
+def readSegyFast(filename):
+	"""
+	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
+	"""
+        #from numarray import *
+	# from pylab import *
+	
+
+	data = open(filename).read()
+
+	filesize=len(data)
+        vtxt = 'Length of data ; ',filesize
+	printverbose(vtxt,2)
+
+	SH=getSegyHeader(filename)
+
+	ntraces = (filesize-3600)/(SH['ns']*4+240)
+	printverbose(vtxt,2)
+
+	ndummy_samples=240/4
+
+  	vtxt = "readSegyFast :  ntraces=",ntraces,"nsamples=",SH['ns']
+	printverbose(vtxt,2)
+
+	index=3600
+
+	Data = zeros((SH['ns'],ntraces))
+
+	printverbose("readSegyFast :  reading data",2)
+
+	# GET TRACE
+	index=3200;
+	nd=(filesize-3200)/4
+
+	SegyTraceHeader=[]
+
+	# READ ALL DATA EXCEPT FOR SEGY HEADER
+	Data1 = getValue(data,index,'float','>',nd)
+	Data = Data1[0]
+	Data=transpose(resize(Data[0:2240785],(5151,435)))
+
+	# STRIP THE HEADER VALUES FROM THE DATA
+	#	
+	Data=Data[ndummy_samples:435][:]
+
+	printverbose("readSegyFast :  read data",2)
+	
+	if (segypy_verbose>2):
+		imshow(Data)
+		title('pymat test')
+		grid(True)
+		show()
+
+	return Data,SH,SegyTraceHeader	
+
+
 
 def readSegy(filename):
 	"""

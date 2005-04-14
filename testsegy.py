@@ -37,6 +37,6 @@ print SH
 #print SH['Reel']
 
 print "TESTING READING OF SEGY FILE"
-segypy.readSegy(filename);
+segypy.readSegyFast(filename);
 
 

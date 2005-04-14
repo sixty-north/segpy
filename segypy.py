@@ -2,17 +2,22 @@
 A python module for reading/writing/manipuating 
 SEG-Y formatted filed
 
-segy.segypy_version : The version of SegyPY
-segy.segypy_verbose : A,punt of verbose information to the screen.
-segy.getValue : Get a value from a binary string
-
+segy.segypy_version 	: The version of SegyPY
+segy.segypy_verbose 	: Amount of verbose information to the screen.
+segy.getValue 		: Get a value from a binary string
+segy.getSegyHeader  	: Get SEGY header form file
+segy.readSegy		: Read SEGY file
 """
 #
 # segypy : A Python module for reading and writing SEG-Y formatted data
 #
 # (C) Thomas Mejer Hansen, 2005
+#
 
-import struct
+#import struct
+from struct import *
+from Numeric import *
+#from numarray import *
 
 # SOME GLOBAL PARAMETERS
 segypy_version=0.1
@@ -21,7 +26,6 @@ segypy_verbose=10;
 #endian='>' # Big Endian
 #endian='<' # Little Endian
 #endian='=' # Native
-
 
 l_long = struct.calcsize('l')
 l_ulong = struct.calcsize('L')
@@ -33,9 +37,12 @@ l_float = struct.calcsize('f')
 
 def readSegy(filename):
 	"""
-	getSegyHeader
+	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
 	"""
-	from pylab import *
+        #from numarray import *
+	#from pylab import *
+	
+
 	data = open(filename).read()
 
 	filesize=len(data)
@@ -52,32 +59,35 @@ def readSegy(filename):
 
 	index=3600
 
-
-	# ntraces=500;
+	ntraces=500;
 	Data = zeros((SH['ns'],ntraces))
 
 	printverbose("readSegy :  reading data",2)
 
 	for itrace in range(1,ntraces,1):
 		i=itrace
-#		print "Reading trace ",itrace," of ",ntraces
+		# print "Reading trace ",itrace," of ",ntraces
 		SegyTraceHeader,SegyTraceData=getSegyTrace(SH,itrace)
        
 		for iss in range(1,SH['ns'],1):
+			#STH((iss))=SegyTraceHeader
 			Data[iss-1][itrace-1]=SegyTraceData[0][iss-1]
  		   
 	printverbose("readSegy :  read data",2)
 	
-	if (segypy_verbose>2):
-		imshow(Data)
-		title('pymat test')
-		grid(True)
-		show()
+	#if (segypy_verbose>2):
+	#	imshow(Data)
+	#	title('pymat test')
+	#	grid(True)
+	#	show()
 
-
-	return Data,SH
+	return Data,SH,SegyTraceHeader	
 
 def getSegyTrace(SH,itrace):
+	"""
+	SegyTraceHeader,SegyTraceData=getSegyTrace(SegyHeader,itrace)
+		itrace : trace number to read
+	"""	
 	data = open(SH["filename"]).read()
 	# GET TRACE HEADER
 	index=3200+(itrace-1)*(240+SH['ns']*4)
@@ -90,14 +100,15 @@ def getSegyTrace(SH,itrace):
 	return SegyTraceHeader,SegyTraceData
 
 
-def getSegyHeader(filename,offset=3200):
-
+def getSegyHeader(filename):
+	"""
+	SegyHeader=getSegyHeader(filename)
+	"""
 	data = open(filename).read()
 
         printverbose('getSegyHeader : trying to read from '+filename,1)
 	
 	# START INDEX IN FILE
-	index=offset;
 	index=0;
 
 	SegyHeader = {'filename': filename}
@@ -146,7 +157,7 @@ def getSegyHeader(filename,offset=3200):
 
 def getValue(data,index,ctype='l',endian='>',number=1):
 	"""
-	GET
+	getValue(data,index,ctype,endian,number)
 	"""
 	if (ctype=='l')|(ctype=='long'):
 		size=l_long

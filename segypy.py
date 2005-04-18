@@ -17,7 +17,8 @@ segy.readSegy		: Read SEGY file
 
 import struct
 
-pref_numeric_module='numarray'
+pref_numeric_module='numarray' # FAST ON LARGE FILES
+pref_numeric_module='Numeric' 
 if (pref_numeric_module=='Numeric'):
 	# IMPORT SEPCIFIC FUNCTIONS FROM Numeric
 	print('SegyPY : Using Numeric module')
@@ -33,7 +34,7 @@ else:
 
 # SOME GLOBAL PARAMETERS
 version=0.1
-verbose=2;
+verbose=12;
 
 #endian='>' # Big Endian
 #endian='<' # Little Endian
@@ -86,15 +87,15 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	THpos=TraceHeaderPos[THN]
 	ntraces=SH["ntraces"]
 	thv = zeros(ntraces)
-	for itrace in range(1,ntraces,1):
+	for itrace in range(1,ntraces+1,1):
 		i=itrace
 
 		pos=THpos+3600+(SH["ns"]*4+240)*(itrace-1);
 
 		txt="Reading trace header ",itrace," of ",ntraces,pos
 		printverbose(txt,10);
-		thv[itrace],index = getValue(data,pos,'l','>',1)
-		txt=THN,"=",thv[itrace]
+		thv[itrace-1],index = getValue(data,pos,'l','>',1)
+		txt=THN,"=",thv[itrace-1]
 		printverbose(txt,5);
 	
 	return thv

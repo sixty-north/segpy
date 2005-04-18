@@ -2,8 +2,8 @@
 A python module for reading/writing/manipuating 
 SEG-Y formatted filed
 
-segy.segypy_version 	: The version of SegyPY
-segy.segypy_verbose 	: Amount of verbose information to the screen.
+segy.version 		: The version of SegyPY
+segy.verbose 		: Amount of verbose information to the screen.
 segy.getValue 		: Get a value from a binary string
 segy.getSegyHeader  	: Get SEGY header form file
 segy.readSegy		: Read SEGY file
@@ -14,14 +14,26 @@ segy.readSegy		: Read SEGY file
 # (C) Thomas Mejer Hansen, 2005
 #
 
+
 import struct
-from Numeric import *
-#from numarray import *
-from pylab import *
+
+pref_numeric_module='numarray'
+if (pref_numeric_module=='Numeric'):
+	# IMPORT SEPCIFIC FUNCTIONS FROM Numeric
+	print('SegyPY : Using Numeric module')
+	from Numeric import transpose
+	from Numeric import resize
+	from Numeric import zeros
+else:
+	# IMPORT SEPCIFIC FUNCTIONS FROM numarray
+	print('SegyPY : Using numarray module')
+	from numarray import transpose
+	from numarray import resize
+	from numarray import zeros
 
 # SOME GLOBAL PARAMETERS
-segypy_version=0.1
-segypy_verbose=10;
+version=0.1
+verbose=2;
 
 #endian='>' # Big Endian
 #endian='<' # Little Endian
@@ -35,27 +47,78 @@ l_char = struct.calcsize('c')
 l_uchar = struct.calcsize('B')
 l_float = struct.calcsize('f')
 
+TraceHeaderPos={'TraceSequenceLine': 0}
+TraceHeaderPos["TraceSequenceFile"]=4
+#TraceSequenceLine=fread(segyid,1,'int32');    % 0#
+#TraceSequenceFile=fread(segyid,1,'int32');    % 4
+#FieldRecord=fread(segyid,1,'int32');          % 8
+#TraceNumber=fread(segyid,1,'int32');          % 12
+#EnergySourcePoint=fread(segyid,1,'int32');    % 16
+#cdp=fread(segyid,1,'int32');                  % 20
+TraceHeaderPos["cdp"]=20
+#cdpTrace=fread(segyid,1,'int32');             % 24#TraceIdenitifactionCode=fread(segyid,1,'int16'); % 28
+
+
 ##############
 # FUNCTIONS
 
-def readSegyFast(filename):
+def imageSegy(Data):
+	"""
+	imageSegy(Data)
+	Image segy Data
+	"""
+	import pylab
+	imshow(Data)
+	title('pymat test')
+	grid(True)
+	show()
+
+def getSegyTraceHeader(SH,THN='cdp',data='none'):
+	"""
+	getSegyTraceHeader(SH,TraceHeaderName)
+	"""
+
+	if (data=='none'):
+		data = open(SH["filename"]).read()
+		
+
+	# MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
+	THpos=TraceHeaderPos[THN]
+	ntraces=SH["ntraces"]
+	thv = zeros(ntraces)
+	for itrace in range(1,ntraces,1):
+		i=itrace
+
+		pos=THpos+3600+(SH["ns"]*4+240)*(itrace-1);
+
+		txt="Reading trace header ",itrace," of ",ntraces,pos
+		printverbose(txt,10);
+		thv[itrace],index = getValue(data,pos,'l','>',1)
+		txt=THN,"=",thv[itrace]
+		printverbose(txt,5);
+	
+	return thv
+	
+
+
+def readSegyFast(filename)	:
 	"""
 	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
 	"""
-        #from numarray import *
-	# from pylab import *
 	
+	printverbose("Trying to read "+filename,0)
 
 	data = open(filename).read()
 
 	filesize=len(data)
-        vtxt = 'Length of data ; ',filesize
+        vtxt = "Length of data ; ",filesize
 	printverbose(vtxt,2)
 
 	SH=getSegyHeader(filename)
 
 	ntraces = (filesize-3600)/(SH['ns']*4+240)
 	printverbose(vtxt,2)
+	SH["ntraces"]=ntraces;
 
 	ndummy_samples=240/4
 
@@ -85,14 +148,7 @@ def readSegyFast(filename):
 
 	printverbose("readSegyFast :  read data",2)
 	
-	if (segypy_verbose>2):
-		imshow(Data)
-		title('pymat test')
-		grid(True)
-		show()
-
 	return Data,SH,SegyTraceHeader	
-
 
 
 def readSegy(filename):
@@ -209,6 +265,14 @@ def getSegyHeader(filename):
 	SegyHeader['FixedLengthTraceFlag'],index=getValue(data,index,'uint16');        
 	SegyHeader['NumberOfExtTextualHeaders'],index= getValue(data,index,'uint16');
 
+
+	# CALCULATE NUMBER OF TRACES
+	filesize=len(data)
+	ntraces = (filesize-3600)/(SegyHeader['ns']*4+240)
+	SegyHeader["ntraces"]=ntraces;
+
+
+
         printverbose('getSegyHeader : succesfully read '+filename,1)
 
 	return SegyHeader
@@ -259,15 +323,12 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 		return HeaderValue,index_end
 
 
-def version():
-	return segypy_version
-
 def print_version():
-	print 'SegyPY version is ', segypy_version
+	print 'SegyPY version is ', version
 
-def printverbose(txt,level):
-        if level<segypy_verbose:
-		print 'SegyPY',segypy_version,': ',txt
+def printverbose(txt,level=1):
+        if level<verbose:
+		print 'SegyPY',version,': ',txt
 
 
 

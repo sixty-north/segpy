@@ -6,18 +6,7 @@ import struct
 import segypy
 
 filename='mini.sgy'
-
 data = open(filename).read()
-
-l_long = struct.calcsize('l')
-l_ulong = struct.calcsize('L')
-l_short = struct.calcsize('h')
-l_ushort = struct.calcsize('H')
-
-segypy_version=segypy.version()
-
-print 'filename=',filename
-
 
 #index=3200;
 #Job,size = segypy.getValue(data,index,'l','>')
@@ -30,13 +19,14 @@ print 'filename=',filename
 #DataTracePerEnsemble, size = segypy.getValue(data,index,'h','>')
 #DataTracePerEnsemble, size = segypy.getValue(data,index,'short','>')
 
-print "GET SEGY GEADER"
-SH=segypy.getSegyHeader(filename)
+#print "GET SEGY GEADER"
+#SH=segypy.getSegyHeader(filename)
+#print SH
 
-print SH
 #print SH['Reel']
 
-print "TESTING READING OF SEGY FILE"
-segypy.readSegyFast(filename);
+segypy.verbose=1;
+
+Data,SH,STH=segypy.readSegyFast(filename);
 
 

@@ -160,18 +160,6 @@ STH_def["TraceValueMeasurementUnit"]["descr"] = {
 	7: "Meters Per Second squared (m/&s2)Other", 
 	8: "Newton (N)", 
 	9: "Watt (W)"}
-#if SegyTraceHeader.TraceValueMeasurementUnit==-1, #SegyTraceHeader.TraceValueMeasurementUnitText='Other';
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==0, #SegyTraceHeader.TraceValueMeasurementUnitText='Unknown';
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==1, #SegyTraceHeader.TraceValueMeasurementUnitText='Pascal (Pa)';
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==2, #SegyTraceHeader.TraceValueMeasurementUnitText='Volts (v)';
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==3, #SegyTraceHeader.TraceValueMeasurementUnitText='Millivolts (v)';
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==4, #SegyTraceHeader.TraceValueMeasurementUnitText='Amperes (A)';  
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==5, #SegyTraceHeader.TraceValueMeasurementUnitText='Meters (m)';  
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==6, #SegyTraceHeader.TraceValueMeasurementUnitText='Meters Per Second (m/s)';  
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==7, #SegyTraceHeader.TraceValueMeasurementUnitText='Meters Per Second squared (m/&s2)Other';  
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==8, #SegyTraceHeader.TraceValueMeasurementUnitText='Newton (N)';  
-#elseif SegyTraceHeader.TraceValueMeasurementUnit==9, #SegyTraceHeader.TraceValueMeasurementUnitText='Watt (W)';  
-#else SegyTraceHeader.TraceValueMeasurementUnitText='Undefined'; end
 STH_def["TransductionConstantMantissa"]={"pos":204 ,"type":"int32"} #'int32');  %204
 STH_def["TransductionConstantPower"]={"pos":208 ,"type":"int16"} #'int16'); %208
 STH_def["TransductionUnit"]={"pos":210 ,"type":"int16"} #'int16');  %210

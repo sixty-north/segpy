@@ -48,16 +48,31 @@ l_char = struct.calcsize('c')
 l_uchar = struct.calcsize('B')
 l_float = struct.calcsize('f')
 
-TraceHeaderPos={'TraceSequenceLine': 0}
-TraceHeaderPos["TraceSequenceFile"]=4
-#TraceSequenceLine=fread(segyid,1,'int32');    % 0#
-#TraceSequenceFile=fread(segyid,1,'int32');    % 4
-#FieldRecord=fread(segyid,1,'int32');          % 8
-#TraceNumber=fread(segyid,1,'int32');          % 12
-#EnergySourcePoint=fread(segyid,1,'int32');    % 16
-#cdp=fread(segyid,1,'int32');                  % 20
-TraceHeaderPos["cdp"]=20
-#cdpTrace=fread(segyid,1,'int32');             % 24#TraceIdenitifactionCode=fread(segyid,1,'int16'); % 28
+
+##############
+# INIT
+
+##############
+#  Initialize SEGY HEADER 
+SH_def = {"Job": {"pos": 3200,"type":"int32"}}
+SH_def["Line"]=			{"pos": 3204,"type":"int32"}
+SH_def["Line"]=			{"pos": 3208,"type":"int32"}
+SH_def["DataTracePerEnsemble"]={"pos": 3212,"type":"int16"}
+SH_def["AuxiliaryTracePerEnsemble"]={"pos": 3214,"type":"int16"}
+SH_def["dt"]=				{"pos": 3216,"type":"uint16"}
+SH_def["dtOrig"]=			{"pos": 3218,"type":"uint16"}
+
+##############
+#  Initialize SEGY TRACE HEADER SPECIFICATION
+STH_def = {"TraceSequenceLine": {"pos": 0,"type":"int32"}}
+STH_def["TraceSequenceFile"]=	{"pos": 4,"type":"int32"}
+STH_def["FieldRecord"]=		{"pos": 8, "type":"int32"}
+STH_def["TraceNumber"]=		{"pos": 12,"type":"int32"}
+STH_def["EnergySourcePoint"]=	{"pos": 16,"type":"int32"} 
+STH_def["cdp"]=				{"pos": 20,"type":"int32"}
+STH_def["cdpTrace"]=			{"pos": 24,"type":"int32"}
+# AND ADD THE REST....
+
 
 
 ##############
@@ -84,7 +99,8 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 		
 
 	# MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
-	THpos=TraceHeaderPos[THN]
+#	THpos=TraceHeaderPos[THN]
+	THpos=STH_def[THN]["pos"]
 	ntraces=SH["ntraces"]
 	thv = zeros(ntraces)
 	for itrace in range(1,ntraces+1,1):

@@ -71,11 +71,47 @@ STH_def["TraceNumber"]=		{"pos": 12,"type":"int32"}
 STH_def["EnergySourcePoint"]=	{"pos": 16,"type":"int32"} 
 STH_def["cdp"]=			{"pos": 20,"type":"int32"}
 STH_def["cdpTrace"]=		{"pos": 24,"type":"int32"}
-# AND ADD THE REST....
-STH_def["TraceIdenitifactionCode"]={"pos":28 ,"type":"int16"} #'int16'); % 28
-STH_def["NSummedTraces"]={"pos":30 ,"type":"int16"} #'int16'); % 30
+STH_def["TraceIdenitifactionCode"]={"pos":28 ,"type":"uint16"} #'int16'); % 28
+STH_def["TraceIdenitifactionCode"]["descr"]={0:{
+	1: "Seismic data", 
+	2: "Dead", 
+	3: "Dummy", 
+	4: "Time Break", 
+	5: "Uphole", 
+	6: "Sweep", 
+	7: "Timing", 
+	8: "Water Break"}}
+STH_def["TraceIdenitifactionCode"]["descr"][1]={
+	-1: "Other",
+	 0: "Unknown",
+ 	1: "Seismic data",
+ 	2: "Dead",
+ 	3: "Dummy",
+ 	4: "Time break",
+ 	5: "Uphole",
+ 	6: "Sweep",
+ 	7: "Timing",
+ 	8: "Waterbreak",
+ 	9: "Near-field gun signature",
+	10: "Far-field gun signature",
+	11: "Seismic pressure sensor",
+	12: "Multicomponent seismic sensor - Vertical component",
+	13: "Multicomponent seismic sensor - Cross-line component",
+	14: "Multicomponent seismic sensor - In-line component",
+	15: "Rotated multicomponent seismic sensor - Vertical component",
+	16: "Rotated multicomponent seismic sensor - Transverse component",
+	17: "Rotated multicomponent seismic sensor - Radial component",
+	18: "Vibrator reaction mass",
+	19: "Vibrator baseplate",
+	20: "Vibrator estimated ground force",
+	21: "Vibrator reference",
+	22: "Time-velocity pairs"}STH_def["NSummedTraces"]={"pos":30 ,"type":"int16"} #'int16'); % 30
 STH_def["NStackedTraces"]={"pos":32 ,"type":"int16"} #'int16'); % 32
 STH_def["DataUse"]={"pos":34 ,"type":"int16"} #'int16'); % 34
+STH_def["DataUse"]["descr"]={0: {
+	1: "Production", 
+	2: "Test"}}
+STH_def["DataUse"]["descr"][1]=STH_def["DataUse"]["descr"][0]
 STH_def["offset"]={"pos":36 ,"type":"int32"} #'int32');             %36
 STH_def["ReceiverGroupElevation"]={"pos":40 ,"type":"int32"} #'int32');             %40
 STH_def["SourceSurfaceElevation"]={"pos":44 ,"type":"int32"} #'int32');             %44
@@ -91,6 +127,14 @@ STH_def["SourceY"]={"pos":76 ,"type":"int32"} #'int32');  %76
 STH_def["GroupX"]={"pos":80 ,"type":"int32"} #'int32');  %80
 STH_def["GroupY"]={"pos":84 ,"type":"int32"} #'int32');  %84
 STH_def["CoordinateUnits"]={"pos":88 ,"type":"int16"} #'int16');  %88
+STH_def["CoordinateUnits"]["descr"]={1: {
+	1: "Length (meters or feet)",
+	2: "Seconds of arc"}}
+STH_def["CoordinateUnits"]["descr"][1]={
+	1: "Length (meters or feet)",
+	2: "Seconds of arc",
+	3: "Decimal degrees",
+	4: "Degrees, minutes, seconds (DMS)"}	
 STH_def["WeatheringVelocity"]={"pos":90 ,"type":"int16"} #'int16');  %90
 STH_def["SubWeatheringVelocity"]={"pos":92 ,"type":"int16"} #'int16');  %92
 STH_def["SourceUpholeTime"]={"pos":94 ,"type":"int16"} #'int16');  %94
@@ -106,16 +150,39 @@ STH_def["MuteTimeEND"]={"pos":112 ,"type":"int16"} #'int16');  %112
 STH_def["ns"]={"pos":114 ,"type":"uint16"} #'uint16');  %114
 STH_def["dt"]={"pos":116 ,"type":"uint16"} #'uint16');  %116
 STH_def["GainType"]={"pos":119 ,"type":"int16"} #'int16');  %118
+STH_def["GainType"]["descr"]={0: {
+	1: "Fixes", 
+	2: "Binary",
+	3: "Floating point"}}
+STH_def["GainType"]["descr"][1]=STH_def["GainType"]["descr"][0]
 STH_def["InstrumentGainConstant"]={"pos":120 ,"type":"int16"} #'int16');  %120
 STH_def["InstrumentInitialGain"]={"pos":122 ,"type":"int16"} #'int16');  %%122
 STH_def["Correlated"]={"pos":124 ,"type":"int16"} #'int16');  %124
+STH_def["Correlated"]["descr"]={0: {
+	1: "No", 
+	2: "Yes"}}
+STH_def["Correlated"]["descr"][1]=STH_def["Correlated"]["descr"][0]
+
 STH_def["SweepFrequenceStart"]={"pos":126 ,"type":"int16"} #'int16');  %126
 STH_def["SweepFrequenceEnd"]={"pos":128 ,"type":"int16"} #'int16');  %128
 STH_def["SweepLength"]={"pos":130 ,"type":"int16"} #'int16');  %130
 STH_def["SweepType"]={"pos":132 ,"type":"int16"} #'int16');  %132
+STH_def["SweepType"]["descr"]={0: {
+	1: "linear", 
+	2: "parabolic",
+	3: "exponential",
+	4: "other"}}
+STH_def["SweepType"]["descr"][1]=STH_def["SweepType"]["descr"][0]
+
 STH_def["SweepTraceTaperLengthStart"]={"pos":134 ,"type":"int16"} #'int16');  %134
 STH_def["SweepTraceTaperLengthEnd"]={"pos":136 ,"type":"int16"} #'int16');  %136
 STH_def["TaperType"]={"pos":138 ,"type":"int16"} #'int16');  %138
+STH_def["TaperType"]["descr"]={0: {
+	1: "linear", 
+	2: "cos2c",
+	3: "other"}}
+STH_def["TaperType"]["descr"][1]=STH_def["TaperType"]["descr"][0]
+
 STH_def["AliasFilterFrequency"]={"pos":140 ,"type":"int16"} #'int16');  %140
 STH_def["AliasFilterSlope"]={"pos":142 ,"type":"int16"} #'int16');  %142
 STH_def["NotchFilterFrequency"]={"pos":144 ,"type":"int16"} #'int16');  %144
@@ -130,17 +197,28 @@ STH_def["HourOfDay"]={"pos":160 ,"type":"int16"} #'int16');  %160
 STH_def["MinuteOfHour"]={"pos":162 ,"type":"int16"} #'int16');  %162
 STH_def["SecondOfMinute"]={"pos":164 ,"type":"int16"} #'int16');  %164
 STH_def["TimeBaseCode"]={"pos":166 ,"type":"int16"} #'int16');  %166
-STH_def["TimeBaseCode"]["descr"]={
+STH_def["TimeBaseCode"]["descr"]={0: {
 	1: "Local", 
 	2: "GMT", 
-	3:"Other", 
-	4:"UTC"}
+	3: "Other"}}
+STH_def["TimeBaseCode"]["descr"][1]={
+	1: "Local", 
+	2: "GMT", 
+	3: "Other", 
+	4: "UTC"}
 STH_def["TraceWeightningFactor"]={"pos":168 ,"type":"int16"} #'int16');  %170
 STH_def["GeophoneGroupNumberRoll1"]={"pos":170 ,"type":"int16"} #'int16');  %172
 STH_def["GeophoneGroupNumberFirstTraceOrigField"]={"pos":172 ,"type":"int16"} #'int16');  %174
 STH_def["GeophoneGroupNumberLastTraceOrigField"]={"pos":174 ,"type":"int16"} #'int16');  %176
 STH_def["GapSize"]={"pos":176 ,"type":"int16"} #'int16');  %178
 STH_def["OverTravel"]={"pos":178 ,"type":"int16"} #'int16');  %178
+STH_def["OverTravel"]["descr"]={0: {
+	1: "down (or behind)", 
+	2: "up (or ahead)",
+	3: "other"}}
+STH_def["OverTravel"]["descr"][1]=STH_def["OverTravel"]["descr"][0]
+
+
 STH_def["cdpX"]={"pos":180 ,"type":"int32"} #'int32');  %180
 STH_def["cdpY"]={"pos":184 ,"type":"int32"} #'int32');  %184
 STH_def["Inline3D"]={"pos":188 ,"type":"int32"} #'int32');  %188
@@ -148,9 +226,9 @@ STH_def["Crossline3D"]={"pos":192 ,"type":"int32"} #'int32');  %192
 STH_def["ShotPoint"]={"pos":192 ,"type":"int32"} #'int32');  %196
 STH_def["ShotPointScalar"]={"pos":200 ,"type":"int16"} #'int16');  %200
 STH_def["TraceValueMeasurementUnit"]={"pos":202 ,"type":"int16"} #'int16');  %202
-STH_def["TraceValueMeasurementUnit"]["descr"] = {
+STH_def["TraceValueMeasurementUnit"]["descr"] = {1: {
 	-1: "Other", 
-	0: "Unknown", 
+	0: "Unknown (should be described in Data Sample Measurement Units Stanza) ", 
 	1: "Pascal (Pa)", 
 	2: "Volts (V)", 
 	3: "Millivolts (v)", 
@@ -159,23 +237,44 @@ STH_def["TraceValueMeasurementUnit"]["descr"] = {
 	6: "Meters Per Second (m/s)", 
 	7: "Meters Per Second squared (m/&s2)Other", 
 	8: "Newton (N)", 
-	9: "Watt (W)"}
+	9: "Watt (W)"}}
 STH_def["TransductionConstantMantissa"]={"pos":204 ,"type":"int32"} #'int32');  %204
 STH_def["TransductionConstantPower"]={"pos":208 ,"type":"int16"} #'int16'); %208
 STH_def["TransductionUnit"]={"pos":210 ,"type":"int16"} #'int16');  %210
+STH_def["TransductionUnit"]["descr"]  = STH_def["TraceValueMeasurementUnit"]["descr"] 
 STH_def["TraceIdentifier"]={"pos":212 ,"type":"int16"} #'int16');  %212
 STH_def["ScalarTraceHeader"]={"pos":214 ,"type":"int16"} #'int16');  %214
 STH_def["SourceType"]={"pos":216 ,"type":"int16"} #'int16');  %216
+STH_def["SourceType"]["descr"] = {1: {
+	-1: "Other (should be described in Source Type/Orientation stanza)",
+	 0: "Unknown",
+	 1: "Vibratory - Vertical orientation",
+	 2: "Vibratory - Cross-line orientation",
+	 3: "Vibratory - In-line orientation",
+	 4: "Impulsive - Vertical orientation",
+	 5: "Impulsive - Cross-line orientation",
+	 6: "Impulsive - In-line orientation",
+	 7: "Distributed Impulsive - Vertical orientation",
+	 8: "Distributed Impulsive - Cross-line orientation",
+	 9: "Distributed Impulsive - In-line orientation"}}
+
 STH_def["SourceEnergyDirectionMantissa"]={"pos":218 ,"type":"int32"} #'int32');  %218
 STH_def["SourceEnergyDirectionExponent"]={"pos":222 ,"type":"int16"} #'int16');  %222
 STH_def["SourceMeasurementMantissa"]={"pos":224 ,"type":"int32"} #'int32');  %224
 STH_def["SourceMeasurementExponent"]={"pos":228 ,"type":"int16"} #'int16');  %228
 STH_def["SourceMeasurementUnit"]={"pos":230 ,"type":"int16"} #'int16');  %230
+STH_def["SourceMeasurementUnit"]["descr"] = {1: {
+	-1: "Other (should be described in Source Measurement Unit stanza)",
+ 	0: "Unknown",
+ 	1: "Joule (J)",
+ 	2: "Kilowatt (kW)",
+ 	3: "Pascal (Pa)",
+ 	4: "Bar (Bar)",
+ 	4: "Bar-meter (Bar-m)",
+ 	5: "Newton (N)",
+ 	6: "Kilograms (kg)"}}
 STH_def["UnassignedInt1"]={"pos":232 ,"type":"int32"} #'int32');  %232
 STH_def["UnassignedInt2"]={"pos":236 ,"type":"int32"} #'int32');  %236
-
-
-
 
 ##############
 # FUNCTIONS

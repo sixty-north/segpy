@@ -34,7 +34,7 @@ else:
 
 # SOME GLOBAL PARAMETERS
 version=0.1
-verbose=1;
+verbose=3;
 
 #endian='>' # Big Endian
 #endian='<' # Little Endian
@@ -56,11 +56,36 @@ l_float = struct.calcsize('f')
 #  Initialize SEGY HEADER 
 SH_def = {"Job": {"pos": 3200,"type":"int32"}}
 SH_def["Line"]=			{"pos": 3204,"type":"int32"}
-SH_def["Line"]=			{"pos": 3208,"type":"int32"}
+SH_def["Reel"]=			{"pos": 3208,"type":"int32"}
 SH_def["DataTracePerEnsemble"]=	{"pos": 3212,"type":"int16"}
 SH_def["AuxiliaryTracePerEnsemble"]={"pos": 3214,"type":"int16"}
 SH_def["dt"]=			{"pos": 3216,"type":"uint16"}
 SH_def["dtOrig"]=		{"pos": 3218,"type":"uint16"}
+SH_def["ns"]={"pos": 3220,"type":"uint16"} #;                          % 3222
+SH_def["nsOrig"]={"pos": 3222,"type":"uint16"} #;                      % 3224
+SH_def["DataSampleFormat"]={"pos": 3224,"type":"int16"} #;            % 3226
+SH_def["EnsembleFold"]={"pos": 3226,"type":"int16"} #;                
+SH_def["TraceSorting"]={"pos": 3228,"type":"int16"} #;               % 3228
+SH_def["VerticalSumCode"]={"pos": 3230,"type":"int16"} #;            % 3230SH_def["SweepFrequencyStart"]={"pos": 3232,"type":'uint16'} #;        % 3232
+SH_def["SweepFrequencyEnd"]={"pos": 3234,"type":"int16"} #;          % 3234
+SH_def["SweepLength"]={"pos": 3236,"type":"int16"} #;                % 3236
+SH_def["SweepType"]={"pos": 3238,"type":"int16"} #;                  % 3238
+SH_def["SweepChannel"]={"pos": 3240,"type":"int16"} #;               % 3240
+SH_def["SweepTaperlengthStart"]={"pos": 3242,"type":"int16"} #;               % 3242
+SH_def["SweepTaperLengthEnd"]={"pos": 3244,"type":"int16"} #;               % 3244
+SH_def["TaperType"]={"pos": 3246,"type":"int16"} #;               % 3246
+SH_def["CorrelatedDataTraces"]={"pos": 3248,"type":"int16"} #;               % 3248
+SH_def["BinaryGain"]={"pos": 3250,"type":"int16"} #;               % 3250
+SH_def["AmplitudeRecoveryMethod"]={"pos": 3252,"type":"int16"} #;               % 3252
+SH_def["MeasurementSystem"]={"pos": 3254,"type":"int16"} #;               % 3254
+SH_def["ImpulseSignalPolarity"]={"pos": 3256,"type":"int16"} #;               % 3256
+SH_def["VibratoryPolarityCode"]={"pos": 3258,"type":"int16"} #;               % 3258
+SH_def["Unassigned1"]={"pos": 3260,"type":"int16", "n":120} #    % 3260
+SH_def["SegyFormatRevisionNumber"]={"pos": 3500,"type":"uint16"} #;   % 3500
+SH_def["FixedLengthTraceFlag"]={"pos": 3502,"type":"uint16"} #;        % 3502
+SH_def["NumberOfExtTextualHeaders"]={"pos": 3504,"type":"uint16"} #;        % 3504
+#% 3506-3600 UNASSIGNED (as 47*2byte integer = 94 byte)
+SH_def["Unassigned2"]={"pos": 3506,"type":"int16", "n":47} # =fread(segyid,47,'int16');               % 3506
 
 ##############
 #  Initialize SEGY TRACE HEADER SPECIFICATION
@@ -310,15 +335,30 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 
 		pos=THpos+3600+(SH["ns"]*4+240)*(itrace-1);
 
-		txt="Reading trace header ",itrace," of ",ntraces,pos
+		txt="Reading trace header " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
+
 		printverbose(txt,10);
 		thv[itrace-1],index = getValue(data,pos,THformat,'>',1)
-		txt=THN,"=",thv[itrace-1]
-		printverbose(txt,5);
+		txt=THN + "=" + str(thv[itrace-1])
+		printverbose(txt,10);
 	
 	return thv
-	
 
+def getAllSegyTraceHeaders(SH,data='none'):
+	SegyTraceHeaders = {'filename': SH["filename"]}
+
+	if (data=='none'):
+		data = open(SH["filename"]).read()
+	
+ 	for key in STH_def.keys(): 
+
+		sth = getSegyTraceHeader(SH,key,data)
+		SegyTraceHeaders[key]=sth
+
+		txt =  "getAllSegyTraceHeaders :  " + key 
+	        printverbose(txt,2)
+		
+	return SegyTraceHeaders
 
 def readSegyFast(filename)	:
 	"""
@@ -354,7 +394,8 @@ def readSegyFast(filename)	:
 	index=3200;
 	nd=(filesize-3200)/4
 
-	SegyTraceHeader=[]
+	# SegyTraceHeaders=[]
+	SegyTraceHeaders = getAllSegyTraceHeaders(SH,data)
 
 	# READ ALL DATA EXCEPT FOR SEGY HEADER
 	Data1 = getValue(data,index,'float','>',nd)
@@ -367,7 +408,7 @@ def readSegyFast(filename)	:
 
 	printverbose("readSegyFast :  read data",2)
 	
-	return Data,SH,SegyTraceHeader	
+	return Data,SH,SegyTraceHeaders	
 
 
 def readSegy(filename):
@@ -410,13 +451,15 @@ def readSegy(filename):
  		   
 	printverbose("readSegy :  read data",2)
 	
+	SegyTraceHeaders = getAllSegyTraceHeaders(SH,data)
+
 	#if (segypy_verbose>2):
 	#	imshow(Data)
 	#	title('pymat test')
 	#	grid(True)
 	#	show()
 
-	return Data,SH,SegyTraceHeader	
+	return Data,SH,SegyTraceHeaders	
 
 def getSegyTrace(SH,itrace):
 	"""
@@ -434,8 +477,32 @@ def getSegyTrace(SH,itrace):
 	SegyTraceData = getValue(data,index,'float','>',SH['ns'])
 	return SegyTraceHeader,SegyTraceData
 
-
 def getSegyHeader(filename):
+	"""
+	SegyHeader=getSegyHeader(filename)
+	"""
+	data = open(filename).read()
+
+	SegyHeader = {'filename': filename}
+ 	for key in SH_def.keys(): 
+		pos=SH_def[key]["pos"]
+		format=SH_def[key]["type"]
+
+		SegyHeader[key],index = getValue(data,pos,format,'>');	
+
+		txt =  str(pos) + " " + str(format) + "  Reading " + key +"="+str(SegyHeader[key])
+	        printverbose(txt,10)
+
+	filesize=len(data)
+	ntraces = (filesize-3600)/(SegyHeader['ns']*4+240)
+	SegyHeader["ntraces"]=ntraces;
+
+        printverbose('getSegyHeader : succesfully read '+filename,1)
+
+	
+	return SegyHeader
+
+def getSegyHeader2(filename):
 	"""
 	SegyHeader=getSegyHeader(filename)
 	"""

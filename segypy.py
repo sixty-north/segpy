@@ -301,6 +301,7 @@ STH_def["SourceMeasurementUnit"]["descr"] = {1: {
 STH_def["UnassignedInt1"]={"pos":232 ,"type":"int32"} #'int32');  %232
 STH_def["UnassignedInt2"]={"pos":236 ,"type":"int32"} #'int32');  %236
 
+
 ##############
 # FUNCTIONS
 
@@ -335,7 +336,7 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 
 		pos=THpos+3600+(SH["ns"]*4+240)*(itrace-1);
 
-		txt="Reading trace header " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
+		txt="Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
 		printverbose(txt,10);
 		thv[itrace-1],index = getValue(data,pos,THformat,'>',1)
@@ -617,9 +618,33 @@ def printverbose(txt,level=1):
 		print 'SegyPY',version,': ',txt
 
 
+##############
+# segy class
+class SegyTraceheaderClass:
+	def __init__(self):
+		self.cdp=0
 
-#def read(filename):
-#	read_segy(filename)
-#
-#def write(filename):
-#	write_segy(filename)
+class SegyHeaderClass:
+	def __str__(self):
+		return "SegyHeaderClass "	
+	def __init__(self):	
+		self.filename=0
+		self.Trace = version
+
+	def cdp(self):
+		return "Getting CDP trace header"
+	def InlineX(self):
+		return "Getting CDP trace header"
+
+	
+
+
+class SegyClass:
+	STH_def=STH_def
+	SH_def=SH_def
+	STH=SegyTraceheaderClass()
+	SH=SegyHeaderClass()
+
+
+	def __init__(self):
+		self.THOMAS='Thomas'

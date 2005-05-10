@@ -2,11 +2,17 @@
 A python module for reading/writing/manipuating 
 SEG-Y formatted filed
 
-segy.version 		: The version of SegyPY
-segy.verbose 		: Amount of verbose information to the screen.
-segy.getValue 		: Get a value from a binary string
-segy.getSegyHeader  	: Get SEGY header form file
 segy.readSegy		: Read SEGY file
+segy.getSegyHeader  	: Get SEGY header 
+segy.getSegyTraceHeader : Get SEGY Trace header 
+segy.getAllSegyTraceHeaders : Get all SEGY Trace headers 
+segy.getSegyTrace		: Get SEGY Trace heder and trace data for one trace
+
+segy.getValue 		: Get a value from a binary string
+segy.ibm2ieee		: Convert IBM floats to IEEE
+
+segy.version 		: The version of SegyPY
+segy.verbose 		: Amount of verbose information to the scree
 """
 #
 # segypy : A Python module for reading and writing SEG-Y formatted data
@@ -18,7 +24,7 @@ segy.readSegy		: Read SEGY file
 import struct
 
 pref_numeric_module='numarray' # FAST ON LARGE FILES
-pref_numeric_module='Numeric' 
+#pref_numeric_module='Numeric' 
 if (pref_numeric_module=='Numeric'):
 	# IMPORT SEPCIFIC FUNCTIONS FROM Numeric
 	print('SegyPY : Using Numeric module')
@@ -33,10 +39,10 @@ else:
 	from numarray import zeros
 
 # SOME GLOBAL PARAMETERS
-version=0.1
+version=0.2
 verbose=3;
 
-#endian='>' # Big Endian
+endian='>' # Big Endian
 #endian='<' # Little Endian
 #endian='=' # Native
 
@@ -336,17 +342,20 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 
 		pos=THpos+3600+(SH["ns"]*4+240)*(itrace-1);
 
-		txt="Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
+		txt="getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
-		printverbose(txt,10);
-		thv[itrace-1],index = getValue(data,pos,THformat,'>',1)
-		txt=THN + "=" + str(thv[itrace-1])
-		printverbose(txt,10);
+		printverbose(txt,20);
+		thv[itrace-1],index = getValue(data,pos,THformat,endian,1)
+		txt="getSegyTraceHeader : " + THN + "=" + str(thv[itrace-1])
+		printverbose(txt,30);
 	
 	return thv
 
 def getAllSegyTraceHeaders(SH,data='none'):
 	SegyTraceHeaders = {'filename': SH["filename"]}
+
+        printverbose('getAllSegyTraceHeaders : trying to get all segy trace headers',2)
+
 
 	if (data=='none'):
 		data = open(SH["filename"]).read()
@@ -357,68 +366,64 @@ def getAllSegyTraceHeaders(SH,data='none'):
 		SegyTraceHeaders[key]=sth
 
 		txt =  "getAllSegyTraceHeaders :  " + key 
-	        printverbose(txt,2)
+	        printverbose(txt,10)
 		
 	return SegyTraceHeaders
 
-def readSegyFast(filename)	:
+def readSegy(filename)	:
 	"""
 	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
 	"""
 	
-	printverbose("Trying to read "+filename,0)
+	printverbose("readSegy : Trying to read "+filename,0)
 
 	data = open(filename).read()
 
 	filesize=len(data)
-        vtxt = "Length of data ; ",filesize
-	printverbose(vtxt,2)
 
 	SH=getSegyHeader(filename)
 
 	ntraces = (filesize-3600)/(SH['ns']*4+240)
-	printverbose(vtxt,2)
+
+	printverbose("readSegy : Length of data : " + str(filesize),2)
+
 	SH["ntraces"]=ntraces;
 
 	ndummy_samples=240/4
 
-  	vtxt = "readSegyFast :  ntraces=",ntraces,"nsamples=",SH['ns']
-	printverbose(vtxt,2)
+	printverbose("readSegy :  ntraces=" + str(ntraces) + " nsamples="+str(SH['ns']),2)
 
 	index=3600
 
-	Data = zeros((SH['ns'],ntraces))
-
-	printverbose("readSegyFast :  reading data",2)
 
 	# GET TRACE
 	index=3200;
 	nd=(filesize-3200)/4
 
-	# SegyTraceHeaders=[]
+	# READ ALL SEGY TRACE HEADRES
 	SegyTraceHeaders = getAllSegyTraceHeaders(SH,data)
 
+	printverbose("readSegy : reading data",2)
+
 	# READ ALL DATA EXCEPT FOR SEGY HEADER
-	Data1 = getValue(data,index,'float','>',nd)
+	#Data = zeros((SH['ns'],ntraces))
+	Data1 = getValue(data,index,'float',endian,nd)
 	Data = Data1[0]
-	Data=transpose(resize(Data[0:2240785],(5151,435)))
+	#Data=transpose(resize(Data[0:(ntraces*(SH['ns']+60))],(ntraces,SH['ns']+60)))
 
 	# STRIP THE HEADER VALUES FROM THE DATA
 	#	
-	Data=Data[ndummy_samples:435][:]
+	Data=Data[ndummy_samples:(SH['ns']+60)][:]
 
 	printverbose("readSegyFast :  read data",2)
 	
 	return Data,SH,SegyTraceHeaders	
 
 
-def readSegy(filename):
+def readSegyOld(filename):
 	"""
-	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
+	Data,SegyHeader,SegyTraceHeaders=readSegyOld(filename)
 	"""
-        #from numarray import *
-	#from pylab import *
-	
 
 	data = open(filename).read()
 
@@ -443,7 +448,7 @@ def readSegy(filename):
 
 	for itrace in range(1,ntraces,1):
 		i=itrace
-		# print "Reading trace ",itrace," of ",ntraces
+		print "Reading trace ",itrace," of ",ntraces
 		SegyTraceHeader,SegyTraceData=getSegyTrace(SH,itrace)
        
 		for iss in range(1,SH['ns'],1):
@@ -475,7 +480,7 @@ def getSegyTrace(SH,itrace):
 
 	# GET TRACE
 	index=3200+(itrace-1)*(240+SH['ns']*4)+240
-	SegyTraceData = getValue(data,index,'float','>',SH['ns'])
+	SegyTraceData = getValue(data,index,'float',endian,SH['ns'])
 	return SegyTraceHeader,SegyTraceData
 
 def getSegyHeader(filename):
@@ -489,7 +494,7 @@ def getSegyHeader(filename):
 		pos=SH_def[key]["pos"]
 		format=SH_def[key]["type"]
 
-		SegyHeader[key],index = getValue(data,pos,format,'>');	
+		SegyHeader[key],index = getValue(data,pos,format,endian);	
 
 		txt =  str(pos) + " " + str(format) + "  Reading " + key +"="+str(SegyHeader[key])
 	        printverbose(txt,10)
@@ -501,67 +506,6 @@ def getSegyHeader(filename):
         printverbose('getSegyHeader : succesfully read '+filename,1)
 
 	
-	return SegyHeader
-
-def getSegyHeader2(filename):
-	"""
-	SegyHeader=getSegyHeader(filename)
-	"""
-	data = open(filename).read()
-
-        printverbose('getSegyHeader : trying to read from '+filename,1)
-	
-	# START INDEX IN FILE
-	index=0;
-
-	SegyHeader = {'filename': filename}
-
-	TextualFileHeader,index = getValue(data,index,'c','>',3200);
-
-	SegyHeader['Job'],index = getValue(data,index,'l','>');	
-	SegyHeader['Line'],index = getValue(data,index,'l','>')
-	SegyHeader['Reel'],index = getValue(data,index,'l','>')
-	SegyHeader['DataTracePerEnsemble'],index = getValue(data,index,'h','>')
-	SegyHeader['AuxiliaryTracePerEnsemble'],index = getValue(data,index,'short','>')
-	SegyHeader['dt'],index = getValue(data,index,'uint16');
-	SegyHeader['dtOrig'],index = getValue(data,index,'uint16'); 
-	SegyHeader['ns'],index = getValue(data,index,'uint16');       
-	SegyHeader['nsOrig'],index = getValue(data,index,'uint16');
-	SegyHeader['DataSampleFormat'],index = getValue(data,index,'int16'); 
-	SegyHeader['EnsembleFold'],index = getValue(data,index,'int16');                
-	SegyHeader['TraceSorting'],index = getValue(data,index,'int16');              
-	SegyHeader['VerticalSumCode'],index = getValue(data,index,'int16');      
-
-	SegyHeader['SweepFrequencyStart'],index = getValue(data,index,'int16');   
-	SegyHeader['SweepFrequencyEnd'],index = getValue(data,index,'int16');    
-	SegyHeader['SweepLength'],index = getValue(data,index,'int16');                
-	SegyHeader['SweepType'],index = getValue(data,index,'int16');                 
-	SegyHeader['SweepChannel'],index = getValue(data,index,'int16');           
-	SegyHeader['SweepTaperlengthStart'],index = getValue(data,index,'int16');             
-	SegyHeader['SweepTaperLengthEnd'],index = getValue(data,index,'int16');              
-	SegyHeader['TaperType'],index = getValue(data,index,'int16');              
-	SegyHeader['CorrelatedDataTraces'],index = getValue(data,index,'int16');
-	SegyHeader['BinaryGain'],index = getValue(data,index,'int16');             
-	SegyHeader['AmplitudeRecoveryMethod'],index = getValue(data,index,'int16');
-	SegyHeader['MeasurementSystem'],index = getValue(data,index,'int16');      
-	SegyHeader['ImpulseSignalPolarity'],index = getValue(data,index,'int16');     
-	SegyHeader['VibratoryPolarityCode'],index = getValue(data,index,'int16');             
-
-	index=3500;
-	SegyHeader['SegyFormatRevisionNumber'],index= getValue(data,index,'uint16');  
-	SegyHeader['FixedLengthTraceFlag'],index=getValue(data,index,'uint16');        
-	SegyHeader['NumberOfExtTextualHeaders'],index= getValue(data,index,'uint16');
-
-
-	# CALCULATE NUMBER OF TRACES
-	filesize=len(data)
-	ntraces = (filesize-3600)/(SegyHeader['ns']*4+240)
-	SegyHeader["ntraces"]=ntraces;
-
-
-
-        printverbose('getSegyHeader : succesfully read '+filename,1)
-
 	return SegyHeader
 
 
@@ -594,20 +538,23 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 	else:
 		printverbose('Bad Ctype : ' +ctype,-1)
 
+
 	cformat=endian + ctype*number
 
-	printverbose('cformat :  ' + cformat,20)
+	printverbose('getValue : cformat :  ' + cformat,40)
 	
 	index_end=index+size*number
-	HeaderValue=struct.unpack(cformat, data[index:index_end])
+	Value=struct.unpack(cformat, data[index:index_end])
+	# IF READING IBM FLOATING DATA 
+	#Value = ibm2ieee(data[index:index_end])
 	
-	str = 'getSegyHeaderValue','start=',index,' size=',size, 'number=',number,'Value=',HeaderValue,'cformat=',cformat
-        printverbose(str,20)
+	vtxt = 'getValue : '+'start='+str(index)+' size='+str(size)+ ' number='+str(number)+' Value='+str(Value)+' cformat='+str(cformat)
+        printverbose(vtxt,20)
 
 	if number==1:
-		return HeaderValue[0], index_end
+		return Value[0], index_end
 	else:
-		return HeaderValue,index_end
+		return Value,index_end
 
 
 def print_version():
@@ -616,6 +563,17 @@ def print_version():
 def printverbose(txt,level=1):
         if level<verbose:
 		print 'SegyPY',version,': ',txt
+
+
+##############
+# MISC FUNCTIONS
+def ibm2ieee(ibm_float):
+	i = struct.unpack('>I',ibm_float[0])
+	sign = [1,-1][bool(i & 0x100000000L)]
+	characteristic = ((i >> 24) & 0x7f) - 64
+	fraction = (i & 0xffffff)/float(0x1000000L)
+	return sign*16**characteristic*fraction
+
 
 
 ##############

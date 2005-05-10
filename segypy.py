@@ -23,15 +23,15 @@ segy.verbose 		: Amount of verbose information to the scree
 
 import struct
 
-#pref_numeric_module='numarray' # FAST ON LARGE FILES
-pref_numeric_module='Numeric' 
+pref_numeric_module='numarray' # FAST ON LARGE FILES
+#pref_numeric_module='Numeric' 
 if (pref_numeric_module=='Numeric'):
 	# IMPORT SEPCIFIC FUNCTIONS FROM Numeric
 	print('SegyPY : Using Numeric module')
 	from Numeric import transpose
 	from Numeric import resize
 	from Numeric import reshape
-	from Numeric import zeros
+	from Numeric import arange
 else:
 	# IMPORT SEPCIFIC FUNCTIONS FROM numarray
 	print('SegyPY : Using numarray module')
@@ -39,6 +39,8 @@ else:
 	from numarray import resize
 	from numarray import reshape
 	from numarray import zeros
+	from numarray import arange
+	from numarray import *
 
 # SOME GLOBAL PARAMETERS
 version=0.2
@@ -401,18 +403,19 @@ def readSegy(filename)	:
 
 
 	# GET TRACE
-	index=3200;
-	nd=(filesize-3200)/SH['bps'] 
-
+	index=3600;
+	nd=(filesize-3600)/SH['bps'] 
+		
 	# READ ALL SEGY TRACE HEADRES
 	SegyTraceHeaders = getAllSegyTraceHeaders(SH,data)
 
-	printverbose("readSegy : reading data",2)
+	printverbose("readSegy : reading segy data",2)
 
 	# READ ALL DATA EXCEPT FOR SEGY HEADER
 	#Data = zeros((SH['ns'],ntraces))
 	if (SH["DataSampleFormat"]==1):
 		printverbose("readSegy : Assuming DSF=1, IBM FLOATS",2)
+		printverbose("readSegy : THERE IS A BUG SHIFTING THE SEISMOGRAM FOR OBM FLOATS",-1)
 		Data1 = getValue(data,index,'ibm',endian,nd)
 	elif (SH["DataSampleFormat"]==2):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 32bit INT",2)		
@@ -431,19 +434,17 @@ def readSegy(filename)	:
 		
 
 	Data = Data1[0]
-	printverbose("readSegyFast :  transposing",2)
-	Data=transpose(reshape(Data[0:(ntraces*(SH['ns']+ndummy_samples))],(ntraces,SH['ns']+ndummy_samples)))
-	#Data=(resize(Data[0:(ntraces*(SH['ns']+ndummy_samples))],(ntraces,SH['ns']+ndummy_samples)))
-	#Data=(reshape(Data[0:(ntraces*(SH['ns']+ndummy_samples))],(ntraces,SH['ns']+ndummy_samples)))
+
+	printverbose("readSegy : - reshaping",2)
+	Data=reshape(Data,ntraces,SH['ns']+ndummy_samples)
+	printverbose("readSegy : - stripping header dummy data",2)
+	Data=Data[:,ndummy_samples:(SH['ns']+ndummy_samples)]
+	printverbose("readSegy : - transposing",2)
+	Data=transpose(Data)
+	
 
 
-	ndummy_samples=60
-
-	# STRIP THE HEADER VALUES FROM THE DATA
-	#	
-	Data=Data[ndummy_samples:(SH['ns']+ndummy_samples)][:]
-
-	printverbose("readSegyFast :  read data",2)
+	printverbose("readSegy :  read data",2)
 	
 	return Data,SH,SegyTraceHeaders	
 
@@ -544,9 +545,13 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 	if (ctype=='ibm'):
 		# ASSUME IBM FLOAT DATA
 		Value = range(number)		
-		for i in range(number):
+		for i in arange(number):
 			index=i*4
 			Value[i] = ibm2ieee2(data[index:index+4])
+			if Value[i]>100:
+				Value[i]=0
+			if Value[i]<-100:
+				Value[i]=0
 	else:
 		# ALL OTHER TYPES OF DATA
 		Value=struct.unpack(cformat, data[index:index_end])

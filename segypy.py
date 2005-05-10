@@ -548,10 +548,10 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 		for i in arange(number):
 			index=i*4
 			Value[i] = ibm2ieee2(data[index:index+4])
-			if Value[i]>100:
-				Value[i]=0
-			if Value[i]<-100:
-				Value[i]=0
+#			if Value[i]>100:
+#				Value[i]=0
+#			if Value[i]<-100:
+#				Value[i]=0
 	else:
 		# ALL OTHER TYPES OF DATA
 		Value=struct.unpack(cformat, data[index:index_end])

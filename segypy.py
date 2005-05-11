@@ -76,6 +76,42 @@ SH_def["dtOrig"]=		{"pos": 3218,"type":"uint16"}
 SH_def["ns"]={"pos": 3220,"type":"uint16"} #;                          % 3222
 SH_def["nsOrig"]={"pos": 3222,"type":"uint16"} #;                      % 3224
 SH_def["DataSampleFormat"]={"pos": 3224,"type":"int16"} #;            % 3226
+SH_def["DataSampleFormat"]["descr"]={0:{
+	1: "IBM Float", 
+	2: "32 bit Integer", 
+	3: "16 bit Integer", 
+	8: "8 bit Integer"}}
+
+SH_def["DataSampleFormat"]["descr"][1]={
+	1: "IBM Float", 
+	2: "32 bit Integer", 
+	3: "16 bit Integer", 
+	5: "IEEE",
+	8: "8 bit Integer"}
+
+SH_def["DataSampleFormat"]["bps"]={0:{
+	1: 4, 
+	2: 4, 
+	3: 2, 
+	8: 1}}
+SH_def["DataSampleFormat"]["bps"][1]={
+	1: 4, 
+	2: 4, 
+	3: 2, 
+	5: 4, 
+	8: 1}
+SH_def["DataSampleFormat"]["datatype"]={0:{
+	1: 'ibm', 
+	2: 'l', 
+	3: 'h', 
+	8: 'B'}}
+SH_def["DataSampleFormat"]["datatype"][1]={
+	1: 'ibm', 
+	2: 'l', 
+	3: 'h', 
+	5: 'float', 
+	8: 'B'}
+
 SH_def["EnsembleFold"]={"pos": 3226,"type":"int16"} #;                
 SH_def["TraceSorting"]={"pos": 3228,"type":"int16"} #;               % 3228
 SH_def["VerticalSumCode"]={"pos": 3230,"type":"int16"} #;            % 3230SH_def["SweepFrequencyStart"]={"pos": 3232,"type":'uint16'} #;        % 3232
@@ -333,6 +369,8 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	getSegyTraceHeader(SH,TraceHeaderName)
 	"""
 
+	bps=getBytePerSample(SH)
+
 	if (data=='none'):
 		data = open(SH["filename"]).read()
 		
@@ -346,7 +384,7 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	for itrace in range(1,ntraces+1,1):
 		i=itrace
 
-		pos=THpos+3600+(SH["ns"]*SH["bps"]+240)*(itrace-1);
+		pos=THpos+3600+(SH["ns"]*bps+240)*(itrace-1);
 
 		txt="getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
@@ -389,22 +427,23 @@ def readSegy(filename)	:
 
 	SH=getSegyHeader(filename)
 
+	bps=getBytePerSample(SH)
 
-	ntraces = (filesize-3600)/(SH['ns']*SH['bps']+240)
+	ntraces = (filesize-3600)/(SH['ns']*bps+240)
 #	ntraces = 100
 
 	printverbose("readSegy : Length of data : " + str(filesize),2)
 
 	SH["ntraces"]=ntraces;
 
-	ndummy_samples=240/SH['bps']
-	printverbose("readSegy : ndummy_samples="+str(ndummy_samples),-1)
+	ndummy_samples=240/bps
+	printverbose("readSegy : ndummy_samples="+str(ndummy_samples),6)
 	printverbose("readSegy : ntraces=" + str(ntraces) + " nsamples="+str(SH['ns']),2)
 
 
 	# GET TRACE
 	index=3600;
-	nd=(filesize-3600)/SH['bps'] 
+	nd=(filesize-3600)/bps 
 		
 	# READ ALL SEGY TRACE HEADRES
 	SegyTraceHeaders = getAllSegyTraceHeaders(SH,data)
@@ -413,22 +452,33 @@ def readSegy(filename)	:
 
 	# READ ALL DATA EXCEPT FOR SEGY HEADER
 	#Data = zeros((SH['ns'],ntraces))
+
+	revision=SH["SegyFormatRevisionNumber"]
+	if (revision==100):
+		revision=1
+	dsf=SH["DataSampleFormat"]
+
+	DataDescr=SH_def["DataSampleFormat"]["descr"][revision][dsf]
+
+	printverbose("readSegy : SEG-Y revision = "+str(revision),1)
+	printverbose("readSegy : DataSampleFormat="+str(dsf)+"("+DataDescr+")",1)
+
 	if (SH["DataSampleFormat"]==1):
 		printverbose("readSegy : Assuming DSF=1, IBM FLOATS",2)
 		printverbose("readSegy : THERE IS A BUG SHIFTING THE SEISMOGRAM FOR OBM FLOATS",-1)
 		Data1 = getValue(data,index,'ibm',endian,nd)
 	elif (SH["DataSampleFormat"]==2):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 32bit INT",2)		
-		Data1 = getValue(data,index,'L',endian,nd)
+		Data1 = getValue(data,index,'l',endian,nd)
 	elif (SH["DataSampleFormat"]==3):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 16bit INT",2)		
-		Data1 = getValue(data,index,'H',endian,nd)
+		Data1 = getValue(data,index,'h',endian,nd)
 	elif (SH["DataSampleFormat"]==5):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", IEEE",2)		
 		Data1 = getValue(data,index,'float',endian,nd)
 	elif (SH["DataSampleFormat"]==8):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 8bit CHAR",2)		
-		Data1 = getValue(data,index,'c',endian,nd)
+		Data1 = getValue(data,index,'B',endian,nd)
 	else:
 		printverbose("readSegy : DSF=" + str(SH["DataSampleFormat"]) + ", NOT SUPORTED",2)		
 		
@@ -442,7 +492,15 @@ def readSegy(filename)	:
 	printverbose("readSegy : - transposing",2)
 	Data=transpose(Data)
 	
+	# SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF=8
+	if (SH["DataSampleFormat"]==8):
+		for i in arange(ntraces):
+			for j in arange(SH['ns']):
+				if Data[i][j]>128:
+					Data[i][j]=Data[i][j]-256
 
+
+	
 
 	printverbose("readSegy :  read data",2)
 	
@@ -456,13 +514,17 @@ def getSegyTrace(SH,itrace):
 		THIS DEF IS NOT UPDATED. NOT READY TO USE
 	"""	
 	data = open(SH["filename"]).read()
+
+	bps=getBytePerSample(SH)
+
+
 	# GET TRACE HEADER
-	index=3200+(itrace-1)*(240+SH['ns']*SH['bps'])
+	index=3200+(itrace-1)*(240+SH['ns']*bps)
 	SegyTraceHeader=[];
 	#print index
 
 	# GET TRACE
-	index=3200+(itrace-1)*(240+SH['ns']*SH['bps'])+240
+	index=3200+(itrace-1)*(240+SH['ns']*bps)+240
 	SegyTraceData = getValue(data,index,'float',endian,SH['ns'])
 	return SegyTraceHeader,SegyTraceData
 
@@ -483,19 +545,13 @@ def getSegyHeader(filename):
 	        printverbose(txt,10)
 
 
-	# SET NUMBER OF BYTES PER DATA SAMPLE
-	if (SegyHeader['DataSampleFormat']==3):
-		bps=2
-	elif (SegyHeader['DataSampleFormat']==8):
-		bps=1
-	else:
-		bps=4
-		
+	
 
-	SegyHeader["bps"]=bps
+	# SET NUMBER OF BYTES PER DATA SAMPLE
+	bps=getBytePerSample(SegyHeader)
 
 	filesize=len(data)
-	ntraces = (filesize-3600)/(SegyHeader['ns']*SegyHeader['bps']+240)
+	ntraces = (filesize-3600)/(SegyHeader['ns']*bps+240)
 	SegyHeader["ntraces"]=ntraces;
 
         printverbose('getSegyHeader : succesfully read '+filename,1)
@@ -556,7 +612,9 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 		# ALL OTHER TYPES OF DATA
 		Value=struct.unpack(cformat, data[index:index_end])
 
-	 
+	if (ctype=='B'):
+		printverbose('getValue : Ineficient use of 1byte Integer...',-1)
+ 
 	vtxt = 'getValue : '+'start='+str(index)+' size='+str(size)+ ' number='+str(number)+' Value='+str(Value)+' cformat='+str(cformat)
         printverbose(vtxt,20)
 
@@ -571,7 +629,7 @@ def print_version():
 	print 'SegyPY version is ', version
 
 def printverbose(txt,level=1):
-        if level<verbose:
+        if level<=verbose:
 		print 'SegyPY',version,': ',txt
 
 
@@ -600,6 +658,19 @@ def ibm2ieee2(ibm_float):
 	mant= float(a<<16) + float(b<<8) +float(c)
 	return sign* 16**(istic-64)*(mant/dividend)
 	
+
+def getBytePerSample(SH):
+	revision=SH["SegyFormatRevisionNumber"]
+	if (revision==100):
+		revision=1
+	dsf=SH["DataSampleFormat"]
+
+	bps=SH_def["DataSampleFormat"]["bps"][revision][dsf]
+
+	printverbose("getBytePerSample :  bps="+str(bps),21);
+	
+	return bps
+
 
 ##############
 # segy class

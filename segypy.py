@@ -635,8 +635,14 @@ def printverbose(txt,level=1):
 
 ##############
 # MISC FUNCTIONS
-def ibm2ieee(ibm_float):
-	i = struct.unpack('>I',ibm_float)[0]
+def ibm2Ieee(ibm_float):
+	"""
+	ibm2Ieee(ibm_float)
+	Used by permission
+	(C)
+	with thanks to 
+	"""
+	I = struct.unpack('>I',ibm_float)[0]
 	sign = [1,-1][bool(i & 0x100000000L)]
 	characteristic = ((i >> 24) & 0x7f) - 64
 	fraction = (i & 0xffffff)/float(0x1000000L)

@@ -1,12 +1,10 @@
 SegyPY : A Python module for reading/writing of SEG-Y formatted files
 Copyright (C) 2005 Thomas Mejer Hansen, cultpenguin@gmail.com
 
-Currently you can only read IEEE, 1, 2 and 4 byte INTEGER formatted data.
-Big Endian is assumed.
-IBM FLOAT POINT format, is implemented, but there is a bug when transforming the read data into a matrix. Any help would be greatly appreciated.
+Currently you can only READ (not write) IBM Floats, IEEE, 1, 2 and 4 byte INTEGER formatted data.
 
 With time I would like the module to have the capabilities of SegyMAT : http://segymat.sf.net/
 
-Thomas(cultpenguin@gmail.com), May 22, 2005.
+Thomas(cultpenguin@gmail.com), July 22, 2005.
 
 

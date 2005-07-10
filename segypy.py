@@ -31,7 +31,9 @@ if (pref_numeric_module=='Numeric'):
 	from Numeric import transpose
 	from Numeric import resize
 	from Numeric import reshape
+	from Numeric import zeros
 	from Numeric import arange
+	
 else:
 	# IMPORT SEPCIFIC FUNCTIONS FROM numarray
 	print('SegyPY : Using numarray module')
@@ -40,7 +42,6 @@ else:
 	from numarray import reshape
 	from numarray import zeros
 	from numarray import arange
-	from numarray import *
 
 # SOME GLOBAL PARAMETERS
 version=0.2
@@ -359,10 +360,10 @@ def imageSegy(Data):
 	Image segy Data
 	"""
 	import pylab
-	imshow(Data)
-	title('pymat test')
-	grid(True)
-	show()
+	pylab.imshow(Data)
+	pylab.title('pymat test')
+	pylab.grid(True)
+	pylab.show()
 
 def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	"""
@@ -465,7 +466,6 @@ def readSegy(filename)	:
 
 	if (SH["DataSampleFormat"]==1):
 		printverbose("readSegy : Assuming DSF=1, IBM FLOATS",2)
-		printverbose("readSegy : THERE IS A BUG SHIFTING THE SEISMOGRAM FOR OBM FLOATS",-1)
 		Data1 = getValue(data,index,'ibm',endian,nd)
 	elif (SH["DataSampleFormat"]==2):
 		printverbose("readSegy : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 32bit INT",2)		
@@ -481,12 +481,12 @@ def readSegy(filename)	:
 		Data1 = getValue(data,index,'B',endian,nd)
 	else:
 		printverbose("readSegy : DSF=" + str(SH["DataSampleFormat"]) + ", NOT SUPORTED",2)		
-		
 
 	Data = Data1[0]
 
+
 	printverbose("readSegy : - reshaping",2)
-	Data=reshape(Data,ntraces,SH['ns']+ndummy_samples)
+	Data=reshape(Data,(ntraces,SH['ns']+ndummy_samples))
 	printverbose("readSegy : - stripping header dummy data",2)
 	Data=Data[:,ndummy_samples:(SH['ns']+ndummy_samples)]
 	printverbose("readSegy : - transposing",2)
@@ -602,12 +602,9 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 		# ASSUME IBM FLOAT DATA
 		Value = range(number)		
 		for i in arange(number):
-			index=i*4
-			Value[i] = ibm2ieee2(data[index:index+4])
-#			if Value[i]>100:
-#				Value[i]=0
-#			if Value[i]<-100:
-#				Value[i]=0
+			index_ibm=i*4+index
+			Value[i] = ibm2ieee2(data[index_ibm:index_ibm+4])
+		# this resturn an array as opposed to a tuple	
 	else:
 		# ALL OTHER TYPES OF DATA
 		Value=struct.unpack(cformat, data[index:index_end])

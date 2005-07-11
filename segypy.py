@@ -636,8 +636,8 @@ def ibm2Ieee(ibm_float):
 	"""
 	ibm2Ieee(ibm_float)
 	Used by permission
-	(C)
-	with thanks to 
+	(C) Secchi Angelo
+	with thanks to Howard Lightstone and Anton Vredegoor. 
 	"""
 	I = struct.unpack('>I',ibm_float)[0]
 	sign = [1,-1][bool(i & 0x100000000L)]
@@ -648,6 +648,12 @@ def ibm2Ieee(ibm_float):
 
 
 def ibm2ieee2(ibm_float):
+	"""
+	ibm2ieee2(ibm_float)
+	Used by permission
+	(C) Secchi Angelo
+	with thanks to Howard Lightstone and Anton Vredegoor. 
+	"""
 	dividend=float(16**6)
 	
 	if ibm_float == 0:

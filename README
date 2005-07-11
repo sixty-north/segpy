@@ -7,4 +7,7 @@ With time I would like the module to have the capabilities of SegyMAT : http://s
 
 Thomas(cultpenguin@gmail.com), July 22, 2005.
 
+## ACKNOWLEDGEMENT ##
+The Ibm2Ieee conversion routines are developed and made availabe for SegyPY by Secchi Angelo, who thanks Howard Lightstone and Anton Vredegoor for their help.
+
 

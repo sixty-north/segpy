@@ -365,6 +365,30 @@ def imageSegy(Data):
 	pylab.grid(True)
 	pylab.show()
 
+def wiggle(Data,SH,skipt=1,maxval=8,lwidth=2):
+	"""
+	imageSegy(Data)
+	Image segy Data
+	"""
+	import pylab
+		
+	t = range(SH['ns'])
+	# t = range(SH['ns'])*SH['dt']/1000000;
+
+	for i in range(0,SH['ntraces'],skipt):
+		trace=Data[:,i]
+		pylab.plot(i+trace/maxval,t,color='black',linewidth=lwidth)
+		for a in range(len(trace)):
+			if (trace[a]<0):
+				trace[a]=0;
+		# pylab.fill(i+Data[:,i]/maxval,t,color='k',facecolor='g')
+		pylab.fill(i+Data[:,i]/maxval,t,'k',linewidth=0)
+	pylab.title(SH['filename'])
+	pylab.grid(True)
+	pylab.show()
+
+
+
 def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	"""
 	getSegyTraceHeader(SH,TraceHeaderName)
@@ -559,6 +583,109 @@ def getSegyHeader(filename):
 	
 	return SegyHeader
 
+def writeSegyStructure(filename,Data,SH,STH):
+	"""
+	writeSegyHeader(filename,Data,SegyHeader,SegyTraceHeaders)
+
+	Write SEGY file using SegyPy data structures
+
+	See also readSegy
+
+	(c) 2005, Thomas Mejer Hansen
+	
+	"""
+
+	printverbose("writeSegy : Trying to write "+filename,0)
+	
+	f = open(filename,'w')
+
+
+	# WRITE SEGY HEADER
+
+	for key in SH_def.keys(): 	
+		pos=SH_def[key]["pos"]
+		format=SH_def[key]["type"]
+		value=SH[key]
+
+#		SegyHeader[key],index = putValue(value,f,pos,format,endian);	
+		putValue(value,f,pos,format,endian);	
+		
+		txt =  str(pos) + " " + str(format) + "  Reading " + key + "=" + str(value)
+#+"="+str(SegyHeader[key])
+	        # printverbose(txt,-1)
+
+	
+	# SEGY TRACES
+
+	sizeT = 240 + SH['ns']*4;
+
+	for itrace in range(SH['ntraces']):
+		index=3600+itrace*sizeT
+	 	printverbose('Writing Trace #'+str(itrace+1)+'/'+str(SH['ntraces']),10)
+		# WRITE SEGY TRACE HEADER
+		for key in STH_def.keys(): 	
+			pos=index+STH_def[key]["pos"]
+			format=STH_def[key]["type"]
+			value=STH[key][itrace]
+			txt =  str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value)
+	        	printverbose(txt,40)
+			putValue(value,f,pos,format,endian);	
+	         
+		# Write Data
+		ctype='f'
+		#cformat=	endian + ctype*SH['ns']
+		cformat=	endian + ctype
+		for s in range(SH['ns']):
+			strVal=struct.pack(cformat, Data[s,itrace])
+			f.seek(index+240+s*struct.calcsize(cformat))
+			f.write(strVal);
+
+
+
+	f.close
+
+	#return segybuffer
+	
+def putValue(value,fileid,index,ctype='l',endian='>',number=1):
+	"""
+	putValue(data,index,ctype,endian,number)
+	"""
+	if (ctype=='l')|(ctype=='long')|(ctype=='int32'):
+		size=l_long
+	        ctype='l'
+        elif (ctype=='L')|(ctype=='ulong')|(ctype=='uint32'):
+		size=l_ulong
+		ctype='L'
+        elif (ctype=='h')|(ctype=='short')|(ctype=='int16'):
+		size=l_short
+		ctype='h'
+        elif (ctype=='H')|(ctype=='ushort')|(ctype=='uint16'):
+		size=l_ushort
+		ctype='H'
+        elif (ctype=='c')|(ctype=='char'):
+		size=l_char
+		ctype='c'
+        elif (ctype=='B')|(ctype=='uchar'):
+		size=l_uchar
+		ctype='B'
+        elif (ctype=='f')|(ctype=='float'):
+		size=l_float
+		ctype='f'
+        elif (ctype=='ibm'):
+		size=l_float
+	else:
+		printverbose('Bad Ctype : ' +ctype,-1)
+
+	cformat=endian + ctype*number
+
+	printverbose('putValue : cformat :  ' + cformat + ' ctype=' + ctype,40)
+	
+	strVal=struct.pack(cformat, value)
+	fileid.seek(index)
+	fileid.write(strVal);
+
+
+	return 1
 
 
 def getValue(data,index,ctype='l',endian='>',number=1):

@@ -18,11 +18,21 @@ filename='mini.sgy'
 f_ieee='data_IEEE.segy';
 f_ibm='data_IBM_REV1.segy';
 
+filename='data_IEEE.segy';
+
 # Set verbose level
 segypy.verbose=1;
 
 # Read Segy File
 Data,SH,STH=segypy.readSegy(filename);
+
+
+filename_out='testout.segy';
+segypy.writeSegyStructure(filename_out,Data,SH,STH);
+segypy.wiggle(Data,SH,1,2)
+
+
+exit
 
 
 d_ieee,SH,STH=segypy.readSegy(f_ieee);

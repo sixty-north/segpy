@@ -1,7 +1,7 @@
 SegyPY : A Python module for reading/writing of SEG-Y formatted files
 Copyright (C) 2005 Thomas Mejer Hansen, cultpenguin@gmail.com
 
-Currently you can only READ (not write) IBM Floats, IEEE, 1, 2 and 4 byte INTEGER formatted data.
+Currently you can READ IBM Floats, IEEE, 1, 2 and 4 byte INTEGER formatted data, and WRITE anything but IBM Floats.
 
 With time I would like the module to have the capabilities of SegyMAT : http://segymat.sf.net/
 

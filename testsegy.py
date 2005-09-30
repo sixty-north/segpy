@@ -32,9 +32,6 @@ segypy.writeSegyStructure(filename_out,Data,SH,STH);
 segypy.wiggle(Data,SH,1,2)
 
 
-exit
-
-
 d_ieee,SH,STH=segypy.readSegy(f_ieee);
 d_ibm,SH,STH=segypy.readSegy(f_ibm);
 

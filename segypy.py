@@ -110,7 +110,8 @@ SH_def["DataSampleFormat"]["datatype"][1]={
 	1: 'ibm', 
 	2: 'l', 
 	3: 'h', 
-	5: 'float', 
+#	5: 'float', 
+	5: 'f', 
 	8: 'B'}
 
 SH_def["EnsembleFold"]={"pos": 3226,"type":"int16"} #;                
@@ -365,18 +366,23 @@ def imageSegy(Data):
 	pylab.grid(True)
 	pylab.show()
 
-def wiggle(Data,SH,skipt=1,maxval=8,lwidth=2):
+def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
 	"""
-	imageSegy(Data)
-	Image segy Data
+	wiggle(Data,SH)
 	"""
 	import pylab
 		
 	t = range(SH['ns'])
-	# t = range(SH['ns'])*SH['dt']/1000000;
+# 	t = range(SH['ns'])*SH['dt']/1000000;
 
 	for i in range(0,SH['ntraces'],skipt):
+#		trace=zeros(SH['ns']+2)
+#		dtrace=Data[:,i]
+#		trace[1:SH['ns']]=Data[:,i]
+#		trace[SH['ns']+1]=0
 		trace=Data[:,i]
+		trace[0]=0
+		trace[SH['ns']-1]=0	
 		pylab.plot(i+trace/maxval,t,color='black',linewidth=lwidth)
 		for a in range(len(trace)):
 			if (trace[a]<0):
@@ -617,7 +623,15 @@ def writeSegyStructure(filename,Data,SH,STH):
 	
 	# SEGY TRACES
 
-	sizeT = 240 + SH['ns']*4;
+	revision=SH["SegyFormatRevisionNumber"]
+	dsf=SH["DataSampleFormat"]
+	if (revision==100):
+		revision=1
+	ctype=SH_def['DataSampleFormat']['datatype'][revision][dsf]
+	bps=SH_def['DataSampleFormat']['bps'][revision][dsf]
+	
+
+	sizeT = 240 + SH['ns']*bps;
 
 	for itrace in range(SH['ntraces']):
 		index=3600+itrace*sizeT
@@ -631,10 +645,8 @@ def writeSegyStructure(filename,Data,SH,STH):
 	        	printverbose(txt,40)
 			putValue(value,f,pos,format,endian);	
 	         
-		# Write Data
-		ctype='f'
-		#cformat=	endian + ctype*SH['ns']
-		cformat=	endian + ctype
+		# Write Data	
+		cformat=endian + ctype
 		for s in range(SH['ns']):
 			strVal=struct.pack(cformat, Data[s,itrace])
 			f.seek(index+240+s*struct.calcsize(cformat))
@@ -800,7 +812,7 @@ def getBytePerSample(SH):
 	if (revision==100):
 		revision=1
 	dsf=SH["DataSampleFormat"]
-
+	
 	bps=SH_def["DataSampleFormat"]["bps"][revision][dsf]
 
 	printverbose("getBytePerSample :  bps="+str(bps),21);

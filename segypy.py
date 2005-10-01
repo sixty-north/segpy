@@ -67,16 +67,16 @@ l_float = struct.calcsize('f')
 
 ##############
 #  Initialize SEGY HEADER 
-SH_def = {"Job": {"pos": 3200,"type":"int32"}}
-SH_def["Line"]=			{"pos": 3204,"type":"int32"}
-SH_def["Reel"]=			{"pos": 3208,"type":"int32"}
-SH_def["DataTracePerEnsemble"]=	{"pos": 3212,"type":"int16"}
-SH_def["AuxiliaryTracePerEnsemble"]={"pos": 3214,"type":"int16"}
-SH_def["dt"]=			{"pos": 3216,"type":"uint16"}
-SH_def["dtOrig"]=		{"pos": 3218,"type":"uint16"}
-SH_def["ns"]={"pos": 3220,"type":"uint16"} #;                          % 3222
-SH_def["nsOrig"]={"pos": 3222,"type":"uint16"} #;                      % 3224
-SH_def["DataSampleFormat"]={"pos": 3224,"type":"int16"} #;            % 3226
+SH_def = {"Job": {"pos": 3200,"type":"int32","def":0}}
+SH_def["Line"]=			{"pos": 3204,"type":"int32","def":0}
+SH_def["Reel"]=			{"pos": 3208,"type":"int32","def":0}
+SH_def["DataTracePerEnsemble"]=	{"pos": 3212,"type":"int16","def":0}
+SH_def["AuxiliaryTracePerEnsemble"]={"pos": 3214,"type":"int16","def":0}
+SH_def["dt"]=			{"pos": 3216,"type":"uint16","def":1000}
+SH_def["dtOrig"]=		{"pos": 3218,"type":"uint16","def":1000}
+SH_def["ns"]={"pos": 3220,"type":"uint16","def":0}
+SH_def["nsOrig"]={"pos": 3222,"type":"uint16","def":0} 
+SH_def["DataSampleFormat"]={"pos": 3224,"type":"int16","def":5} 
 SH_def["DataSampleFormat"]["descr"]={0:{
 	1: "IBM Float", 
 	2: "32 bit Integer", 
@@ -114,28 +114,27 @@ SH_def["DataSampleFormat"]["datatype"][1]={
 	5: 'f', 
 	8: 'B'}
 
-SH_def["EnsembleFold"]={"pos": 3226,"type":"int16"} #;                
-SH_def["TraceSorting"]={"pos": 3228,"type":"int16"} #;               % 3228
-SH_def["VerticalSumCode"]={"pos": 3230,"type":"int16"} #;            % 3230SH_def["SweepFrequencyStart"]={"pos": 3232,"type":'uint16'} #;        % 3232
-SH_def["SweepFrequencyEnd"]={"pos": 3234,"type":"int16"} #;          % 3234
-SH_def["SweepLength"]={"pos": 3236,"type":"int16"} #;                % 3236
-SH_def["SweepType"]={"pos": 3238,"type":"int16"} #;                  % 3238
-SH_def["SweepChannel"]={"pos": 3240,"type":"int16"} #;               % 3240
-SH_def["SweepTaperlengthStart"]={"pos": 3242,"type":"int16"} #;               % 3242
-SH_def["SweepTaperLengthEnd"]={"pos": 3244,"type":"int16"} #;               % 3244
-SH_def["TaperType"]={"pos": 3246,"type":"int16"} #;               % 3246
-SH_def["CorrelatedDataTraces"]={"pos": 3248,"type":"int16"} #;               % 3248
-SH_def["BinaryGain"]={"pos": 3250,"type":"int16"} #;               % 3250
-SH_def["AmplitudeRecoveryMethod"]={"pos": 3252,"type":"int16"} #;               % 3252
-SH_def["MeasurementSystem"]={"pos": 3254,"type":"int16"} #;               % 3254
-SH_def["ImpulseSignalPolarity"]={"pos": 3256,"type":"int16"} #;               % 3256
-SH_def["VibratoryPolarityCode"]={"pos": 3258,"type":"int16"} #;               % 3258
-SH_def["Unassigned1"]={"pos": 3260,"type":"int16", "n":120} #    % 3260
-SH_def["SegyFormatRevisionNumber"]={"pos": 3500,"type":"uint16"} #;   % 3500
-SH_def["FixedLengthTraceFlag"]={"pos": 3502,"type":"uint16"} #;        % 3502
-SH_def["NumberOfExtTextualHeaders"]={"pos": 3504,"type":"uint16"} #;        % 3504
-#% 3506-3600 UNASSIGNED (as 47*2byte integer = 94 byte)
-SH_def["Unassigned2"]={"pos": 3506,"type":"int16", "n":47} # =fread(segyid,47,'int16');               % 3506
+SH_def["EnsembleFold"]={"pos": 3226,"type":"int16","def":0}
+SH_def["TraceSorting"]={"pos": 3228,"type":"int16","def":0}
+SH_def["VerticalSumCode"]={"pos": 3230,"type":"int16","def":0}
+SH_def["SweepFrequencyEnd"]={"pos": 3234,"type":"int16","def":0}
+SH_def["SweepLength"]={"pos": 3236,"type":"int16","def":0}
+SH_def["SweepType"]={"pos": 3238,"type":"int16","def":0}
+SH_def["SweepChannel"]={"pos": 3240,"type":"int16","def":0}
+SH_def["SweepTaperlengthStart"]={"pos": 3242,"type":"int16","def":0}
+SH_def["SweepTaperLengthEnd"]={"pos": 3244,"type":"int16","def":0} 
+SH_def["TaperType"]={"pos": 3246,"type":"int16","def":0}
+SH_def["CorrelatedDataTraces"]={"pos": 3248,"type":"int16","def":0}
+SH_def["BinaryGain"]={"pos": 3250,"type":"int16","def":0}
+SH_def["AmplitudeRecoveryMethod"]={"pos": 3252,"type":"int16","def":0}
+SH_def["MeasurementSystem"]={"pos": 3254,"type":"int16","def":0} 
+SH_def["ImpulseSignalPolarity"]={"pos": 3256,"type":"int16","def":0}
+SH_def["VibratoryPolarityCode"]={"pos": 3258,"type":"int16","def":0}
+SH_def["Unassigned1"]={"pos": 3260,"type":"int16", "n":120,"def":0}
+SH_def["SegyFormatRevisionNumber"]={"pos": 3500,"type":"uint16","def":100}
+SH_def["FixedLengthTraceFlag"]={"pos": 3502,"type":"uint16","def":0} 
+SH_def["NumberOfExtTextualHeaders"]={"pos": 3504,"type":"uint16","def":0}
+SH_def["Unassigned2"]={"pos": 3506,"type":"int16", "n":47,"def":0} 
 
 ##############
 #  Initialize SEGY TRACE HEADER SPECIFICATION
@@ -394,6 +393,52 @@ def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
 	pylab.show()
 
 
+def getDefaultSegyHeader(ntraces=100,ns=100):
+	"""
+	SH=getDefaultSegyHeader()
+	"""
+	# INITIALIZE DICTIONARY
+	SH = {"Job": {"pos": 3200,"type":"int32","def":0}}
+		
+	for key in SH_def.keys(): 
+
+		tmpkey = SH_def[key]
+		if (tmpkey.has_key('def')):
+			val=tmpkey['def']
+		else:
+			val=0
+		SH[key]=val
+
+	SH["ntraces"]=ntraces;
+	SH["ns"]=ns;
+	
+		
+	return SH
+def getDefaultSegyTraceHeaders(ntraces=100,ns=100,dt=1000):
+	"""
+	SH=getDefaultSegyTraceHeader()
+	"""
+	# INITIALIZE DICTIONARY
+	STH = {"TraceSequenceLine": {"pos": 0,"type":"int32"}}
+		
+	for key in STH_def.keys(): 
+
+		tmpkey = STH_def[key]
+		if (tmpkey.has_key('def')):
+			val=tmpkey['def']
+		else:
+			val=0
+		STH[key]=zeros(ntraces)
+			
+	for a in range(ntraces):			
+		STH["TraceSequenceLine"][a]=a+1
+		STH["TraceSequenceFile"][a]=a+1
+		STH["FieldRecord"][a]=1000
+		STH["TraceNumber"][a]=a+1
+		STH["ns"][a]=ns
+		STH["dt"][a]=dt
+	return STH
+
 
 def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	"""
@@ -434,17 +479,8 @@ def getAllSegyTraceHeaders(SH,data='none'):
 
 	if (data=='none'):
 		data = open(SH["filename"]).read()
+
 	
- 	for key in STH_def.keys(): 
-
-		sth = getSegyTraceHeader(SH,key,data)
-		SegyTraceHeaders[key]=sth
-
-		txt =  "getAllSegyTraceHeaders :  " + key 
-	        printverbose(txt,10)
-		
-	return SegyTraceHeaders
-
 def readSegy(filename)	:
 	"""
 	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
@@ -589,6 +625,40 @@ def getSegyHeader(filename):
 	
 	return SegyHeader
 
+def writeSegy(filename,Data,dt=.001,STHin={}):
+	"""
+	writeSegy(filename,Data,dt)
+
+	Write SEGY 
+
+	See also readSegy
+
+	(c) 2005, Thomas Mejer Hansen
+
+	MAKE OPTIONAL INPUT FOR ALL SEGYHTRACEHEADER VALUES
+	
+	"""
+
+	printverbose("writeSegy : Trying to write "+filename,0)
+
+	N=Data.shape
+	ns=N[0]
+	ntraces=N[1]
+	print ntraces,ns
+
+	SH = getDefaultSegyHeader(ntraces,ns);
+	STH = getDefaultSegyTraceHeaders(ntraces,ns,dt)
+
+	# ADD STHin, if exists...
+	for key in STHin.keys():
+		print key
+		for a in range(ntraces):
+			STH[key]=STHin[key][a]
+	
+
+	writeSegyStructure(filename,Data,SH,STH)
+	
+
 def writeSegyStructure(filename,Data,SH,STH):
 	"""
 	writeSegyHeader(filename,Data,SegyHeader,SegyTraceHeaders)
@@ -601,10 +671,19 @@ def writeSegyStructure(filename,Data,SH,STH):
 	
 	"""
 
-	printverbose("writeSegy : Trying to write "+filename,0)
+	printverbose("writeSegyStructure : Trying to write "+filename,0)
 	
 	f = open(filename,'w')
 
+	# VERBOSE INF
+	revision=SH["SegyFormatRevisionNumber"]
+	dsf=SH["DataSampleFormat"]
+	if (revision==100):
+		revision=1
+	DataDescr=SH_def["DataSampleFormat"]["descr"][revision][dsf]
+
+	printverbose("writeSegyStructure : SEG-Y revision = "+str(revision),1)
+	printverbose("writeSegyStructure : DataSampleFormat="+str(dsf)+"("+DataDescr+")",1)
 
 	# WRITE SEGY HEADER
 
@@ -623,17 +702,14 @@ def writeSegyStructure(filename,Data,SH,STH):
 	
 	# SEGY TRACES
 
-	revision=SH["SegyFormatRevisionNumber"]
-	dsf=SH["DataSampleFormat"]
-	if (revision==100):
-		revision=1
+
 	ctype=SH_def['DataSampleFormat']['datatype'][revision][dsf]
 	bps=SH_def['DataSampleFormat']['bps'][revision][dsf]
 	
 
 	sizeT = 240 + SH['ns']*bps;
 
-	for itrace in range(SH['ntraces']):
+	for itrace in range(SH['ntraces']):		
 		index=3600+itrace*sizeT
 	 	printverbose('Writing Trace #'+str(itrace+1)+'/'+str(SH['ntraces']),10)
 		# WRITE SEGY TRACE HEADER

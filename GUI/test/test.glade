@@ -4,8 +4,6 @@
 <glade-interface>
 
 <widget class="GtkWindow" id="window1">
-  <property name="width_request">800</property>
-  <property name="height_request">600</property>
   <property name="visible">True</property>
   <property name="title" translatable="yes">SegyPY GUI</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
@@ -43,7 +41,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menu1">
+		<widget class="GtkMenu" id="menuitem1_menu">
 
 		  <child>
 		    <widget class="GtkImageMenuItem" id="new1">
@@ -107,7 +105,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menu2">
+		<widget class="GtkMenu" id="menuitem2_menu">
 
 		  <child>
 		    <widget class="GtkImageMenuItem" id="cut1">
@@ -154,11 +152,6 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">_View</property>
 	      <property name="use_underline">True</property>
-
-	      <child>
-		<widget class="GtkMenu" id="menu3">
-		</widget>
-	      </child>
 	    </widget>
 	  </child>
 
@@ -169,7 +162,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menu4">
+		<widget class="GtkMenu" id="menuitem4_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="about1">

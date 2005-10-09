@@ -27,6 +27,7 @@ from matplotlib.axes import Subplot
 from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar 
 from matplotlib.numerix import arange, sin, pi 
 
+import Numeric as numpy
 
 import gtk, gtk.glade
 
@@ -35,13 +36,30 @@ import segypy
 class SimpleTest:
 	def __init__(self):
 		# xml = gtk.glade.XML('test2.glade')
-		xml = gtk.glade.XML('test/test.glade')
-		xml.signal_autoconnect(self)
+#		self.xml = gtk.glade.XML('test/test.glade')
+		self.xml = gtk.glade.XML('segygui/segygui.glade')
+		self.xml.signal_autoconnect(self)
 	
 	def on_new1_activate(self, button):
 		print 'foo'
 		self.segy = segypy.readSegy('../data_4byteINT.segy')
 		print 'foo2'
+		self.figure = Figure(figsize=(6,4), dpi=72) 
+		self.axis = self.figure.add_subplot(111) 
+		self.axis.set_xlabel('Trace Header') 
+		self.axis.set_ylabel('Time [s]') 
+		self.axis.set_title('An Empty Graph') 
+		self.axis.grid(True) 
+		self.axis.imshow(self.segy[0])
+		self.canvas = FigureCanvasGTK(self.figure) # a gtk.DrawingArea 
+		self.canvas.show() 
+#		self.graphview = self.wTree.get_widget("vbox1") 
+#		self.graphview.pack_start(self.canvas, True, True)
+		self.graphview = self.xml.get_widget("hbox1") 
+		self.graphview.pack_start(self.canvas, True, True)
+		print 'PLOTTED'		
+
+
 
 	def on_open1_activate(self, button):
 		dialog = gtk.FileChooserDialog("Open..",
@@ -79,10 +97,15 @@ class SimpleTest:
 			self.axis.set_ylabel('Flabber') 
 			self.axis.set_title('An Empty Graph') 
 			self.axis.grid(True) 
+			self.axis.imshow(self.segy[0])
 			self.canvas = FigureCanvasGTK(self.figure) # a gtk.DrawingArea 
 			self.canvas.show() 
 #			self.graphview = self.wTree.get_widget("vbox1") 
 #			self.graphview.pack_start(self.canvas, True, True)
+			self.graphview = self.xml.get_widget("hbox2") 
+			self.graphview.pack_start(self.canvas, True, True)
+			print 'PLOTTED'		
+		
 		
 		
 		elif response == gtk.RESPONSE_CANCEL:
@@ -90,4 +113,5 @@ class SimpleTest:
 			dialog.destroy()
 
 test = SimpleTest()
+
 gtk.main()

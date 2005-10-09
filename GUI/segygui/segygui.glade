@@ -4,10 +4,8 @@
 <glade-interface>
 
 <widget class="GtkWindow" id="window1">
-  <property name="width_request">800</property>
-  <property name="height_request">600</property>
   <property name="visible">True</property>
-  <property name="title" translatable="yes">SegyPY GUI</property>
+  <property name="title" translatable="yes">window1</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
   <property name="modal">False</property>
@@ -22,16 +20,10 @@
   <property name="urgency_hint">False</property>
 
   <child>
-    <widget class="GtkTable" id="table1">
-      <property name="width_request">307</property>
+    <widget class="GtkVBox" id="vbox1">
       <property name="visible">True</property>
-      <property name="can_default">True</property>
-      <property name="has_default">True</property>
-      <property name="n_rows">3</property>
-      <property name="n_columns">1</property>
       <property name="homogeneous">False</property>
-      <property name="row_spacing">0</property>
-      <property name="column_spacing">0</property>
+      <property name="spacing">0</property>
 
       <child>
 	<widget class="GtkMenuBar" id="menubar1">
@@ -46,14 +38,14 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menuitem1_menu">
+		<widget class="GtkMenu" id="menu1">
 
 		  <child>
 		    <widget class="GtkImageMenuItem" id="new1">
 		      <property name="visible">True</property>
 		      <property name="label">gtk-new</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_new1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_new1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -62,7 +54,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-open</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_open1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_open1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -71,7 +63,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-save</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_save1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_save1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -80,7 +72,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-save-as</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_save_as1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_save_as1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -95,7 +87,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-quit</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_quit1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_quit1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -110,14 +102,14 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menuitem2_menu">
+		<widget class="GtkMenu" id="menu2">
 
 		  <child>
 		    <widget class="GtkImageMenuItem" id="cut1">
 		      <property name="visible">True</property>
 		      <property name="label">gtk-cut</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_cut1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_cut1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -126,7 +118,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-copy</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_copy1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_copy1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -135,7 +127,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-paste</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_paste1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_paste1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 
@@ -144,7 +136,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-delete</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_delete1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_delete1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -157,6 +149,11 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">_View</property>
 	      <property name="use_underline">True</property>
+
+	      <child>
+		<widget class="GtkMenu" id="menu3">
+		</widget>
+	      </child>
 	    </widget>
 	  </child>
 
@@ -167,14 +164,14 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="menuitem4_menu">
+		<widget class="GtkMenu" id="menu4">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="about1">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_About</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_about1_activate" last_modification_time="Sat, 08 Oct 2005 11:26:31 GMT"/>
+		      <signal name="activate" handler="on_about1_activate" last_modification_time="Sun, 09 Oct 2005 20:43:06 GMT"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -183,47 +180,14 @@
 	  </child>
 	</widget>
 	<packing>
-	  <property name="left_attach">0</property>
-	  <property name="right_attach">1</property>
-	  <property name="top_attach">0</property>
-	  <property name="bottom_attach">1</property>
-	  <property name="x_options">fill</property>
-	  <property name="y_options"></property>
+	  <property name="padding">0</property>
+	  <property name="expand">False</property>
+	  <property name="fill">False</property>
 	</packing>
       </child>
 
       <child>
-	<widget class="GtkToolbar" id="toolbar1">
-	  <property name="visible">True</property>
-	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-	  <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
-	  <property name="tooltips">True</property>
-	  <property name="show_arrow">True</property>
-
-	  <child>
-	    <placeholder/>
-	  </child>
-
-	  <child>
-	    <placeholder/>
-	  </child>
-
-	  <child>
-	    <placeholder/>
-	  </child>
-	</widget>
-	<packing>
-	  <property name="left_attach">0</property>
-	  <property name="right_attach">1</property>
-	  <property name="top_attach">1</property>
-	  <property name="bottom_attach">2</property>
-	  <property name="x_options">fill</property>
-	  <property name="y_options"></property>
-	</packing>
-      </child>
-
-      <child>
-	<widget class="GtkVBox" id="vbox1">
+	<widget class="GtkHBox" id="hbox1">
 	  <property name="visible">True</property>
 	  <property name="homogeneous">False</property>
 	  <property name="spacing">0</property>
@@ -231,17 +195,11 @@
 	  <child>
 	    <placeholder/>
 	  </child>
-
-	  <child>
-	    <placeholder/>
-	  </child>
 	</widget>
 	<packing>
-	  <property name="left_attach">0</property>
-	  <property name="right_attach">1</property>
-	  <property name="top_attach">2</property>
-	  <property name="bottom_attach">3</property>
-	  <property name="x_options">fill</property>
+	  <property name="padding">0</property>
+	  <property name="expand">True</property>
+	  <property name="fill">True</property>
 	</packing>
       </child>
     </widget>

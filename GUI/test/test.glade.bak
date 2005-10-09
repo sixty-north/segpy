@@ -4,6 +4,8 @@
 <glade-interface>
 
 <widget class="GtkWindow" id="window1">
+  <property name="width_request">800</property>
+  <property name="height_request">600</property>
   <property name="visible">True</property>
   <property name="title" translatable="yes">SegyPY GUI</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
@@ -22,6 +24,8 @@
   <child>
     <widget class="GtkTable" id="table1">
       <property name="visible">True</property>
+      <property name="can_default">True</property>
+      <property name="has_default">True</property>
       <property name="n_rows">3</property>
       <property name="n_columns">1</property>
       <property name="homogeneous">False</property>
@@ -218,8 +222,18 @@
       </child>
 
       <child>
-	<widget class="GtkDrawingArea" id="drawingarea1">
+	<widget class="GtkVBox" id="vbox1">
 	  <property name="visible">True</property>
+	  <property name="homogeneous">False</property>
+	  <property name="spacing">0</property>
+
+	  <child>
+	    <placeholder/>
+	  </child>
+
+	  <child>
+	    <placeholder/>
+	  </child>
 	</widget>
 	<packing>
 	  <property name="left_attach">0</property>

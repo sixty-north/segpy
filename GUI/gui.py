@@ -55,7 +55,7 @@ class SimpleTest:
 		self.canvas.show() 
 #		self.graphview = self.wTree.get_widget("vbox1") 
 #		self.graphview.pack_start(self.canvas, True, True)
-		self.graphview = self.xml.get_widget("vbox2") 
+		self.graphview = self.xml.get_widget("vbox3") 
 		self.graphview.pack_start(self.canvas, True, True)
 		print 'PLOTTED'		
 
@@ -100,10 +100,11 @@ class SimpleTest:
 			self.axis.imshow(self.segy[0])
 			self.canvas = FigureCanvasGTK(self.figure) # a gtk.DrawingArea 
 			self.canvas.show() 
-#			self.graphview = self.wTree.get_widget("vbox1") 
-#			self.graphview.pack_start(self.canvas, True, True)
-			self.graphview = self.xml.get_widget("hbox2") 
+			self.graphview = self.xml.get_widget_widget("vbox1") 
+			print self.graphview
 			self.graphview.pack_start(self.canvas, True, True)
+#			self.graphview = self.xml.get_widget("hbox2") 
+#			self.graphview.pack_start(self.canvas, True, True)
 			print 'PLOTTED'		
 		
 		

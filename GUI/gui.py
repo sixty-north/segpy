@@ -55,7 +55,7 @@ class SimpleTest:
 		self.canvas.show() 
 #		self.graphview = self.wTree.get_widget("vbox1") 
 #		self.graphview.pack_start(self.canvas, True, True)
-		self.graphview = self.xml.get_widget("vbox3") 
+		self.graphview = self.xml.get_widget("vbox4") 
 		self.graphview.pack_start(self.canvas, True, True)
 		print 'PLOTTED'		
 

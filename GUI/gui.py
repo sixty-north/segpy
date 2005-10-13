@@ -59,6 +59,42 @@ class SimpleTest:
 		self.graphview.pack_start(self.canvas, True, True)
 		print 'PLOTTED'		
 
+		# create a TreeStore with one string column to use as the model
+		
+		self.liststore = gtk.ListStore(int,str)
+		self.treestore = gtk.TreeStore(str)
+		# we'll add some data now - 4 rows with 3 child rows each
+		for parent in range(4):
+			piter = self.treestore.append(None, ['parent %i' % parent])
+			for child in range(3):
+				self.treestore.append(piter, ['child %i of parent %i' %
+					(child, parent)])
+
+
+
+		self.treeview = self.xml.get_widget("treeview1")
+
+		self.treeview.set_model(self.liststore)
+
+
+		renderer1= gtk.CellRendererText()
+
+		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer1, text=0)
+		self.treeview.append_column(self.tvcolumn1)
+		self.tvcolumn2 = gtk.TreeViewColumn('Value')
+		self.treeview.append_column(self.tvcolumn2)
+
+
+		# create a CellRendererText to render the data
+		self.cell = gtk.CellRendererText()
+		# add the cell to the tvcolumn and allow it to expand
+		self.tvcolumn1.pack_start(self.cell, True)
+		# set the cell "text" attribute to column 0 - retrieve text
+		# from that column in treestore
+		self.tvcolumn1.add_attribute(self.cell, 'text', 0)
+		# make it searchable
+		self.treeview.set_search_column(0)
+		self.treeview.show_all()
 
 
 	def on_open1_activate(self, button):

@@ -48,19 +48,22 @@ class appgui:
     import gobject
     self.treeview=self.wTree.get_widget("treeview1")
     self.treemodel=gtk.TreeStore(gobject.TYPE_STRING,
+                                 gobject.TYPE_INT,
                                  gobject.TYPE_STRING)
     self.treeview.set_model(self.treemodel)
 
     self.treeview.set_headers_visible(True)
+
     renderer=gtk.CellRendererText()
     column=gtk.TreeViewColumn("Name",renderer, text=0)
     column.set_resizable(True)
     self.treeview.append_column(column)
-    renderer=gtk.CellRendererText()
-    
+
+    renderer=gtk.CellRendererText()    
     column=gtk.TreeViewColumn("Description",renderer, text=1)
     column.set_resizable(True)
     self.treeview.append_column(column)
+
     self.treeview.show()
 
     model=self.treemodel

@@ -33,6 +33,16 @@ import gtk, gtk.glade
 
 import segypy
 
+
+def insert_row(model,parent,firstcolumn,secondcolumn,thirdcolumn):
+		myiter=model.insert_after(parent,None)
+		model.set_value(myiter,0,firstcolumn)
+		model.set_value(myiter,1,secondcolumn)
+		model.set_value(myiter,2,thirdcolumn)
+#		print secondcolumn
+#		return myiter
+
+
 class SimpleTest:
 	def __init__(self):
 		# xml = gtk.glade.XML('test2.glade')
@@ -59,43 +69,51 @@ class SimpleTest:
 		self.graphview.pack_start(self.canvas, True, True)
 		print 'PLOTTED'		
 
-		# create a TreeStore with one string column to use as the model
-		
-		self.liststore = gtk.ListStore(int,str)
-		self.treestore = gtk.TreeStore(str)
-		# we'll add some data now - 4 rows with 3 child rows each
-		for parent in range(4):
-			piter = self.treestore.append(None, ['parent %i' % parent])
-			for child in range(3):
-				self.treestore.append(piter, ['child %i of parent %i' %
-					(child, parent)])
-
-
-
+		import gobject
 		self.treeview = self.xml.get_widget("treeview1")
+		self.treemodel = gtk.TreeStore(gobject.TYPE_STRING,
+											gobject.TYPE_STRING,
+											gobject.TYPE_STRING)
+		self.treeview.set_model(self.treemodel)
 
-		self.treeview.set_model(self.liststore)
+		self.treeview.set_headers_visible(True)
 
 
-		renderer1= gtk.CellRendererText()
 
-		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer1, text=0)
+#		renderer=gtk.CellRendererText()
+#		column=gtk.TreeViewColumn("Name1",renderer, text=0)
+#		column.set_resizable(True)
+#		self.treeview.append_column(column)
+
+		renderer= gtk.CellRendererText()
+		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer, text=0)
+		self.tvcolumn1.set_resizable(True)
 		self.treeview.append_column(self.tvcolumn1)
-		self.tvcolumn2 = gtk.TreeViewColumn('Value')
+
+		renderer= gtk.CellRendererText()
+		self.tvcolumn2 = gtk.TreeViewColumn('Meaning', renderer, text=1)
+		self.tvcolumn2.set_resizable(True)
 		self.treeview.append_column(self.tvcolumn2)
 
+		renderer= gtk.CellRendererText()
+		self.tvcolumn3 = gtk.TreeViewColumn('Value', renderer, text=2)
+		self.tvcolumn3.set_resizable(True)
+		self.treeview.append_column(self.tvcolumn3)
 
-		# create a CellRendererText to render the data
-		self.cell = gtk.CellRendererText()
-		# add the cell to the tvcolumn and allow it to expand
-		self.tvcolumn1.pack_start(self.cell, True)
-		# set the cell "text" attribute to column 0 - retrieve text
-		# from that column in treestore
-		self.tvcolumn1.add_attribute(self.cell, 'text', 0)
-		# make it searchable
-		self.treeview.set_search_column(0)
-		self.treeview.show_all()
+		self.treeview.show()
+	
+		# treeSTH = insert_row(self.treemodel,None,'HEJ','')
+		self.SHtree= {"init": 1}
+		for key in segypy.SH_def.keys(): 
+				SHkey=segypy.SH_def[key]
+				if (SHkey.has_key('descr')):
+						descr = segypy.SH_def[key]['descr'][0][self.segy[1][key]]
+				else:
+						descr = ''
+				insert_row(self.treemodel,None,key,descr,self.segy[1][key])
 
+
+class app:
 
 	def on_open1_activate(self, button):
 		dialog = gtk.FileChooserDialog("Open..",

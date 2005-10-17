@@ -22,14 +22,16 @@ segypy.verbose=1;
 Data,SH,STH=segypy.readSegy(filename);
 
 
+
+exit
+
+
 filename_out='testout.segy';
 SH['DataSampleFormat']=5;
 SH['SegyFormatRevisionNumber']=100;
 segypy.writeSegyStructure(filename_out,Data,SH,STH);
 
 segypy.wiggle(Data,SH,2,.1,.1)
-
-exit
 
 f_ieee='data_IEEE.segy';
 f_ibm='data_IBM_REV1.segy';

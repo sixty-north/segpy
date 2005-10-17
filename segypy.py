@@ -45,7 +45,7 @@ else:
 
 # SOME GLOBAL PARAMETERS
 version=0.2
-verbose=3;
+verbose=1;
 
 endian='>' # Big Endian
 #endian='<' # Little Endian
@@ -479,8 +479,19 @@ def getAllSegyTraceHeaders(SH,data='none'):
 
 	if (data=='none'):
 		data = open(SH["filename"]).read()
+			
+	for key in STH_def.keys(): 	 
 
+		sth = getSegyTraceHeader(SH,key,data) 	 
+		SegyTraceHeaders[key]=sth 	 
+
+		txt =  "getAllSegyTraceHeaders :  " + key 	 
+		printverbose(txt,10) 	 
+
+	return SegyTraceHeaders
 	
+
+
 def readSegy(filename)	:
 	"""
 	Data,SegyHeader,SegyTraceHeaders=getSegyHeader(filename)
@@ -609,10 +620,7 @@ def getSegyHeader(filename):
 
 		txt =  str(pos) + " " + str(format) + "  Reading " + key +"="+str(SegyHeader[key])
 	        printverbose(txt,10)
-
-
 	
-
 	# SET NUMBER OF BYTES PER DATA SAMPLE
 	bps=getBytePerSample(SegyHeader)
 
@@ -888,6 +896,7 @@ def getBytePerSample(SH):
 	if (revision==100):
 		revision=1
 	dsf=SH["DataSampleFormat"]
+	
 	
 	bps=SH_def["DataSampleFormat"]["bps"][revision][dsf]
 

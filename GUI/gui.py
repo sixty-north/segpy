@@ -56,34 +56,67 @@ def update_segyplot(self):
 		self.graphview = self.xml.get_widget("vbox4")
 		self.graphview.pack_start(self.canvas, True, True)
 
-
-def update_segyheader(self):
+def init_treeviews(self):
 		import gobject
 
-		self.treeview = self.xml.get_widget("treeview1")
-		self.treemodel = gtk.TreeStore(gobject.TYPE_STRING,
+		###############################################################
+		# SEGYHEADER VIEW
+		self.treeview1 = self.xml.get_widget("treeview1")
+		self.treemodel1 = gtk.TreeStore(gobject.TYPE_STRING,
 											gobject.TYPE_STRING,
 											gobject.TYPE_STRING)
-		self.treeview.set_model(self.treemodel)
-		self.treeview.set_headers_visible(True)
+		self.treeview1.set_model(self.treemodel1)
+		self.treeview1.set_headers_visible(True)
 
 		# COLUMN 1
 		renderer= gtk.CellRendererText()
 		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer, text=0)
 		self.tvcolumn1.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn1)
+		self.treeview1.append_column(self.tvcolumn1)
 
 		# COLUMN 2
 		renderer= gtk.CellRendererText()
 		self.tvcolumn2 = gtk.TreeViewColumn('Meaning', renderer, text=1)
 		self.tvcolumn2.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn2)
+		self.treeview1.append_column(self.tvcolumn2)
 
 		# COLUMN 3
 		renderer= gtk.CellRendererText()
 		self.tvcolumn3 = gtk.TreeViewColumn('Value', renderer, text=2)
 		self.tvcolumn3.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn3)
+		self.treeview1.append_column(self.tvcolumn3)
+
+		###############################################################
+		# SEGYHEADER VIEW
+		
+		self.treeview2 = self.xml.get_widget("treeview2")
+		self.treemodel2 = gtk.TreeStore(gobject.TYPE_STRING,
+											gobject.TYPE_STRING,
+											gobject.TYPE_STRING)
+		self.treeview2.set_model(self.treemodel2)
+		self.treeview2.set_headers_visible(True)
+
+		# COLUMN 1
+		renderer= gtk.CellRendererText()
+		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer, text=0)
+		self.tvcolumn1.set_resizable(True)
+		self.treeview2.append_column(self.tvcolumn1)
+
+		# COLUMN 2
+		renderer= gtk.CellRendererText()
+		self.tvcolumn2 = gtk.TreeViewColumn('Meaning', renderer, text=1)
+		self.tvcolumn2.set_resizable(True)
+		self.treeview2.append_column(self.tvcolumn2)
+
+		# COLUMN 3
+		renderer= gtk.CellRendererText()
+		self.tvcolumn3 = gtk.TreeViewColumn('Value', renderer, text=2)
+		self.tvcolumn3.set_resizable(True)
+		self.treeview2.append_column(self.tvcolumn3)
+
+
+def update_segyheader(self):
+		import gobject
 
 	
 		# INSERT INTO TREEMODEL
@@ -94,38 +127,12 @@ def update_segyheader(self):
 						descr = segypy.SH_def[key]['descr'][0][self.segy[1][key]]
 				else:
 						descr = ''
-				insert_row(self.treemodel,None,key,descr,self.segy[1][key])
+				insert_row(self.treemodel1,None,key,descr,self.segy[1][key])
 
-		self.treeview.show()
+		self.treeview1.show()
 
 def update_segytraceheader(self,itrace=1):
 		import gobject
-
-		self.treeview = self.xml.get_widget("treeview2")
-		self.treemodel = gtk.TreeStore(gobject.TYPE_STRING,
-											gobject.TYPE_STRING,
-											gobject.TYPE_STRING)
-		self.treeview.set_model(self.treemodel)
-		self.treeview.set_headers_visible(True)
-
-		# COLUMN 1
-		renderer= gtk.CellRendererText()
-		self.tvcolumn1 = gtk.TreeViewColumn('Name', renderer, text=0)
-		self.tvcolumn1.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn1)
-
-		# COLUMN 2
-		renderer= gtk.CellRendererText()
-		self.tvcolumn2 = gtk.TreeViewColumn('Meaning', renderer, text=1)
-		self.tvcolumn2.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn2)
-
-		# COLUMN 3
-		renderer= gtk.CellRendererText()
-		self.tvcolumn3 = gtk.TreeViewColumn('Value', renderer, text=2)
-		self.tvcolumn3.set_resizable(True)
-		self.treeview.append_column(self.tvcolumn3)
-
 	
 		# INSERT INTO TREEMODEL
 		self.STHtree= {"init": 1}
@@ -138,18 +145,34 @@ def update_segytraceheader(self,itrace=1):
 							descr='Not Defined'
 				else:
 						descr = ''
-				insert_row(self.treemodel,None,key,descr,self.segy[2][key][itrace-1])
+				insert_row(self.treemodel2,None,key,descr,self.segy[2][key][itrace-1])
 
-		self.treeview.show()
+		self.treeview2.show()
 
 
 class SimpleTest:
 	def __init__(self):
-		# xml = gtk.glade.XML('test2.glade')
-#		self.xml = gtk.glade.XML('test/test.glade')
 		self.xml = gtk.glade.XML('segygui/segygui.glade')
 		self.xml.signal_autoconnect(self)
-	
+		init_treeviews(self)
+
+	def on_about1_activate(self, button):
+		dialog = gtk.AboutDialog()
+		dialog.set_name("SegyPY GUI")
+		dialog.set_version(segypy.version.__str__())
+		dialog.set_copyright("\302\251 Copyright 200x Thomas Mejer Hansen")
+		dialog.set_website("http://segymat.sourceforge.net/segypy/")
+		authors=["Thomas Mejer Hansen"]
+		dialog.set_authors(authors)
+                try: 
+                    f=open('LICENSE')
+                    license = f.read(100000)
+                except IOError:
+                    license = 'Could not read license file....';
+                dialog.set_license(license)
+		## Close dialog on user response
+		dialog.connect ("response", lambda d, r: d.destroy())
+		dialog.show()
 
 	def on_open1_activate(self, button):
 		dialog = gtk.FileChooserDialog("Open..",

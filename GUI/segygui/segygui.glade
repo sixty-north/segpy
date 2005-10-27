@@ -202,6 +202,7 @@
 
       <child>
 	<widget class="GtkHPaned" id="hpaned1">
+	  <property name="width_request">385</property>
 	  <property name="visible">True</property>
 	  <property name="can_focus">True</property>
 

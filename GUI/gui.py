@@ -155,6 +155,26 @@ class SimpleTest:
 		self.xml = gtk.glade.XML('segygui/segygui.glade')
 		self.xml.signal_autoconnect(self)
 		init_treeviews(self)
+		self.window1 = self.xml.get_widget("window1")
+                self.window1.resize(600,400)
+
+	def on_cut1_activate(self, button):
+		self.hpaned1= self.xml.get_widget("hpaned1")
+		self.vbox3= self.xml.get_widget("vbox3")
+                pos = self.hpaned1.get_position()
+                if (pos==1):
+                    pos=100
+                    self.vbox3.visible = 1                    
+                else:
+                    pos=1
+                    self.vbox3.visible = 0
+                pos = self.hpaned1.set_position(pos)
+                print self.vbox3.visible
+                
+                #width,height = self.vbox3.get_size()
+                #print width,height
+                # self.window1.resize(400,400)
+
 
 	def on_about1_activate(self, button):
 		dialog = gtk.AboutDialog()

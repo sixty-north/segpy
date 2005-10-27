@@ -2,11 +2,14 @@
 A python module for reading/writing/manipuating 
 SEG-Y formatted filed
 
-segy.readSegy		: Read SEGY file
-segy.getSegyHeader  	: Get SEGY header 
-segy.getSegyTraceHeader : Get SEGY Trace header 
+segy.readSegy				: Read SEGY file
+segy.getSegyHeader  		: Get SEGY header 
+segy.getSegyTraceHeader 	: Get SEGY Trace header 
 segy.getAllSegyTraceHeaders : Get all SEGY Trace headers 
-segy.getSegyTrace		: Get SEGY Trace heder and trace data for one trace
+segy.getSegyTrace			: Get SEGY Trace heder and trace data for one trace
+
+segy.writeSegy				: Write a data to a SEGY file
+segy.writeSegyStructure     : Writes a segypy data structure to a SEGY file
 
 segy.getValue 		: Get a value from a binary string
 segy.ibm2ieee		: Convert IBM floats to IEEE
@@ -669,7 +672,7 @@ def writeSegy(filename,Data,dt=.001,STHin={}):
 
 def writeSegyStructure(filename,Data,SH,STH):
 	"""
-	writeSegyHeader(filename,Data,SegyHeader,SegyTraceHeaders)
+	writeSegyStructure(filename,Data,SegyHeader,SegyTraceHeaders)
 
 	Write SEGY file using SegyPy data structures
 

@@ -451,7 +451,7 @@ def getSegyTraceHeader(SH,THN='cdp',data='none'):
 	bps=getBytePerSample(SH)
 
 	if (data=='none'):
-		data = open(SH["filename"]).read()
+		data = open(SH["filename"],'rb').read()
 		
 
 	# MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
@@ -481,7 +481,7 @@ def getAllSegyTraceHeaders(SH,data='none'):
 
 
 	if (data=='none'):
-		data = open(SH["filename"]).read()
+		data = open(SH["filename"],'rb').read()
 			
 	for key in STH_def.keys(): 	 
 
@@ -502,7 +502,7 @@ def readSegy(filename)	:
 	
 	printverbose("readSegy : Trying to read "+filename,0)
 
-	data = open(filename).read()
+	data = open(filename,'rb').read()
 
 	filesize=len(data)
 
@@ -593,7 +593,7 @@ def getSegyTrace(SH,itrace):
 		itrace : trace number to read
 		THIS DEF IS NOT UPDATED. NOT READY TO USE
 	"""	
-	data = open(SH["filename"]).read()
+	data = open(SH["filename"],'rb').read()
 
 	bps=getBytePerSample(SH)
 
@@ -612,7 +612,7 @@ def getSegyHeader(filename):
 	"""
 	SegyHeader=getSegyHeader(filename)
 	"""
-	data = open(filename).read()
+	data = open(filename,'rb').read()
 
 	SegyHeader = {'filename': filename}
  	for key in SH_def.keys(): 
@@ -636,7 +636,7 @@ def getSegyHeader(filename):
 	
 	return SegyHeader
 
-def writeSegy(filename,Data,dt=.001,STHin={}):
+def writeSegy(filename,Data,dt=1000,STHin={},SHin={}):
 	"""
 	writeSegy(filename,Data,dt)
 
@@ -666,6 +666,11 @@ def writeSegy(filename,Data,dt=.001,STHin={}):
 		for a in range(ntraces):
 			STH[key]=STHin[key][a]
 	
+	# ADD SHin, if exists...
+        for key in SHin.keys():
+		print key
+		SH[key]=SHin[key]
+
 
 	writeSegyStructure(filename,Data,SH,STH)
 	
@@ -684,7 +689,7 @@ def writeSegyStructure(filename,Data,SH,STH):
 
 	printverbose("writeSegyStructure : Trying to write "+filename,0)
 	
-	f = open(filename,'w')
+	f = open(filename,'wb')
 
 	# VERBOSE INF
 	revision=SH["SegyFormatRevisionNumber"]

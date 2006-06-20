@@ -20,7 +20,10 @@ segy.verbose 		: Amount of verbose information to the scree
 #
 # segypy : A Python module for reading and writing SEG-Y formatted data
 #
-# (C) Thomas Mejer Hansen, 2005
+# (C) Thomas Mejer Hansen, 2005-2006
+#
+# contributions from
+# - Pete Forman 
 #
 
 

@@ -38,7 +38,7 @@ from numpy import arange
 
 # SOME GLOBAL PARAMETERS
 version='0.3.1'   # modified by A Squelch
-verbose=1;
+verbose=1
 
 #endian='>' # Big Endian  # modified by A Squelch
 #endian='<' # Little Endian
@@ -374,7 +374,7 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=.1):
         pylab.plot(i+trace/maxval, t, color='black', linewidth=lwidth)
         for a in range(len(trace)):
             if trace[a]<0:
-                trace[a]=0;
+                trace[a]=0
 
         pylab.fill(i+Data[: , i]/maxval, t, 'k', linewidth=0)
     pylab.title(SH['filename'])
@@ -398,8 +398,8 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
             val=0
         SH[key]=val
 
-    SH["ntraces"]=ntraces;
-    SH["ns"]=ns;
+    SH["ntraces"]=ntraces
+    SH["ns"]=ns
 
 
     return SH
@@ -445,14 +445,14 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
     thv = zeros(ntraces)
     for itrace in range(1, ntraces+1, 1):
 
-        pos=THpos+3600+(SH["ns"]*bps+240)*(itrace-1);
+        pos=THpos+3600+(SH["ns"]*bps+240)*(itrace-1)
 
         txt="getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
-        printverbose(txt, 20);
+        printverbose(txt, 20)
         thv[itrace-1], index = getValue(data, pos, THformat, endian, 1)
         txt="getSegyTraceHeader : " + THN + "=" + str(thv[itrace-1])
-        printverbose(txt, 30);
+        printverbose(txt, 30)
 
     return thv
 
@@ -473,14 +473,14 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
     THformat=STH_def[THN]["type"]
     ntraces=SH["ntraces"]
 
-    pos=THpos+3600+(SH["ns"]*bps+240)*(ntraces-1);
+    pos=THpos+3600+(SH["ns"]*bps+240)*(ntraces-1)
 
     txt="getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
 
-    printverbose(txt, 20);
+    printverbose(txt, 20)
     thv, index = getValue(data, pos, THformat, endian, 1)
     txt="getLastSegyTraceHeader : " + THN + "=" + str(thv)
-    printverbose(txt, 30);
+    printverbose(txt, 30)
 
     return thv
 
@@ -524,13 +524,13 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     printverbose("readSegy : Length of data : " + str(filesize), 2)
 
-    SH["ntraces"]=ntraces;
+    SH["ntraces"]=ntraces
 
     printverbose("readSegy : ntraces=" + str(ntraces) + " nsamples="+str(SH['ns']), 2)
 
 
     # GET TRACE
-    index=3600;
+    index=3600
     nd=(filesize-3600)/bps 
 
     Data, SH, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index, endian)
@@ -629,7 +629,7 @@ def getSegyTrace(SH, itrace, endian='>'):  # modified by A Squelch
 
 
     # GET TRACE HEADER
-    SegyTraceHeader=[];
+    SegyTraceHeader=[]
 
     # GET TRACE
     index=3200+(itrace-1)*(240+SH['ns']*bps)+240
@@ -648,7 +648,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
         pos=SH_def[key]["pos"]
         format=SH_def[key]["type"]
 
-        SegyHeader[key], index = getValue(data, pos, format, endian);    
+        SegyHeader[key], index = getValue(data, pos, format, endian)
 
         txt =  str(pos) + " " + str(format) + "  Reading " + key +"="+str(SegyHeader[key])
         printverbose(txt, 10)
@@ -658,7 +658,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
 
     filesize=len(data)
     ntraces = (filesize-3600)/(SegyHeader['ns']*bps+240)
-    SegyHeader["ntraces"]=ntraces;
+    SegyHeader["ntraces"]=ntraces
 
     printverbose('getSegyHeader : succesfully read '+filename, 1)
 
@@ -687,7 +687,7 @@ def writeSegy(filename, Data, dt=1000, STHin={}, SHin={}):
     ntraces=N[1]
     print ntraces, ns
 
-    SH = getDefaultSegyHeader(ntraces, ns);
+    SH = getDefaultSegyHeader(ntraces, ns)
     STH = getDefaultSegyTraceHeaders(ntraces, ns, dt)
 
     # ADD STHin, if exists...
@@ -746,7 +746,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         pos=SH_def[key]["pos"]
         format=SH_def[key]["type"]
         value=SH[key]
-        putValue(value, f, pos, format, endian);
+        putValue(value, f, pos, format, endian)
 
     # SEGY TRACES
 
@@ -755,7 +755,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
     bps=SH_def['DataSampleFormat']['bps'][revision][dsf]
 
 
-    sizeT = 240 + SH['ns']*bps;
+    sizeT = 240 + SH['ns']*bps
 
     for itrace in range(SH['ntraces']):        
         index=3600+itrace*sizeT
@@ -767,14 +767,14 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
             value=STH[key][itrace]
             txt =  str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value)
             printverbose(txt, 40)
-            putValue(value, f, pos, format, endian);    
+            putValue(value, f, pos, format, endian)
 
         # Write Data    
         cformat=endian + ctype
         for s in range(SH['ns']):
             strVal=struct.pack(cformat, Data[s, itrace])
             f.seek(index+240+s*struct.calcsize(cformat))
-            f.write(strVal);
+            f.write(strVal)
 
     f.close
 
@@ -808,7 +808,7 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
 
     strVal=struct.pack(cformat, value)
     fileid.seek(index)
-    fileid.write(strVal);
+    fileid.write(strVal)
 
 
     return 1
@@ -938,7 +938,7 @@ def getBytePerSample(SH):
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("getBytePerSample :  bps="+str(bps), 21);
+    printverbose("getBytePerSample :  bps="+str(bps), 21)
 
     return bps
 

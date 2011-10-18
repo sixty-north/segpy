@@ -338,7 +338,6 @@ STH_def["SourceMeasurementUnit"]["descr"] = {1: {
      2: "Kilowatt (kW)",
      3: "Pascal (Pa)",
      4: "Bar (Bar)",
-     4: "Bar-meter (Bar-m)",
      5: "Newton (N)",
      6: "Kilograms (kg)"}}
 STH_def["UnassignedInt1"]={"pos":232 ,"type":"int32"} #'int32');  %232

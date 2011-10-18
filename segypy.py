@@ -1,16 +1,16 @@
 
 """
-A python module for reading/writing/manipuating 
+A python module for reading/writing/manipulating
 SEG-Y formatted filed
 
 segy.readSegy                : Read SEGY file
 segy.getSegyHeader           : Get SEGY header
 segy.getSegyTraceHeader      : Get SEGY Trace header
 segy.getAllSegyTraceHeaders  : Get all SEGY Trace headers
-segy.getSegyTrace            : Get SEGY Trace heder and trace data for one trace
+segy.getSegyTrace            : Get SEGY Trace header and trace data for one trace
 
 segy.writeSegy               : Write a data to a SEGY file
-segy.writeSegyStructure      : Writes a segypy data structure to a SEGY file
+segy.writeSegyStructure      : Writes a segpy data structure to a SEGY file
 
 segy.getValue        : Get a value from a binary string
 segy.ibm2ieee        : Convert IBM floats to IEEE
@@ -19,17 +19,17 @@ segy.version         : The version of SegyPY
 segy.verbose         : Amount of verbose information to the screen
 """
 #
-# segypy : A Python module for reading and writing SEG-Y formatted data
+# segpy : A Python module for reading and writing SEG-Y formatted data
+#
+# Forked by Robert Smallshire from the original segypy by
 #
 # (C) Thomas Mejer Hansen, 2005-2006
 #
-# contributions from
-# - Pete Forman 
-#
-# modified by Andrew Squelch 2007 : sub-version 0.3.1
+# with contributions from Pete Forman and Andrew Squelch 2007
 
 
-import struct, sys # modified by A Squelch
+import sys
+import struct
 
 from numpy import transpose
 from numpy import resize
@@ -115,7 +115,7 @@ SH_def["SweepFrequencyEnd"]={"pos": 3234,"type":"int16","def":0}
 SH_def["SweepLength"]={"pos": 3236,"type":"int16","def":0}
 SH_def["SweepType"]={"pos": 3238,"type":"int16","def":0}
 SH_def["SweepChannel"]={"pos": 3240,"type":"int16","def":0}
-SH_def["SweepTaperlengthStart"]={"pos": 3242,"type":"int16","def":0}
+SH_def["SweepTaperLengthStart"]={"pos": 3242,"type":"int16","def":0}
 SH_def["SweepTaperLengthEnd"]={"pos": 3244,"type":"int16","def":0} 
 SH_def["TaperType"]={"pos": 3246,"type":"int16","def":0}
 SH_def["CorrelatedDataTraces"]={"pos": 3248,"type":"int16","def":0}
@@ -139,8 +139,8 @@ STH_def["TraceNumber"]=        {"pos": 12,"type":"int32"}
 STH_def["EnergySourcePoint"]=    {"pos": 16,"type":"int32"} 
 STH_def["cdp"]=            {"pos": 20,"type":"int32"}
 STH_def["cdpTrace"]=        {"pos": 24,"type":"int32"}
-STH_def["TraceIdenitifactionCode"]={"pos":28 ,"type":"uint16"} #'int16'); % 28
-STH_def["TraceIdenitifactionCode"]["descr"]={0:{
+STH_def["TraceIdentificationCode"]={"pos":28 ,"type":"uint16"} #'int16'); % 28
+STH_def["TraceIdentificationCode"]["descr"]={0:{
     1: "Seismic data", 
     2: "Dead", 
     3: "Dummy", 
@@ -149,7 +149,7 @@ STH_def["TraceIdenitifactionCode"]["descr"]={0:{
     6: "Sweep", 
     7: "Timing", 
     8: "Water Break"}}
-STH_def["TraceIdenitifactionCode"]["descr"][1]={
+STH_def["TraceIdentificationCode"]["descr"][1]={
     -1: "Other",
      0: "Unknown",
      1: "Seismic data",
@@ -275,7 +275,7 @@ STH_def["TimeBaseCode"]["descr"][1]={
     2: "GMT", 
     3: "Other", 
     4: "UTC"}
-STH_def["TraceWeightningFactor"]={"pos":168 ,"type":"int16"} #'int16');  %170
+STH_def["TraceWeightingFactor"]={"pos":168 ,"type":"int16"} #'int16');  %170
 STH_def["GeophoneGroupNumberRoll1"]={"pos":170 ,"type":"int16"} #'int16');  %172
 STH_def["GeophoneGroupNumberFirstTraceOrigField"]={"pos":172 ,"type":"int16"} #'int16');  %174
 STH_def["GeophoneGroupNumberLastTraceOrigField"]={"pos":174 ,"type":"int16"} #'int16');  %176
@@ -565,11 +565,11 @@ def readSegyData(data,SH,nd,bps,index,endian='>'):  # added by A Squelch
     called from other external functions - by A Squelch.
     """
 
-    # Calulate number of dummy samples needed to account for Trace Headers
+    # Calculate number of dummy samples needed to account for Trace Headers
     ndummy_samples=240/bps
     printverbose("readSegyData : ndummy_samples="+str(ndummy_samples),6)
 
-    # READ ALL SEGY TRACE HEADRES
+    # READ ALL SEGY TRACE HEADERS
     STH = getAllSegyTraceHeaders(SH,data)
 
     printverbose("readSegyData : Reading segy data",1)

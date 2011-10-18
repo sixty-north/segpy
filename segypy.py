@@ -370,13 +370,13 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
 
         trace = Data[: , i]
         trace[0] = 0
-        trace[SH['ns']-1] = 0
+        trace[SH['ns'] - 1] = 0
         pylab.plot(i+trace/maxval, t, color='black', linewidth=lwidth)
         for a in range(len(trace)):
-            if trace[a]<0:
+            if trace[a] < 0:
                 trace[a] = 0
 
-        pylab.fill(i+Data[: , i]/maxval, t, 'k', linewidth=0)
+        pylab.fill(i + Data[: , i] / maxval, t, 'k', linewidth=0)
     pylab.title(SH['filename'])
     pylab.grid(True)
     pylab.show()
@@ -418,10 +418,10 @@ def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
         STH[key] = zeros(ntraces)
 
     for a in range(ntraces):            
-        STH["TraceSequenceLine"][a] = a+1
-        STH["TraceSequenceFile"][a] = a+1
+        STH["TraceSequenceLine"][a] = a + 1
+        STH["TraceSequenceFile"][a] = a + 1
         STH["FieldRecord"][a] = 1000
-        STH["TraceNumber"][a] = a+1
+        STH["TraceNumber"][a] = a + 1
         STH["ns"][a] = ns
         STH["dt"][a] = dt
     return STH
@@ -445,13 +445,13 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
     thv = zeros(ntraces)
     for itrace in range(1, ntraces+1, 1):
 
-        pos = THpos+3600+(SH["ns"]*bps+240)*(itrace-1)
+        pos = THpos + 3600 + (SH["ns"] * bps + 240) * (itrace - 1)
 
         txt = "getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
         printverbose(txt, 20)
-        thv[itrace-1], index = getValue(data, pos, THformat, endian, 1)
-        txt = "getSegyTraceHeader : " + THN + "=" + str(thv[itrace-1])
+        thv[itrace - 1], index = getValue(data, pos, THformat, endian, 1)
+        txt = "getSegyTraceHeader : " + THN + "=" + str(thv[itrace - 1])
         printverbose(txt, 30)
 
     return thv
@@ -473,7 +473,7 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
     THformat = STH_def[THN]["type"]
     ntraces = SH["ntraces"]
 
-    pos = THpos+3600+(SH["ns"]*bps+240)*(ntraces-1)
+    pos = THpos + 3600 + (SH["ns"] * bps + 240) * (ntraces - 1)
 
     txt = "getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
 
@@ -520,18 +520,18 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     bps = getBytePerSample(SH)
 
-    ntraces = (filesize-3600)/(SH['ns']*bps+240)
+    ntraces = (filesize - 3600) / (SH['ns'] * bps + 240)
 
     printverbose("readSegy : Length of data : " + str(filesize), 2)
 
     SH["ntraces"] = ntraces
 
-    printverbose("readSegy : ntraces = " + str(ntraces) + " nsamples = "+str(SH['ns']), 2)
+    printverbose("readSegy : ntraces = " + str(ntraces) + " nsamples = " + str(SH['ns']), 2)
 
 
     # GET TRACE
     index = 3600
-    nd = (filesize-3600)/bps
+    nd = (filesize - 3600) / bps
 
     Data, SH, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index, endian)
 
@@ -549,8 +549,8 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     """
 
     # Calculate number of dummy samples needed to account for Trace Headers
-    ndummy_samples = 240/bps
-    printverbose("readSegyData : ndummy_samples = "+str(ndummy_samples), 6)
+    ndummy_samples = 240 / bps
+    printverbose("readSegyData : ndummy_samples = " + str(ndummy_samples), 6)
 
     # READ ALL SEGY TRACE HEADERS
     STH = getAllSegyTraceHeaders(SH, data)
@@ -571,12 +571,12 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
         DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
     except KeyError:
         print""
-        print"  An error has ocurred interpreting a SEGY binary header key"
+        print"  An error has occurred interpreting a SEGY binary header key"
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("readSegyData : SEG-Y revision = "+str(revision), 1)
-    printverbose("readSegyData : DataSampleFormat = "+str(dsf)+"("+DataDescr+")", 1)
+    printverbose("readSegyData : SEG-Y revision = " + str(revision), 1)
+    printverbose("readSegyData : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")", 1)
 
     if SH["DataSampleFormat"] == 1:
         printverbose("readSegyData : Assuming DSF = 1, IBM FLOATS", 2)
@@ -594,7 +594,7 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
         printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 8bit CHAR", 2)
         Data1 = getValue(data, index, 'B', endian, nd)
     else:
-        printverbose("readSegyData : DSF = " + str(SH["DataSampleFormat"]) + ", NOT SUPORTED", 2)
+        printverbose("readSegyData : DSF = " + str(SH["DataSampleFormat"]) + ", NOT SUPPORTED", 2)
 
     Data = Data1[0]
 
@@ -609,8 +609,8 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     if SH["DataSampleFormat"] == 8:
         for i in arange(SH['ntraces']):
             for j in arange(SH['ns']):
-                if Data[i][j]>128:
-                    Data[i][j] = Data[i][j]-256
+                if Data[i][j] > 128:
+                    Data[i][j] = Data[i][j] - 256
 
     printverbose("readSegyData : Finished reading segy data", 1)
 
@@ -632,7 +632,7 @@ def getSegyTrace(SH, itrace, endian='>'):  # modified by A Squelch
     SegyTraceHeader = []
 
     # GET TRACE
-    index = 3200+(itrace-1)*(240+SH['ns']*bps)+240
+    index = 3200 + (itrace - 1) * (240 + SH['ns'] * bps) + 240
     SegyTraceData = getValue(data, index, 'float', endian, SH['ns'])
     return SegyTraceHeader, SegyTraceData
 
@@ -650,18 +650,17 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
 
         SegyHeader[key], index = getValue(data, pos, format, endian)
 
-        txt =  str(pos) + " " + str(format) + "  Reading " + key +"="+str(SegyHeader[key])
+        txt =  str(pos) + " " + str(format) + "  Reading " + key + "=" + str(SegyHeader[key])
         printverbose(txt, 10)
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
     bps = getBytePerSample(SegyHeader)
 
     filesize = len(data)
-    ntraces = (filesize-3600)/(SegyHeader['ns']*bps+240)
+    ntraces = (filesize - 3600) / (SegyHeader['ns'] * bps + 240)
     SegyHeader["ntraces"] = ntraces
 
     printverbose('getSegyHeader : succesfully read '+filename, 1)
-
 
     return SegyHeader
 
@@ -680,7 +679,7 @@ def writeSegy(filename, Data, dt = 1000, STHin={}, SHin={}):
 
     """
 
-    printverbose("writeSegy : Trying to write "+filename, 0)
+    printverbose("writeSegy : Trying to write " + filename, 0)
 
     N = Data.shape
     ns = N[0]
@@ -717,7 +716,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
 
     """
 
-    printverbose("writeSegyStructure : Trying to write "+filename, 0)
+    printverbose("writeSegyStructure : Trying to write " + filename, 0)
 
     f = open(filename, 'wb')
 
@@ -737,8 +736,8 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("writeSegyStructure : SEG-Y revision = "+str(revision), 1)
-    printverbose("writeSegyStructure : DataSampleFormat = "+str(dsf)+"("+DataDescr+")", 1)
+    printverbose("writeSegyStructure : SEG-Y revision = " + str(revision), 1)
+    printverbose("writeSegyStructure : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")", 1)
 
     # WRITE SEGY HEADER
 
@@ -755,11 +754,11 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
     bps = SH_def['DataSampleFormat']['bps'][revision][dsf]
 
 
-    sizeT = 240 + SH['ns']*bps
+    sizeT = 240 + SH['ns'] * bps
 
     for itrace in range(SH['ntraces']):        
-        index = 3600+itrace*sizeT
-        printverbose('Writing Trace #'+str(itrace+1)+'/'+str(SH['ntraces']), 10)
+        index = 3600 + itrace * sizeT
+        printverbose('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']), 10)
         # WRITE SEGY TRACE HEADER
         for key in STH_def.keys():     
             pos = index+STH_def[key]["pos"]
@@ -773,7 +772,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         cformat = endian + ctype
         for s in range(SH['ns']):
             strVal = struct.pack(cformat, Data[s, itrace])
-            f.seek(index+240+s*struct.calcsize(cformat))
+            f.seek(index + 240 + s * struct.calcsize(cformat))
             f.write(strVal)
 
     f.close
@@ -845,18 +844,18 @@ def getValue(data, index, ctype='l', endian='>', number=1):
         printverbose('Bad Ctype : ' +ctype, -1)
 
 
-    cformat = endian + ctype*number
+    cformat = endian + ctype * number
 
     printverbose('getValue : cformat :  ' + cformat, 40)
 
-    index_end = index+size*number
+    index_end = index + size * number
 
     if ctype == 'ibm':
         # ASSUME IBM FLOAT DATA
         Value = range(number)        
         for i in arange(number):
-            index_ibm = i*4+index
-            Value[i] = ibm2ieee2(data[index_ibm: index_ibm+4])
+            index_ibm = i * 4 + index
+            Value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
         # this returns an array as opposed to a tuple
     else:
         # ALL OTHER TYPES OF DATA
@@ -895,8 +894,8 @@ def ibm2Ieee(ibm_float):
     i = struct.unpack('>I', ibm_float)[0]
     sign = [1, -1][bool(i & 0x100000000L)]
     characteristic = ((i >> 24) & 0x7f) - 64
-    fraction = (i & 0xffffff)/float(0x1000000L)
-    return sign*16**characteristic*fraction
+    fraction = (i & 0xffffff) / float(0x1000000L)
+    return sign * 16 ** characteristic * fraction
 
 
 
@@ -907,7 +906,7 @@ def ibm2ieee2(ibm_float):
     (C) Secchi Angelo
     with thanks to Howard Lightstone and Anton Vredegoor. 
     """
-    dividend = float(16**6)
+    dividend = float(16 ** 6)
 
     if ibm_float == 0:
         return 0.0
@@ -917,8 +916,8 @@ def ibm2ieee2(ibm_float):
         istic = istic - 128
     else:
         sign = 1.0
-    mant= float(a<<16) + float(b<<8) +float(c)
-    return sign* 16**(istic-64)*(mant/dividend)
+    mant= float(a << 16) + float(b << 8) + float(c)
+    return sign * 16 ** (istic - 64) * (mant / dividend)
 
 
 def getBytePerSample(SH):
@@ -938,7 +937,7 @@ def getBytePerSample(SH):
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("getBytePerSample :  bps = "+str(bps), 21)
+    printverbose("getBytePerSample :  bps = " + str(bps), 21)
 
     return bps
 

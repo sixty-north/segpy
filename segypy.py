@@ -378,7 +378,7 @@ def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
         trace[SH['ns']-1]=0    
         pylab.plot(i+trace/maxval,t,color='black',linewidth=lwidth)
         for a in range(len(trace)):
-            if (trace[a]<0):
+            if trace[a]<0:
                 trace[a]=0;
         # pylab.fill(i+Data[:,i]/maxval,t,color='k',facecolor='g')
         pylab.fill(i+Data[:,i]/maxval,t,'k',linewidth=0)
@@ -388,7 +388,7 @@ def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
 
 
 def getDefaultSegyHeader(ntraces=100,ns=100):
-    """
+    """Remove unused import.
     SH=getDefaultSegyHeader()
     """
     # INITIALIZE DICTIONARY
@@ -397,7 +397,7 @@ def getDefaultSegyHeader(ntraces=100,ns=100):
     for key in SH_def.keys(): 
 
         tmpkey = SH_def[key]
-        if (tmpkey.has_key('def')):
+        if tmpkey.has_key('def'):
             val=tmpkey['def']
         else:
             val=0
@@ -420,7 +420,7 @@ def getDefaultSegyTraceHeaders(ntraces=100,ns=100,dt=1000):
     for key in STH_def.keys(): 
 
         tmpkey = STH_def[key]
-        if (tmpkey.has_key('def')):
+        if tmpkey.has_key('def'):
             val=tmpkey['def']
         else:
             val=0
@@ -443,7 +443,7 @@ def getSegyTraceHeader(SH,THN='cdp',data='none',endian='>'):  # modified by A Sq
 
     bps=getBytePerSample(SH)
 
-    if (data=='none'):
+    if data=='none':
         data = open(SH["filename"],'rb').read()
 
 
@@ -475,7 +475,7 @@ def getLastSegyTraceHeader(SH,THN='cdp',data='none',endian='>'):  # added by A S
 
     bps=getBytePerSample(SH)
 
-    if (data=='none'):
+    if data=='none':
         data = open(SH["filename"]).read()
 
     # SET PARAMETERS THAT DEFINE THE LOCATION OF THE LAST HEADER
@@ -502,7 +502,7 @@ def getAllSegyTraceHeaders(SH,data='none'):
     printverbose('getAllSegyTraceHeaders : trying to get all segy trace headers',2)
 
 
-    if (data=='none'):
+    if data=='none':
         data = open(SH["filename"],'rb').read()
 
     for key in STH_def.keys():      
@@ -577,9 +577,9 @@ def readSegyData(data,SH,nd,bps,index,endian='>'):  # added by A Squelch
     #Data = zeros((SH['ns'],ntraces))
 
     revision=SH["SegyFormatRevisionNumber"]
-    if (revision==100):
+    if revision==100:
         revision=1
-    if (revision==256):  # added by A Squelch
+    if revision==256:  # added by A Squelch
         revision=1
 
     dsf=SH["DataSampleFormat"]
@@ -596,19 +596,19 @@ def readSegyData(data,SH,nd,bps,index,endian='>'):  # added by A Squelch
     printverbose("readSegyData : SEG-Y revision = "+str(revision),1)
     printverbose("readSegyData : DataSampleFormat="+str(dsf)+"("+DataDescr+")",1)
 
-    if (SH["DataSampleFormat"]==1):
+    if SH["DataSampleFormat"]==1:
         printverbose("readSegyData : Assuming DSF=1, IBM FLOATS",2)
         Data1 = getValue(data,index,'ibm',endian,nd)
-    elif (SH["DataSampleFormat"]==2):
+    elif SH["DataSampleFormat"]==2:
         printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 32bit INT",2)
         Data1 = getValue(data,index,'l',endian,nd)
-    elif (SH["DataSampleFormat"]==3):
+    elif SH["DataSampleFormat"]==3:
         printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 16bit INT",2)
         Data1 = getValue(data,index,'h',endian,nd)
-    elif (SH["DataSampleFormat"]==5):
+    elif SH["DataSampleFormat"]==5:
         printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", IEEE",2)
         Data1 = getValue(data,index,'float',endian,nd)
-    elif (SH["DataSampleFormat"]==8):
+    elif SH["DataSampleFormat"]==8:
         printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 8bit CHAR",2)
         Data1 = getValue(data,index,'B',endian,nd)
     else:
@@ -624,7 +624,7 @@ def readSegyData(data,SH,nd,bps,index,endian='>'):  # added by A Squelch
     Data=transpose(Data)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF=8
-    if (SH["DataSampleFormat"]==8):
+    if SH["DataSampleFormat"]==8:
         for i in arange(SH['ntraces']):
             for j in arange(SH['ns']):
                 if Data[i][j]>128:
@@ -744,9 +744,9 @@ def writeSegyStructure(filename,Data,SH,STH,endian='>'):  # modified by A Squelc
     # VERBOSE INF
     revision=SH["SegyFormatRevisionNumber"]
     dsf=SH["DataSampleFormat"]
-    if (revision==100):
+    if revision==100:
         revision=1
-    if (revision==256):  # added by A Squelch
+    if revision==256:  # added by A Squelch
         revision=1
 
     try:  # block added by A Squelch
@@ -835,7 +835,7 @@ def putValue(value,fileid,index,ctype='l',endian='>',number=1):
     elif (ctype=='f')|(ctype=='float'):
         size=l_float
         ctype='f'
-    elif (ctype=='ibm'):
+    elif ctype=='ibm':
         size=l_float
     else:
         printverbose('Bad Ctype : ' +ctype,-1)
@@ -877,7 +877,7 @@ def getValue(data,index,ctype='l',endian='>',number=1):
     elif (ctype=='f')|(ctype=='float'):
         size=l_float
         ctype='f'
-    elif (ctype=='ibm'):
+    elif ctype=='ibm':
         size=l_float
     else:
         printverbose('Bad Ctype : ' +ctype,-1)
@@ -889,7 +889,7 @@ def getValue(data,index,ctype='l',endian='>',number=1):
 
     index_end=index+size*number
 
-    if (ctype=='ibm'):
+    if ctype=='ibm':
         # ASSUME IBM FLOAT DATA
         Value = range(number)        
         for i in arange(number):
@@ -900,7 +900,7 @@ def getValue(data,index,ctype='l',endian='>',number=1):
         # ALL OTHER TYPES OF DATA
         Value=struct.unpack(cformat, data[index:index_end])
 
-    if (ctype=='B'):
+    if ctype=='B':
         printverbose('getValue : Ineficient use of 1byte Integer...',-1)
 
     vtxt = 'getValue : '+'start='+str(index)+' size='+str(size)+ ' number='+str(number)+' Value='+str(Value)+' cformat='+str(cformat)
@@ -961,9 +961,9 @@ def ibm2ieee2(ibm_float):
 
 def getBytePerSample(SH):
     revision=SH["SegyFormatRevisionNumber"]
-    if (revision==100):
+    if revision==100:
         revision=1
-    if (revision==256):  # added by A Squelch
+    if revision==256:  # added by A Squelch
         revision=1
 
     dsf=SH["DataSampleFormat"]

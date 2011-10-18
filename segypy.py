@@ -365,13 +365,9 @@ def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
     import pylab
 
     t = range(SH['ns'])
-#     t = range(SH['ns'])*SH['dt']/1000000;
 
     for i in range(0,SH['ntraces'],skipt):
-#        trace=zeros(SH['ns']+2)
-#        dtrace=Data[:,i]
-#        trace[1:SH['ns']]=Data[:,i]
-#        trace[SH['ns']+1]=0
+
         trace=Data[:,i]
         trace[0]=0
         trace[SH['ns']-1]=0    
@@ -379,7 +375,7 @@ def wiggle(Data,SH,skipt=1,maxval=8,lwidth=.1):
         for a in range(len(trace)):
             if trace[a]<0:
                 trace[a]=0;
-        # pylab.fill(i+Data[:,i]/maxval,t,color='k',facecolor='g')
+
         pylab.fill(i+Data[:,i]/maxval,t,'k',linewidth=0)
     pylab.title(SH['filename'])
     pylab.grid(True)
@@ -419,10 +415,6 @@ def getDefaultSegyTraceHeaders(ntraces=100,ns=100,dt=1000):
     for key in STH_def.keys(): 
 
         tmpkey = STH_def[key]
-        if tmpkey.has_key('def'):
-            val=tmpkey['def']
-        else:
-            val=0
         STH[key]=zeros(ntraces)
 
     for a in range(ntraces):            
@@ -447,13 +439,11 @@ def getSegyTraceHeader(SH,THN='cdp',data='none',endian='>'):  # modified by A Sq
 
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
-#    THpos=TraceHeaderPos[THN]
     THpos=STH_def[THN]["pos"]
     THformat=STH_def[THN]["type"]
     ntraces=SH["ntraces"]
     thv = zeros(ntraces)
     for itrace in range(1,ntraces+1,1):
-        i=itrace
 
         pos=THpos+3600+(SH["ns"]*bps+240)*(itrace-1);
 
@@ -531,14 +521,11 @@ def readSegy(filename,endian='>'):  # modified by A Squelch
     bps=getBytePerSample(SH)
 
     ntraces = (filesize-3600)/(SH['ns']*bps+240)
-#    ntraces = 100
 
     printverbose("readSegy : Length of data : " + str(filesize),2)
 
     SH["ntraces"]=ntraces;
 
-    #ndummy_samples=240/bps  # modified by A Squelch
-    #printverbose("readSegy : ndummy_samples="+str(ndummy_samples),6)  # modified by A Squelch
     printverbose("readSegy : ntraces=" + str(ntraces) + " nsamples="+str(SH['ns']),2)
 
 
@@ -546,8 +533,6 @@ def readSegy(filename,endian='>'):  # modified by A Squelch
     index=3600;
     nd=(filesize-3600)/bps 
 
-    # modified by A Squelch
-    # this portion replaced by call to new function: readSegyData
     Data,SH,SegyTraceHeaders = readSegyData(data,SH,nd,bps,index,endian)
 
     printverbose("readSegy :  Read segy data",2)  # modified by A Squelch
@@ -573,8 +558,6 @@ def readSegyData(data,SH,nd,bps,index,endian='>'):  # added by A Squelch
     printverbose("readSegyData : Reading segy data",1)
 
     # READ ALL DATA EXCEPT FOR SEGY HEADER
-    #Data = zeros((SH['ns'],ntraces))
-
     revision=SH["SegyFormatRevisionNumber"]
     if revision==100:
         revision=1
@@ -646,9 +629,7 @@ def getSegyTrace(SH,itrace,endian='>'):  # modified by A Squelch
 
 
     # GET TRACE HEADER
-    index=3200+(itrace-1)*(240+SH['ns']*bps)
     SegyTraceHeader=[];
-    #print index
 
     # GET TRACE
     index=3200+(itrace-1)*(240+SH['ns']*bps)+240
@@ -765,14 +746,7 @@ def writeSegyStructure(filename,Data,SH,STH,endian='>'):  # modified by A Squelc
         pos=SH_def[key]["pos"]
         format=SH_def[key]["type"]
         value=SH[key]
-
-#        SegyHeader[key],index = putValue(value,f,pos,format,endian);    
-        putValue(value,f,pos,format,endian);    
-
-        txt =  str(pos) + " " + str(format) + "  Reading " + key + "=" + str(value)
-#+"="+str(SegyHeader[key])
-            # printverbose(txt,-1)
-
+        putValue(value,f,pos,format,endian);
 
     # SEGY TRACES
 
@@ -802,11 +776,7 @@ def writeSegyStructure(filename,Data,SH,STH,endian='>'):  # modified by A Squelc
             f.seek(index+240+s*struct.calcsize(cformat))
             f.write(strVal);
 
-
-
     f.close
-
-    #return segybuffer
 
 
 def putValue(value,fileid,index,ctype='l',endian='>',number=1):
@@ -814,28 +784,21 @@ def putValue(value,fileid,index,ctype='l',endian='>',number=1):
     putValue(data,index,ctype,endian,number)
     """
     if (ctype=='l')|(ctype=='long')|(ctype=='int32'):
-        size=l_long
         ctype='l'
     elif (ctype=='L')|(ctype=='ulong')|(ctype=='uint32'):
-        size=l_ulong
         ctype='L'
     elif (ctype=='h')|(ctype=='short')|(ctype=='int16'):
-        size=l_short
         ctype='h'
     elif (ctype=='H')|(ctype=='ushort')|(ctype=='uint16'):
-        size=l_ushort
         ctype='H'
     elif (ctype=='c')|(ctype=='char'):
-        size=l_char
         ctype='c'
     elif (ctype=='B')|(ctype=='uchar'):
-        size=l_uchar
         ctype='B'
     elif (ctype=='f')|(ctype=='float'):
-        size=l_float
         ctype='f'
     elif ctype=='ibm':
-        size=l_float
+        pass
     else:
         printverbose('Bad Ctype : ' +ctype,-1)
 
@@ -894,7 +857,7 @@ def getValue(data,index,ctype='l',endian='>',number=1):
         for i in arange(number):
             index_ibm=i*4+index
             Value[i] = ibm2ieee2(data[index_ibm:index_ibm+4])
-        # this resturn an array as opposed to a tuple    
+        # this returns an array as opposed to a tuple
     else:
         # ALL OTHER TYPES OF DATA
         Value=struct.unpack(cformat, data[index:index_end])

@@ -32,7 +32,6 @@ import sys
 import struct
 
 from numpy import transpose
-from numpy import resize
 from numpy import reshape
 from numpy import zeros
 from numpy import arange

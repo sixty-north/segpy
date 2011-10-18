@@ -892,7 +892,7 @@ def ibm2Ieee(ibm_float):
     (C) Secchi Angelo
     with thanks to Howard Lightstone and Anton Vredegoor. 
     """
-    I = struct.unpack('>I',ibm_float)[0]
+    i = struct.unpack('>I',ibm_float)[0]
     sign = [1,-1][bool(i & 0x100000000L)]
     characteristic = ((i >> 24) & 0x7f) - 64
     fraction = (i & 0xffffff)/float(0x1000000L)

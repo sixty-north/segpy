@@ -231,8 +231,8 @@ STH_def["Correlated"]["descr"]={0: {
     2: "Yes"}}
 STH_def["Correlated"]["descr"][1]=STH_def["Correlated"]["descr"][0]
 
-STH_def["SweepFrequenceStart"]={"pos":126 ,"type":"int16"} #'int16');  %126
-STH_def["SweepFrequenceEnd"]={"pos":128 ,"type":"int16"} #'int16');  %128
+STH_def["SweepFrequencyStart"]={"pos":126 ,"type":"int16"} #'int16');  %126
+STH_def["SweepFrequencyEnd"]={"pos":128 ,"type":"int16"} #'int16');  %128
 STH_def["SweepLength"]={"pos":130 ,"type":"int16"} #'int16');  %130
 STH_def["SweepType"]={"pos":132 ,"type":"int16"} #'int16');  %132
 STH_def["SweepType"]["descr"]={0: {

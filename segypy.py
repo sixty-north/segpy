@@ -37,12 +37,12 @@ from numpy import zeros
 from numpy import arange
 
 # SOME GLOBAL PARAMETERS
-version='0.3.1'   # modified by A Squelch
-verbose=1
+version = '0.3.1'   # modified by A Squelch
+verbose = 1
 
-#endian='>' # Big Endian  # modified by A Squelch
-#endian='<' # Little Endian
-#endian='=' # Native
+#endian = '>' # Big Endian  # modified by A Squelch
+#endian = '<' # Little Endian
+#endian = '=' # Native
 
 l_int = struct.calcsize('i')
 l_uint = struct.calcsize('I')
@@ -64,42 +64,42 @@ SH_def = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 SH_def["Line"]=            {"pos": 3204, "type": "int32", "def": 0}
 SH_def["Reel"]=            {"pos": 3208, "type": "int32", "def": 0}
 SH_def["DataTracePerEnsemble"]=    {"pos": 3212, "type": "int16", "def": 0}
-SH_def["AuxiliaryTracePerEnsemble"]={"pos": 3214, "type": "int16", "def": 0}
+SH_def["AuxiliaryTracePerEnsemble"] = {"pos": 3214, "type": "int16", "def": 0}
 SH_def["dt"]=            {"pos": 3216, "type": "uint16", "def": 1000}
 SH_def["dtOrig"]=        {"pos": 3218, "type": "uint16", "def": 1000}
-SH_def["ns"]={"pos": 3220, "type": "uint16", "def": 0}
-SH_def["nsOrig"]={"pos": 3222, "type": "uint16", "def": 0} 
-SH_def["DataSampleFormat"]={"pos": 3224, "type": "int16", "def": 5} 
-SH_def["DataSampleFormat"]["descr"]={0: {
+SH_def["ns"] = {"pos": 3220, "type": "uint16", "def": 0}
+SH_def["nsOrig"] = {"pos": 3222, "type": "uint16", "def": 0}
+SH_def["DataSampleFormat"] = {"pos": 3224, "type": "int16", "def": 5}
+SH_def["DataSampleFormat"]["descr"] = {0: {
     1: "IBM Float", 
     2: "32 bit Integer", 
     3: "16 bit Integer", 
     8: "8 bit Integer"}}
 
-SH_def["DataSampleFormat"]["descr"][1]={
+SH_def["DataSampleFormat"]["descr"][1] = {
     1: "IBM Float", 
     2: "32 bit Integer", 
     3: "16 bit Integer", 
     5: "IEEE",
     8: "8 bit Integer"}
 
-SH_def["DataSampleFormat"]["bps"]={0: {
+SH_def["DataSampleFormat"]["bps"] = {0: {
     1: 4, 
     2: 4, 
     3: 2, 
     8: 1}}
-SH_def["DataSampleFormat"]["bps"][1]={
+SH_def["DataSampleFormat"]["bps"][1] = {
     1: 4, 
     2: 4, 
     3: 2, 
     5: 4, 
     8: 1}
-SH_def["DataSampleFormat"]["datatype"]={0: {
+SH_def["DataSampleFormat"]["datatype"] = {0: {
     1: 'ibm', 
     2: 'l', 
     3: 'h', 
     8: 'B'}}
-SH_def["DataSampleFormat"]["datatype"][1]={
+SH_def["DataSampleFormat"]["datatype"][1] = {
     1: 'ibm', 
     2: 'l', 
     3: 'h', 
@@ -107,27 +107,27 @@ SH_def["DataSampleFormat"]["datatype"][1]={
     5: 'f', 
     8: 'B'}
 
-SH_def["EnsembleFold"]={"pos": 3226, "type": "int16", "def": 0}
-SH_def["TraceSorting"]={"pos": 3228, "type": "int16", "def": 0}
-SH_def["VerticalSumCode"]={"pos": 3230, "type": "int16", "def": 0}
-SH_def["SweepFrequencyEnd"]={"pos": 3234, "type": "int16", "def": 0}
-SH_def["SweepLength"]={"pos": 3236, "type": "int16", "def": 0}
-SH_def["SweepType"]={"pos": 3238, "type": "int16", "def": 0}
-SH_def["SweepChannel"]={"pos": 3240, "type": "int16", "def": 0}
-SH_def["SweepTaperLengthStart"]={"pos": 3242, "type": "int16", "def": 0}
-SH_def["SweepTaperLengthEnd"]={"pos": 3244, "type": "int16", "def": 0} 
-SH_def["TaperType"]={"pos": 3246, "type": "int16", "def": 0}
-SH_def["CorrelatedDataTraces"]={"pos": 3248, "type": "int16", "def": 0}
-SH_def["BinaryGain"]={"pos": 3250, "type": "int16", "def": 0}
-SH_def["AmplitudeRecoveryMethod"]={"pos": 3252, "type": "int16", "def": 0}
-SH_def["MeasurementSystem"]={"pos": 3254, "type": "int16", "def": 0} 
-SH_def["ImpulseSignalPolarity"]={"pos": 3256, "type": "int16", "def": 0}
-SH_def["VibratoryPolarityCode"]={"pos": 3258, "type": "int16", "def": 0}
-SH_def["Unassigned1"]={"pos": 3260, "type": "int16", "n": 120, "def": 0}
-SH_def["SegyFormatRevisionNumber"]={"pos": 3500, "type": "uint16", "def": 100}
-SH_def["FixedLengthTraceFlag"]={"pos": 3502, "type": "uint16", "def": 0} 
-SH_def["NumberOfExtTextualHeaders"]={"pos": 3504, "type": "uint16", "def": 0}
-SH_def["Unassigned2"]={"pos": 3506, "type": "int16", "n": 47, "def": 0} 
+SH_def["EnsembleFold"] = {"pos": 3226, "type": "int16", "def": 0}
+SH_def["TraceSorting"] = {"pos": 3228, "type": "int16", "def": 0}
+SH_def["VerticalSumCode"] = {"pos": 3230, "type": "int16", "def": 0}
+SH_def["SweepFrequencyEnd"] = {"pos": 3234, "type": "int16", "def": 0}
+SH_def["SweepLength"] = {"pos": 3236, "type": "int16", "def": 0}
+SH_def["SweepType"] = {"pos": 3238, "type": "int16", "def": 0}
+SH_def["SweepChannel"] = {"pos": 3240, "type": "int16", "def": 0}
+SH_def["SweepTaperLengthStart"] = {"pos": 3242, "type": "int16", "def": 0}
+SH_def["SweepTaperLengthEnd"] = {"pos": 3244, "type": "int16", "def": 0}
+SH_def["TaperType"] = {"pos": 3246, "type": "int16", "def": 0}
+SH_def["CorrelatedDataTraces"] = {"pos": 3248, "type": "int16", "def": 0}
+SH_def["BinaryGain"] = {"pos": 3250, "type": "int16", "def": 0}
+SH_def["AmplitudeRecoveryMethod"] = {"pos": 3252, "type": "int16", "def": 0}
+SH_def["MeasurementSystem"] = {"pos": 3254, "type": "int16", "def": 0}
+SH_def["ImpulseSignalPolarity"] = {"pos": 3256, "type": "int16", "def": 0}
+SH_def["VibratoryPolarityCode"] = {"pos": 3258, "type": "int16", "def": 0}
+SH_def["Unassigned1"] = {"pos": 3260, "type": "int16", "n": 120, "def": 0}
+SH_def["SegyFormatRevisionNumber"] = {"pos": 3500, "type": "uint16", "def": 100}
+SH_def["FixedLengthTraceFlag"] = {"pos": 3502, "type": "uint16", "def": 0}
+SH_def["NumberOfExtTextualHeaders"] = {"pos": 3504, "type": "uint16", "def": 0}
+SH_def["Unassigned2"] = {"pos": 3506, "type": "int16", "n": 47, "def": 0}
 
 ##############
 #  Initialize SEGY TRACE HEADER SPECIFICATION
@@ -138,8 +138,8 @@ STH_def["TraceNumber"]=        {"pos": 12, "type": "int32"}
 STH_def["EnergySourcePoint"]=    {"pos": 16, "type": "int32"} 
 STH_def["cdp"]=            {"pos": 20, "type": "int32"}
 STH_def["cdpTrace"]=        {"pos": 24, "type": "int32"}
-STH_def["TraceIdentificationCode"]={"pos": 28 , "type": "uint16"} 
-STH_def["TraceIdentificationCode"]["descr"]={0: {
+STH_def["TraceIdentificationCode"] = {"pos": 28 , "type": "uint16"}
+STH_def["TraceIdentificationCode"]["descr"] = {0: {
     1: "Seismic data", 
     2: "Dead", 
     3: "Dummy", 
@@ -148,7 +148,7 @@ STH_def["TraceIdentificationCode"]["descr"]={0: {
     6: "Sweep", 
     7: "Timing", 
     8: "Water Break"}}
-STH_def["TraceIdentificationCode"]["descr"][1]={
+STH_def["TraceIdentificationCode"]["descr"][1] = {
     -1: "Other",
      0: "Unknown",
      1: "Seismic data",
@@ -173,127 +173,127 @@ STH_def["TraceIdentificationCode"]["descr"][1]={
     20: "Vibrator estimated ground force",
     21: "Vibrator reference",
     22: "Time-velocity pairs"}
-STH_def["NSummedTraces"]={"pos": 30 , "type": "int16"} 
-STH_def["NStackedTraces"]={"pos": 32 , "type": "int16"} 
-STH_def["DataUse"]={"pos": 34 , "type": "int16"} 
-STH_def["DataUse"]["descr"]={0: {
+STH_def["NSummedTraces"] = {"pos": 30 , "type": "int16"}
+STH_def["NStackedTraces"] = {"pos": 32 , "type": "int16"}
+STH_def["DataUse"] = {"pos": 34 , "type": "int16"}
+STH_def["DataUse"]["descr"] = {0: {
     1: "Production", 
     2: "Test"}}
-STH_def["DataUse"]["descr"][1]=STH_def["DataUse"]["descr"][0]
-STH_def["offset"]={"pos": 36 , "type": "int32"} 
-STH_def["ReceiverGroupElevation"]={"pos": 40 , "type": "int32"} 
-STH_def["SourceSurfaceElevation"]={"pos": 44 , "type": "int32"} 
-STH_def["SourceDepth"]={"pos": 48 , "type": "int32"} 
-STH_def["ReceiverDatumElevation"]={"pos": 52 , "type": "int32"} 
-STH_def["SourceDatumElevation"]={"pos": 56 , "type": "int32"} 
-STH_def["SourceWaterDepth"]={"pos": 60 , "type": "int32"} 
-STH_def["GroupWaterDepth"]={"pos": 64 , "type": "int32"} 
-STH_def["ElevationScalar"]={"pos": 68 , "type": "int16"} 
-STH_def["SourceGroupScalar"]={"pos": 70 , "type": "int16"} 
-STH_def["SourceX"]={"pos": 72 , "type": "int32"} 
-STH_def["SourceY"]={"pos": 76 , "type": "int32"} 
-STH_def["GroupX"]={"pos": 80 , "type": "int32"} 
-STH_def["GroupY"]={"pos": 84 , "type": "int32"} 
-STH_def["CoordinateUnits"]={"pos": 88 , "type": "int16"} 
-STH_def["CoordinateUnits"]["descr"]={1: {
+STH_def["DataUse"]["descr"][1] = STH_def["DataUse"]["descr"][0]
+STH_def["offset"] = {"pos": 36 , "type": "int32"}
+STH_def["ReceiverGroupElevation"] = {"pos": 40 , "type": "int32"}
+STH_def["SourceSurfaceElevation"] = {"pos": 44 , "type": "int32"}
+STH_def["SourceDepth"] = {"pos": 48 , "type": "int32"}
+STH_def["ReceiverDatumElevation"] = {"pos": 52 , "type": "int32"}
+STH_def["SourceDatumElevation"] = {"pos": 56 , "type": "int32"}
+STH_def["SourceWaterDepth"] = {"pos": 60 , "type": "int32"}
+STH_def["GroupWaterDepth"] = {"pos": 64 , "type": "int32"}
+STH_def["ElevationScalar"] = {"pos": 68 , "type": "int16"}
+STH_def["SourceGroupScalar"] = {"pos": 70 , "type": "int16"}
+STH_def["SourceX"] = {"pos": 72 , "type": "int32"}
+STH_def["SourceY"] = {"pos": 76 , "type": "int32"}
+STH_def["GroupX"] = {"pos": 80 , "type": "int32"}
+STH_def["GroupY"] = {"pos": 84 , "type": "int32"}
+STH_def["CoordinateUnits"] = {"pos": 88 , "type": "int16"}
+STH_def["CoordinateUnits"]["descr"] = {1: {
     1: "Length (meters or feet)",
     2: "Seconds of arc"}}
-STH_def["CoordinateUnits"]["descr"][1]={
+STH_def["CoordinateUnits"]["descr"][1] = {
     1: "Length (meters or feet)",
     2: "Seconds of arc",
     3: "Decimal degrees",
     4: "Degrees, minutes, seconds (DMS)"}    
-STH_def["WeatheringVelocity"]={"pos": 90 , "type": "int16"} 
-STH_def["SubWeatheringVelocity"]={"pos": 92 , "type": "int16"} 
-STH_def["SourceUpholeTime"]={"pos": 94 , "type": "int16"} 
-STH_def["GroupUpholeTime"]={"pos": 96 , "type": "int16"} 
-STH_def["SourceStaticCorrection"]={"pos": 98 , "type": "int16"} 
-STH_def["GroupStaticCorrection"]={"pos": 100 , "type": "int16"} 
-STH_def["TotalStaticApplied"]={"pos": 102 , "type": "int16"} 
-STH_def["LagTimeA"]={"pos": 104 , "type": "int16"} 
-STH_def["LagTimeB"]={"pos": 106 , "type": "int16"} 
-STH_def["DelayRecordingTime"]={"pos": 108 , "type": "int16"} 
-STH_def["MuteTimeStart"]={"pos": 110 , "type": "int16"} 
-STH_def["MuteTimeEND"]={"pos": 112 , "type": "int16"} 
-STH_def["ns"]={"pos": 114 , "type": "uint16"} 
-STH_def["dt"]={"pos": 116 , "type": "uint16"} 
-STH_def["GainType"]={"pos": 119 , "type": "int16"} 
-STH_def["GainType"]["descr"]={0: {
+STH_def["WeatheringVelocity"] = {"pos": 90 , "type": "int16"}
+STH_def["SubWeatheringVelocity"] = {"pos": 92 , "type": "int16"}
+STH_def["SourceUpholeTime"] = {"pos": 94 , "type": "int16"}
+STH_def["GroupUpholeTime"] = {"pos": 96 , "type": "int16"}
+STH_def["SourceStaticCorrection"] = {"pos": 98 , "type": "int16"}
+STH_def["GroupStaticCorrection"] = {"pos": 100 , "type": "int16"}
+STH_def["TotalStaticApplied"] = {"pos": 102 , "type": "int16"}
+STH_def["LagTimeA"] = {"pos": 104 , "type": "int16"}
+STH_def["LagTimeB"] = {"pos": 106 , "type": "int16"}
+STH_def["DelayRecordingTime"] = {"pos": 108 , "type": "int16"}
+STH_def["MuteTimeStart"] = {"pos": 110 , "type": "int16"}
+STH_def["MuteTimeEND"] = {"pos": 112 , "type": "int16"}
+STH_def["ns"] = {"pos": 114 , "type": "uint16"}
+STH_def["dt"] = {"pos": 116 , "type": "uint16"}
+STH_def["GainType"] = {"pos": 119 , "type": "int16"}
+STH_def["GainType"]["descr"] = {0: {
     1: "Fixes", 
     2: "Binary",
     3: "Floating point"}}
-STH_def["GainType"]["descr"][1]=STH_def["GainType"]["descr"][0]
-STH_def["InstrumentGainConstant"]={"pos": 120 , "type": "int16"} 
-STH_def["InstrumentInitialGain"]={"pos": 122 , "type": "int16"} 
-STH_def["Correlated"]={"pos": 124 , "type": "int16"} 
-STH_def["Correlated"]["descr"]={0: {
+STH_def["GainType"]["descr"][1] = STH_def["GainType"]["descr"][0]
+STH_def["InstrumentGainConstant"] = {"pos": 120 , "type": "int16"}
+STH_def["InstrumentInitialGain"] = {"pos": 122 , "type": "int16"}
+STH_def["Correlated"] = {"pos": 124 , "type": "int16"}
+STH_def["Correlated"]["descr"] = {0: {
     1: "No", 
     2: "Yes"}}
-STH_def["Correlated"]["descr"][1]=STH_def["Correlated"]["descr"][0]
+STH_def["Correlated"]["descr"][1] = STH_def["Correlated"]["descr"][0]
 
-STH_def["SweepFrequencyStart"]={"pos": 126 , "type": "int16"} 
-STH_def["SweepFrequencyEnd"]={"pos": 128 , "type": "int16"} 
-STH_def["SweepLength"]={"pos": 130 , "type": "int16"} 
-STH_def["SweepType"]={"pos": 132 , "type": "int16"} 
-STH_def["SweepType"]["descr"]={0: {
+STH_def["SweepFrequencyStart"] = {"pos": 126 , "type": "int16"}
+STH_def["SweepFrequencyEnd"] = {"pos": 128 , "type": "int16"}
+STH_def["SweepLength"] = {"pos": 130 , "type": "int16"}
+STH_def["SweepType"] = {"pos": 132 , "type": "int16"}
+STH_def["SweepType"]["descr"] = {0: {
     1: "linear", 
     2: "parabolic",
     3: "exponential",
     4: "other"}}
-STH_def["SweepType"]["descr"][1]=STH_def["SweepType"]["descr"][0]
+STH_def["SweepType"]["descr"][1] = STH_def["SweepType"]["descr"][0]
 
-STH_def["SweepTraceTaperLengthStart"]={"pos": 134 , "type": "int16"} 
-STH_def["SweepTraceTaperLengthEnd"]={"pos": 136 , "type": "int16"} 
-STH_def["TaperType"]={"pos": 138 , "type": "int16"} 
-STH_def["TaperType"]["descr"]={0: {
+STH_def["SweepTraceTaperLengthStart"] = {"pos": 134 , "type": "int16"}
+STH_def["SweepTraceTaperLengthEnd"] = {"pos": 136 , "type": "int16"}
+STH_def["TaperType"] = {"pos": 138 , "type": "int16"}
+STH_def["TaperType"]["descr"] = {0: {
     1: "linear", 
     2: "cos2c",
     3: "other"}}
-STH_def["TaperType"]["descr"][1]=STH_def["TaperType"]["descr"][0]
+STH_def["TaperType"]["descr"][1] = STH_def["TaperType"]["descr"][0]
 
-STH_def["AliasFilterFrequency"]={"pos": 140 , "type": "int16"} 
-STH_def["AliasFilterSlope"]={"pos": 142 , "type": "int16"} 
-STH_def["NotchFilterFrequency"]={"pos": 144 , "type": "int16"} 
-STH_def["NotchFilterSlope"]={"pos": 146 , "type": "int16"} 
-STH_def["LowCutFrequency"]={"pos": 148 , "type": "int16"} 
-STH_def["HighCutFrequency"]={"pos": 150 , "type": "int16"} 
-STH_def["LowCutSlope"]={"pos": 152 , "type": "int16"} 
-STH_def["HighCutSlope"]={"pos": 154 , "type": "int16"} 
-STH_def["YearDataRecorded"]={"pos": 156 , "type": "int16"} 
-STH_def["DayOfYear"]={"pos": 158 , "type": "int16"} 
-STH_def["HourOfDay"]={"pos": 160 , "type": "int16"} 
-STH_def["MinuteOfHour"]={"pos": 162 , "type": "int16"} 
-STH_def["SecondOfMinute"]={"pos": 164 , "type": "int16"} 
-STH_def["TimeBaseCode"]={"pos": 166 , "type": "int16"} 
-STH_def["TimeBaseCode"]["descr"]={0: {
+STH_def["AliasFilterFrequency"] = {"pos": 140 , "type": "int16"}
+STH_def["AliasFilterSlope"] = {"pos": 142 , "type": "int16"}
+STH_def["NotchFilterFrequency"] = {"pos": 144 , "type": "int16"}
+STH_def["NotchFilterSlope"] = {"pos": 146 , "type": "int16"}
+STH_def["LowCutFrequency"] = {"pos": 148 , "type": "int16"}
+STH_def["HighCutFrequency"] = {"pos": 150 , "type": "int16"}
+STH_def["LowCutSlope"] = {"pos": 152 , "type": "int16"}
+STH_def["HighCutSlope"] = {"pos": 154 , "type": "int16"}
+STH_def["YearDataRecorded"] = {"pos": 156 , "type": "int16"}
+STH_def["DayOfYear"] = {"pos": 158 , "type": "int16"}
+STH_def["HourOfDay"] = {"pos": 160 , "type": "int16"}
+STH_def["MinuteOfHour"] = {"pos": 162 , "type": "int16"}
+STH_def["SecondOfMinute"] = {"pos": 164 , "type": "int16"}
+STH_def["TimeBaseCode"] = {"pos": 166 , "type": "int16"}
+STH_def["TimeBaseCode"]["descr"] = {0: {
     1: "Local", 
     2: "GMT", 
     3: "Other"}}
-STH_def["TimeBaseCode"]["descr"][1]={
+STH_def["TimeBaseCode"]["descr"][1] = {
     1: "Local", 
     2: "GMT", 
     3: "Other", 
     4: "UTC"}
-STH_def["TraceWeightingFactor"]={"pos": 168 , "type": "int16"} 
-STH_def["GeophoneGroupNumberRoll1"]={"pos": 170 , "type": "int16"} 
-STH_def["GeophoneGroupNumberFirstTraceOrigField"]={"pos": 172 , "type": "int16"} 
-STH_def["GeophoneGroupNumberLastTraceOrigField"]={"pos": 174 , "type": "int16"} 
-STH_def["GapSize"]={"pos": 176 , "type": "int16"} 
-STH_def["OverTravel"]={"pos": 178 , "type": "int16"} 
-STH_def["OverTravel"]["descr"]={0: {
+STH_def["TraceWeightingFactor"] = {"pos": 168 , "type": "int16"}
+STH_def["GeophoneGroupNumberRoll1"] = {"pos": 170 , "type": "int16"}
+STH_def["GeophoneGroupNumberFirstTraceOrigField"] = {"pos": 172 , "type": "int16"}
+STH_def["GeophoneGroupNumberLastTraceOrigField"] = {"pos": 174 , "type": "int16"}
+STH_def["GapSize"] = {"pos": 176 , "type": "int16"}
+STH_def["OverTravel"] = {"pos": 178 , "type": "int16"}
+STH_def["OverTravel"]["descr"] = {0: {
     1: "down (or behind)", 
     2: "up (or ahead)",
     3: "other"}}
-STH_def["OverTravel"]["descr"][1]=STH_def["OverTravel"]["descr"][0]
+STH_def["OverTravel"]["descr"][1] = STH_def["OverTravel"]["descr"][0]
 
 
-STH_def["cdpX"]={"pos": 180 , "type": "int32"} 
-STH_def["cdpY"]={"pos": 184 , "type": "int32"} 
-STH_def["Inline3D"]={"pos": 188 , "type": "int32"} 
-STH_def["Crossline3D"]={"pos": 192 , "type": "int32"} 
-STH_def["ShotPoint"]={"pos": 192 , "type": "int32"} 
-STH_def["ShotPointScalar"]={"pos": 200 , "type": "int16"} 
-STH_def["TraceValueMeasurementUnit"]={"pos": 202 , "type": "int16"} 
+STH_def["cdpX"] = {"pos": 180 , "type": "int32"}
+STH_def["cdpY"] = {"pos": 184 , "type": "int32"}
+STH_def["Inline3D"] = {"pos": 188 , "type": "int32"}
+STH_def["Crossline3D"] = {"pos": 192 , "type": "int32"}
+STH_def["ShotPoint"] = {"pos": 192 , "type": "int32"}
+STH_def["ShotPointScalar"] = {"pos": 200 , "type": "int16"}
+STH_def["TraceValueMeasurementUnit"] = {"pos": 202 , "type": "int16"}
 STH_def["TraceValueMeasurementUnit"]["descr"] = {1: {
     -1: "Other", 
     0: "Unknown (should be described in Data Sample Measurement Units Stanza) ", 
@@ -306,13 +306,13 @@ STH_def["TraceValueMeasurementUnit"]["descr"] = {1: {
     7: "Meters Per Second squared (m/&s2)Other", 
     8: "Newton (N)", 
     9: "Watt (W)"}}
-STH_def["TransductionConstantMantissa"]={"pos": 204 , "type": "int32"} 
-STH_def["TransductionConstantPower"]={"pos": 208 , "type": "int16"} 
-STH_def["TransductionUnit"]={"pos": 210 , "type": "int16"} 
+STH_def["TransductionConstantMantissa"] = {"pos": 204 , "type": "int32"}
+STH_def["TransductionConstantPower"] = {"pos": 208 , "type": "int16"}
+STH_def["TransductionUnit"] = {"pos": 210 , "type": "int16"}
 STH_def["TransductionUnit"]["descr"]  = STH_def["TraceValueMeasurementUnit"]["descr"] 
-STH_def["TraceIdentifier"]={"pos": 212 , "type": "int16"} 
-STH_def["ScalarTraceHeader"]={"pos": 214 , "type": "int16"} 
-STH_def["SourceType"]={"pos": 216 , "type": "int16"} 
+STH_def["TraceIdentifier"] = {"pos": 212 , "type": "int16"}
+STH_def["ScalarTraceHeader"] = {"pos": 214 , "type": "int16"}
+STH_def["SourceType"] = {"pos": 216 , "type": "int16"}
 STH_def["SourceType"]["descr"] = {1: {
     -1: "Other (should be described in Source Type/Orientation stanza)",
      0: "Unknown",
@@ -326,11 +326,11 @@ STH_def["SourceType"]["descr"] = {1: {
      8: "Distributed Impulsive - Cross-line orientation",
      9: "Distributed Impulsive - In-line orientation"}}
 
-STH_def["SourceEnergyDirectionMantissa"]={"pos": 218 , "type": "int32"} 
-STH_def["SourceEnergyDirectionExponent"]={"pos": 222 , "type": "int16"} 
-STH_def["SourceMeasurementMantissa"]={"pos": 224 , "type": "int32"} 
-STH_def["SourceMeasurementExponent"]={"pos": 228 , "type": "int16"} 
-STH_def["SourceMeasurementUnit"]={"pos": 230 , "type": "int16"} 
+STH_def["SourceEnergyDirectionMantissa"] = {"pos": 218 , "type": "int32"}
+STH_def["SourceEnergyDirectionExponent"] = {"pos": 222 , "type": "int16"}
+STH_def["SourceMeasurementMantissa"] = {"pos": 224 , "type": "int32"}
+STH_def["SourceMeasurementExponent"] = {"pos": 228 , "type": "int16"}
+STH_def["SourceMeasurementUnit"] = {"pos": 230 , "type": "int16"}
 STH_def["SourceMeasurementUnit"]["descr"] = {1: {
     -1: "Other (should be described in Source Measurement Unit stanza)",
      0: "Unknown",
@@ -340,8 +340,8 @@ STH_def["SourceMeasurementUnit"]["descr"] = {1: {
      4: "Bar (Bar)",
      5: "Newton (N)",
      6: "Kilograms (kg)"}}
-STH_def["UnassignedInt1"]={"pos": 232 , "type": "int32"} 
-STH_def["UnassignedInt2"]={"pos": 236 , "type": "int32"} 
+STH_def["UnassignedInt1"] = {"pos": 232 , "type": "int32"}
+STH_def["UnassignedInt2"] = {"pos": 236 , "type": "int32"}
 
 
 ##############
@@ -356,9 +356,9 @@ def imageSegy(Data):
     pylab.imshow(Data)
     pylab.title('pymat test')
     pylab.grid(True)
-    pylab.show()TraceSequenceLine
+    pylab.show()
 
-def wiggle(Data, SH, skipt=1, maxval=8, lwidth=.1):
+def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
     """
     wiggle(Data, SH)
     """
@@ -369,12 +369,12 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=.1):
     for i in range(0, SH['ntraces'], skipt):
 
         trace = Data[: , i]
-        trace[0]=0
-        trace[SH['ns']-1]=0    
+        trace[0] = 0
+        trace[SH['ns']-1] = 0
         pylab.plot(i+trace/maxval, t, color='black', linewidth=lwidth)
         for a in range(len(trace)):
             if trace[a]<0:
-                trace[a]=0
+                trace[a] = 0
 
         pylab.fill(i+Data[: , i]/maxval, t, 'k', linewidth=0)
     pylab.title(SH['filename'])
@@ -384,7 +384,7 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=.1):
 
 def getDefaultSegyHeader(ntraces=100, ns=100):
     """Remove unused import.
-    SH=getDefaultSegyHeader()
+    SH = getDefaultSegyHeader()
     """
     # INITIALIZE DICTIONARYTraceSequenceLine
     SH = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
@@ -396,10 +396,10 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
             val = tmpkey['def']
         else:
             val = 0
-        SH[key]=val
+        SH[key] = val
 
-    SH["ntraces"]=ntraces
-    SH["ns"]=ns
+    SH["ntraces"] = ntraces
+    SH["ns"] = ns
 
 
     return SH
@@ -407,7 +407,7 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
 
 def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
     """
-    SH=getDefaultSegyTraceHeader()
+    SH = getDefaultSegyTraceHeader()
     """
     # INITIALIZE DICTIONARY
     STH = {"TraceSequenceLine": {"pos": 0, "type": "int32"}}
@@ -415,15 +415,15 @@ def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
     for key in STH_def.keys(): 
 
         tmpkey = STH_def[key]
-        STH[key]=zeros(ntraces)
+        STH[key] = zeros(ntraces)
 
     for a in range(ntraces):            
-        STH["TraceSequenceLine"][a]=a+1
-        STH["TraceSequenceFile"][a]=a+1
-        STH["FieldRecord"][a]=1000
-        STH["TraceNumber"][a]=a+1
-        STH["ns"][a]=ns
-        STH["dt"][a]=dt
+        STH["TraceSequenceLine"][a] = a+1
+        STH["TraceSequenceFile"][a] = a+1
+        STH["FieldRecord"][a] = 1000
+        STH["TraceNumber"][a] = a+1
+        STH["ns"][a] = ns
+        STH["dt"][a] = dt
     return STH
 
 
@@ -434,7 +434,7 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
 
     bps = getBytePerSample(SH)
 
-    if data=='none':
+    if data == 'none':
         data = open(SH["filename"], 'rb').read()
 
 
@@ -447,11 +447,11 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
 
         pos = THpos+3600+(SH["ns"]*bps+240)*(itrace-1)
 
-        txt="getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
+        txt = "getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
         printverbose(txt, 20)
         thv[itrace-1], index = getValue(data, pos, THformat, endian, 1)
-        txt="getSegyTraceHeader : " + THN + "=" + str(thv[itrace-1])
+        txt = "getSegyTraceHeader : " + THN + "=" + str(thv[itrace-1])
         printverbose(txt, 30)
 
     return thv
@@ -464,7 +464,7 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
 
     bps = getBytePerSample(SH)
 
-    if data=='none':
+    if data == 'none':
         data = open(SH["filename"]).read()
 
     # SET PARAMETERS THAT DEFINE THE LOCATION OF THE LAST HEADER
@@ -475,11 +475,11 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
 
     pos = THpos+3600+(SH["ns"]*bps+240)*(ntraces-1)
 
-    txt="getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
+    txt = "getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
 
     printverbose(txt, 20)
     thv, index = getValue(data, pos, THformat, endian, 1)
-    txt="getLastSegyTraceHeader : " + THN + "=" + str(thv)
+    txt = "getLastSegyTraceHeader : " + THN + "=" + str(thv)
     printverbose(txt, 30)
 
     return thv
@@ -491,13 +491,13 @@ def getAllSegyTraceHeaders(SH, data='none'):
     printverbose('getAllSegyTraceHeaders : trying to get all segy trace headers', 2)
 
 
-    if data=='none':
+    if data == 'none':
         data = open(SH["filename"], 'rb').read()
 
     for key in STH_def.keys():      
 
         sth = getSegyTraceHeader(SH, key, data)      
-        SegyTraceHeaders[key]=sth      
+        SegyTraceHeaders[key] = sth
 
         txt =  "getAllSegyTraceHeaders :  " + key      
         printverbose(txt, 10)      
@@ -524,9 +524,9 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     printverbose("readSegy : Length of data : " + str(filesize), 2)
 
-    SH["ntraces"]=ntraces
+    SH["ntraces"] = ntraces
 
-    printverbose("readSegy : ntraces=" + str(ntraces) + " nsamples="+str(SH['ns']), 2)
+    printverbose("readSegy : ntraces = " + str(ntraces) + " nsamples = "+str(SH['ns']), 2)
 
 
     # GET TRACE
@@ -550,7 +550,7 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
 
     # Calculate number of dummy samples needed to account for Trace Headers
     ndummy_samples = 240/bps
-    printverbose("readSegyData : ndummy_samples="+str(ndummy_samples), 6)
+    printverbose("readSegyData : ndummy_samples = "+str(ndummy_samples), 6)
 
     # READ ALL SEGY TRACE HEADERS
     STH = getAllSegyTraceHeaders(SH, data)
@@ -576,25 +576,25 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
         sys.exit()
 
     printverbose("readSegyData : SEG-Y revision = "+str(revision), 1)
-    printverbose("readSegyData : DataSampleFormat="+str(dsf)+"("+DataDescr+")", 1)
+    printverbose("readSegyData : DataSampleFormat = "+str(dsf)+"("+DataDescr+")", 1)
 
-    if SH["DataSampleFormat"]==1:
+    if SH["DataSampleFormat"] == 1:
         printverbose("readSegyData : Assuming DSF = 1, IBM FLOATS", 2)
         Data1 = getValue(data, index, 'ibm', endian, nd)
-    elif SH["DataSampleFormat"]==2:
-        printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 32bit INT", 2)
+    elif SH["DataSampleFormat"] == 2:
+        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 32bit INT", 2)
         Data1 = getValue(data, index, 'l', endian, nd)
-    elif SH["DataSampleFormat"]==3:
-        printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 16bit INT", 2)
+    elif SH["DataSampleFormat"] == 3:
+        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 16bit INT", 2)
         Data1 = getValue(data, index, 'h', endian, nd)
-    elif SH["DataSampleFormat"]==5:
-        printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", IEEE", 2)
+    elif SH["DataSampleFormat"] == 5:
+        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", IEEE", 2)
         Data1 = getValue(data, index, 'float', endian, nd)
-    elif SH["DataSampleFormat"]==8:
-        printverbose("readSegyData : Assuming DSF=" + str(SH["DataSampleFormat"]) + ", 8bit CHAR", 2)
+    elif SH["DataSampleFormat"] == 8:
+        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 8bit CHAR", 2)
         Data1 = getValue(data, index, 'B', endian, nd)
     else:
-        printverbose("readSegyData : DSF=" + str(SH["DataSampleFormat"]) + ", NOT SUPORTED", 2)
+        printverbose("readSegyData : DSF = " + str(SH["DataSampleFormat"]) + ", NOT SUPORTED", 2)
 
     Data = Data1[0]
 
@@ -606,7 +606,7 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     Data = transpose(Data)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF = 8
-    if SH["DataSampleFormat"]==8:
+    if SH["DataSampleFormat"] == 8:
         for i in arange(SH['ntraces']):
             for j in arange(SH['ns']):
                 if Data[i][j]>128:
@@ -629,7 +629,7 @@ def getSegyTrace(SH, itrace, endian='>'):  # modified by A Squelch
 
 
     # GET TRACE HEADER
-    SegyTraceHeader=[]
+    SegyTraceHeader = []
 
     # GET TRACE
     index = 3200+(itrace-1)*(240+SH['ns']*bps)+240
@@ -658,7 +658,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
 
     filesize = len(data)
     ntraces = (filesize-3600)/(SegyHeader['ns']*bps+240)
-    SegyHeader["ntraces"]=ntraces
+    SegyHeader["ntraces"] = ntraces
 
     printverbose('getSegyHeader : succesfully read '+filename, 1)
 
@@ -694,12 +694,12 @@ def writeSegy(filename, Data, dt = 1000, STHin={}, SHin={}):
     for key in STHin.keys():
         print key
         for a in range(ntraces):
-            STH[key]=STHin[key][a]
+            STH[key] = STHin[key][a]
 
     # ADD SHin, if exists...
     for key in SHin.keys():
         print key
-        SH[key]=SHin[key]
+        SH[key] = SHin[key]
 
 
     writeSegyStructure(filename, Data, SH, STH)
@@ -738,7 +738,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         sys.exit()
 
     printverbose("writeSegyStructure : SEG-Y revision = "+str(revision), 1)
-    printverbose("writeSegyStructure : DataSampleFormat="+str(dsf)+"("+DataDescr+")", 1)
+    printverbose("writeSegyStructure : DataSampleFormat = "+str(dsf)+"("+DataDescr+")", 1)
 
     # WRITE SEGY HEADER
 
@@ -783,28 +783,28 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
     """
     putValue(data, index, ctype, endian, number)
     """
-    if (ctype=='l')|(ctype=='long')|(ctype=='int32'):
-        ctype='l'
-    elif (ctype=='L')|(ctype=='ulong')|(ctype=='uint32'):
-        ctype='L'
-    elif (ctype=='h')|(ctype=='short')|(ctype=='int16'):
-        ctype='h'
-    elif (ctype=='H')|(ctype=='ushort')|(ctype=='uint16'):
-        ctype='H'
-    elif (ctype=='c')|(ctype=='char'):
-        ctype='c'
-    elif (ctype=='B')|(ctype=='uchar'):
-        ctype='B'
-    elif (ctype=='f')|(ctype=='float'):
-        ctype='f'
-    elif ctype=='ibm':
+    if (ctype == 'l')|(ctype == 'long')|(ctype == 'int32'):
+        ctype = 'l'
+    elif (ctype == 'L')|(ctype == 'ulong')|(ctype == 'uint32'):
+        ctype = 'L'
+    elif (ctype == 'h')|(ctype == 'short')|(ctype == 'int16'):
+        ctype = 'h'
+    elif (ctype == 'H')|(ctype == 'ushort')|(ctype == 'uint16'):
+        ctype = 'H'
+    elif (ctype == 'c')|(ctype == 'char'):
+        ctype = 'c'
+    elif (ctype == 'B')|(ctype == 'uchar'):
+        ctype = 'B'
+    elif (ctype == 'f')|(ctype == 'float'):
+        ctype = 'f'
+    elif ctype == 'ibm':
         pass
     else:
         printverbose('Bad Ctype : ' +ctype, -1)
 
     cformat = endian + ctype*number
 
-    printverbose('putValue : cformat :  ' + cformat + ' ctype=' + ctype, 40)
+    printverbose('putValue : cformat :  ' + cformat + ' ctype = ' + ctype, 40)
 
     strVal = struct.pack(cformat, value)
     fileid.seek(index)
@@ -818,28 +818,28 @@ def getValue(data, index, ctype='l', endian='>', number=1):
     """
     getValue(data, index, ctype, endian, number)
     """
-    if (ctype=='l')|(ctype=='long')|(ctype=='int32'):
+    if (ctype == 'l')|(ctype == 'long')|(ctype == 'int32'):
         size = l_long
-        ctype='l'
-    elif (ctype=='L')|(ctype=='ulong')|(ctype=='uint32'):
+        ctype = 'l'
+    elif (ctype == 'L')|(ctype == 'ulong')|(ctype == 'uint32'):
         size = l_ulong
-        ctype='L'
-    elif (ctype=='h')|(ctype=='short')|(ctype=='int16'):
+        ctype = 'L'
+    elif (ctype == 'h')|(ctype == 'short')|(ctype == 'int16'):
         size = l_short
-        ctype='h'
-    elif (ctype=='H')|(ctype=='ushort')|(ctype=='uint16'):
+        ctype = 'h'
+    elif (ctype == 'H')|(ctype == 'ushort')|(ctype == 'uint16'):
         size = l_ushort
-        ctype='H'
-    elif (ctype=='c')|(ctype=='char'):
+        ctype = 'H'
+    elif (ctype == 'c')|(ctype == 'char'):
         size = l_char
-        ctype='c'
-    elif (ctype=='B')|(ctype=='uchar'):
+        ctype = 'c'
+    elif (ctype == 'B')|(ctype == 'uchar'):
         size = l_uchar
-        ctype='B'
-    elif (ctype=='f')|(ctype=='float'):
+        ctype = 'B'
+    elif (ctype == 'f')|(ctype == 'float'):
         size = l_float
-        ctype='f'
-    elif ctype=='ibm':
+        ctype = 'f'
+    elif ctype == 'ibm':
         size = l_float
     else:
         printverbose('Bad Ctype : ' +ctype, -1)
@@ -851,7 +851,7 @@ def getValue(data, index, ctype='l', endian='>', number=1):
 
     index_end = index+size*number
 
-    if ctype=='ibm':
+    if ctype == 'ibm':
         # ASSUME IBM FLOAT DATA
         Value = range(number)        
         for i in arange(number):
@@ -862,10 +862,10 @@ def getValue(data, index, ctype='l', endian='>', number=1):
         # ALL OTHER TYPES OF DATA
         Value = struct.unpack(cformat, data[index: index_end])
 
-    if ctype=='B':
+    if ctype == 'B':
         printverbose('getValue : Ineficient use of 1byte Integer...', -1)
 
-    vtxt = 'getValue : '+'start='+str(index)+' size='+str(size)+ ' number='+str(number)+' Value='+str(Value)+' cformat='+str(cformat)
+    vtxt = 'getValue : '+'start = '+str(index)+' size = '+str(size)+ ' number = '+str(number)+' Value = '+str(Value)+' cformat = '+str(cformat)
     printverbose(vtxt, 20)
 
     if number == 1:
@@ -879,7 +879,7 @@ def print_version():
     print 'SegyPY version is ', version
 
 def printverbose(txt, level=1):
-    if level<=verbose:
+    if level <= verbose:
         print 'SegyPY', version, ': ', txt
 
 
@@ -938,7 +938,7 @@ def getBytePerSample(SH):
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("getBytePerSample :  bps="+str(bps), 21)
+    printverbose("getBytePerSample :  bps = "+str(bps), 21)
 
     return bps
 
@@ -972,6 +972,6 @@ class SegyClass:
 
 
     def __init__(self):
-        self.THOMAS='Thomas'
+        self.THOMAS = 'Thomas'
 
 

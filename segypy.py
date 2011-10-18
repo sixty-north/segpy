@@ -1,4 +1,3 @@
-
 """
 A python module for reading/writing/manipulating
 SEG-Y formatted filed
@@ -39,6 +38,9 @@ from numpy import arange
 # SOME GLOBAL PARAMETERS
 version = '0.3.1'   # modified by A Squelch
 verbose = 1
+
+REEL_HEADER_NUM_BYTES = 3600
+TRACE_HEADER_NUM_BYTES = 240
 
 #endian = '>' # Big Endian  # modified by A Squelch
 #endian = '<' # Little Endian
@@ -445,7 +447,7 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
     thv = zeros(ntraces)
     for itrace in range(1, ntraces+1, 1):
 
-        pos = THpos + 3600 + (SH["ns"] * bps + 240) * (itrace - 1)
+        pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (itrace - 1)
 
         txt = "getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
@@ -473,7 +475,7 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
     THformat = STH_def[THN]["type"]
     ntraces = SH["ntraces"]
 
-    pos = THpos + 3600 + (SH["ns"] * bps + 240) * (ntraces - 1)
+    pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (ntraces - 1)
 
     txt = "getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
 
@@ -520,7 +522,7 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     bps = getBytePerSample(SH)
 
-    ntraces = (filesize - 3600) / (SH['ns'] * bps + 240)
+    ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SH['ns'] * bps + TRACE_HEADER_NUM_BYTES)
 
     printverbose("readSegy : Length of data : " + str(filesize), 2)
 
@@ -530,8 +532,8 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
 
     # GET TRACE
-    index = 3600
-    nd = (filesize - 3600) / bps
+    index = REEL_HEADER_NUM_BYTES
+    nd = (filesize - REEL_HEADER_NUM_BYTES) / bps
 
     Data, SH, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index, endian)
 
@@ -549,7 +551,7 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     """
 
     # Calculate number of dummy samples needed to account for Trace Headers
-    ndummy_samples = 240 / bps
+    ndummy_samples = TRACE_HEADER_NUM_BYTES / bps
     printverbose("readSegyData : ndummy_samples = " + str(ndummy_samples), 6)
 
     # READ ALL SEGY TRACE HEADERS
@@ -632,7 +634,7 @@ def getSegyTrace(SH, itrace, endian='>'):  # modified by A Squelch
     SegyTraceHeader = []
 
     # GET TRACE
-    index = 3200 + (itrace - 1) * (240 + SH['ns'] * bps) + 240
+    index = 3200 + (itrace - 1) * (TRACE_HEADER_NUM_BYTES + SH['ns'] * bps) + TRACE_HEADER_NUM_BYTES
     SegyTraceData = getValue(data, index, 'float', endian, SH['ns'])
     return SegyTraceHeader, SegyTraceData
 
@@ -657,7 +659,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
     bps = getBytePerSample(SegyHeader)
 
     filesize = len(data)
-    ntraces = (filesize - 3600) / (SegyHeader['ns'] * bps + 240)
+    ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SegyHeader['ns'] * bps + TRACE_HEADER_NUM_BYTES)
     SegyHeader["ntraces"] = ntraces
 
     printverbose('getSegyHeader : succesfully read '+filename, 1)
@@ -754,10 +756,10 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
     bps = SH_def['DataSampleFormat']['bps'][revision][dsf]
 
 
-    sizeT = 240 + SH['ns'] * bps
+    sizeT = TRACE_HEADER_NUM_BYTES + SH['ns'] * bps
 
     for itrace in range(SH['ntraces']):        
-        index = 3600 + itrace * sizeT
+        index = REEL_HEADER_NUM_BYTES + itrace * sizeT
         printverbose('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']), 10)
         # WRITE SEGY TRACE HEADER
         for key in STH_def.keys():     
@@ -772,7 +774,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         cformat = endian + ctype
         for s in range(SH['ns']):
             strVal = struct.pack(cformat, Data[s, itrace])
-            f.seek(index + 240 + s * struct.calcsize(cformat))
+            f.seek(index + TRACE_HEADER_NUM_BYTES + s * struct.calcsize(cformat))
             f.write(strVal)
 
     f.close

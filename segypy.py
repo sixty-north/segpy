@@ -373,7 +373,7 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
         trace = Data[: , i]
         trace[0] = 0
         trace[SH['ns'] - 1] = 0
-        pylab.plot(i+trace/maxval, t, color='black', linewidth=lwidth)
+        pylab.plot(i + trace / maxval, t, color='black', linewidth=lwidth)
         for a in range(len(trace)):
             if trace[a] < 0:
                 trace[a] = 0
@@ -445,7 +445,7 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
     THformat = STH_def[THN]["type"]
     ntraces = SH["ntraces"]
     thv = zeros(ntraces)
-    for itrace in range(1, ntraces+1, 1):
+    for itrace in range(1, ntraces + 1, 1):
 
         pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (itrace - 1)
 
@@ -662,7 +662,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
     ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SegyHeader['ns'] * bps + TRACE_HEADER_NUM_BYTES)
     SegyHeader["ntraces"] = ntraces
 
-    printverbose('getSegyHeader : succesfully read '+filename, 1)
+    printverbose('getSegyHeader : successfully read '+filename, 1)
 
     return SegyHeader
 
@@ -784,19 +784,19 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
     """
     putValue(data, index, ctype, endian, number)
     """
-    if (ctype == 'l')|(ctype == 'long')|(ctype == 'int32'):
+    if (ctype == 'l') | (ctype == 'long') | (ctype == 'int32'):
         ctype = 'l'
-    elif (ctype == 'L')|(ctype == 'ulong')|(ctype == 'uint32'):
+    elif (ctype == 'L') | (ctype == 'ulong') | (ctype == 'uint32'):
         ctype = 'L'
-    elif (ctype == 'h')|(ctype == 'short')|(ctype == 'int16'):
+    elif (ctype == 'h') | (ctype == 'short') | (ctype == 'int16'):
         ctype = 'h'
-    elif (ctype == 'H')|(ctype == 'ushort')|(ctype == 'uint16'):
+    elif (ctype == 'H') | (ctype == 'ushort') | (ctype == 'uint16'):
         ctype = 'H'
-    elif (ctype == 'c')|(ctype == 'char'):
+    elif (ctype == 'c') | (ctype == 'char'):
         ctype = 'c'
-    elif (ctype == 'B')|(ctype == 'uchar'):
+    elif (ctype == 'B') | (ctype == 'uchar'):
         ctype = 'B'
-    elif (ctype == 'f')|(ctype == 'float'):
+    elif (ctype == 'f') | (ctype == 'float'):
         ctype = 'f'
     elif ctype == 'ibm':
         pass
@@ -819,25 +819,25 @@ def getValue(data, index, ctype='l', endian='>', number=1):
     """
     getValue(data, index, ctype, endian, number)
     """
-    if (ctype == 'l')|(ctype == 'long')|(ctype == 'int32'):
+    if (ctype == 'l') | (ctype == 'long') | (ctype == 'int32'):
         size = l_long
         ctype = 'l'
-    elif (ctype == 'L')|(ctype == 'ulong')|(ctype == 'uint32'):
+    elif (ctype == 'L')|(ctype == 'ulong') | (ctype == 'uint32'):
         size = l_ulong
         ctype = 'L'
-    elif (ctype == 'h')|(ctype == 'short')|(ctype == 'int16'):
+    elif (ctype == 'h') | (ctype == 'short') | (ctype == 'int16'):
         size = l_short
         ctype = 'h'
-    elif (ctype == 'H')|(ctype == 'ushort')|(ctype == 'uint16'):
+    elif (ctype == 'H') | (ctype == 'ushort') | (ctype == 'uint16'):
         size = l_ushort
         ctype = 'H'
-    elif (ctype == 'c')|(ctype == 'char'):
+    elif (ctype == 'c') | (ctype == 'char'):
         size = l_char
         ctype = 'c'
-    elif (ctype == 'B')|(ctype == 'uchar'):
+    elif (ctype == 'B') | (ctype == 'uchar'):
         size = l_uchar
         ctype = 'B'
-    elif (ctype == 'f')|(ctype == 'float'):
+    elif (ctype == 'f') | (ctype == 'float'):
         size = l_float
         ctype = 'f'
     elif ctype == 'ibm':
@@ -866,7 +866,7 @@ def getValue(data, index, ctype='l', endian='>', number=1):
     if ctype == 'B':
         printverbose('getValue : Ineficient use of 1byte Integer...', -1)
 
-    vtxt = 'getValue : '+'start = '+str(index)+' size = '+str(size)+ ' number = '+str(number)+' Value = '+str(Value)+' cformat = '+str(cformat)
+    vtxt = 'getValue : '+'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat)
     printverbose(vtxt, 20)
 
     if number == 1:
@@ -915,7 +915,7 @@ def ibm2ieee2(ibm_float):
     istic, a, b, c = struct.unpack('>BBBB', ibm_float)
     if istic >= 128:
         sign= -1.0
-        istic = istic - 128
+        istic -= 128
     else:
         sign = 1.0
     mant= float(a << 16) + float(b << 8) + float(c)
@@ -935,7 +935,7 @@ def getBytePerSample(SH):
         bps = SH_def["DataSampleFormat"]["bps"][revision][dsf]
     except KeyError:
         print""
-        print"  An error has ocurred interpreting a SEGY binary header key"
+        print"  An error has occurred interpreting a SEGY binary header key"
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 

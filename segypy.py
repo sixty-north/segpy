@@ -29,11 +29,14 @@ segy.verbose         : Amount of verbose information to the screen
 
 import sys
 import struct
+import logging
 
 from numpy import transpose
 from numpy import reshape
 from numpy import zeros
 from numpy import arange
+
+logger = logging.getLogger('segpy.segypy')
 
 # SOME GLOBAL PARAMETERS
 version = '0.3.1'   # modified by A Squelch
@@ -451,10 +454,10 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
 
         txt = "getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
 
-        printverbose(txt, 20)
+        logger.debug(txt)
         thv[itrace - 1], index = getValue(data, pos, THformat, endian, 1)
         txt = "getSegyTraceHeader : " + THN + "=" + str(thv[itrace - 1])
-        printverbose(txt, 30)
+        logger.debug(txt, 30)
 
     return thv
 
@@ -479,10 +482,10 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
 
     txt = "getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
 
-    printverbose(txt, 20)
+    logger.debug(txt)
     thv, index = getValue(data, pos, THformat, endian, 1)
     txt = "getLastSegyTraceHeader : " + THN + "=" + str(thv)
-    printverbose(txt, 30)
+    logger.debug(txt)
 
     return thv
 
@@ -490,7 +493,7 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
 def getAllSegyTraceHeaders(SH, data='none'):
     SegyTraceHeaders = {'filename': SH["filename"]}
 
-    printverbose('getAllSegyTraceHeaders : trying to get all segy trace headers', 2)
+    logger.debug('getAllSegyTraceHeaders : trying to get all segy trace headers')
 
 
     if data == 'none':
@@ -502,7 +505,7 @@ def getAllSegyTraceHeaders(SH, data='none'):
         SegyTraceHeaders[key] = sth
 
         txt =  "getAllSegyTraceHeaders :  " + key      
-        printverbose(txt, 10)      
+        logger.debug(txt)
 
     return SegyTraceHeaders
 
@@ -512,7 +515,7 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
     Data, SegyHeader, SegyTraceHeaders = getSegyHeader(filename)
     """
 
-    printverbose("readSegy : Trying to read "+filename, 0)
+    logger.debug("readSegy : Trying to read " + filename)
 
     data = open(filename, 'rb').read()
 
@@ -524,11 +527,11 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SH['ns'] * bps + TRACE_HEADER_NUM_BYTES)
 
-    printverbose("readSegy : Length of data : " + str(filesize), 2)
+    logger.debug("readSegy : Length of data : " + str(filesize))
 
     SH["ntraces"] = ntraces
 
-    printverbose("readSegy : ntraces = " + str(ntraces) + " nsamples = " + str(SH['ns']), 2)
+    logger.debug("readSegy : ntraces = " + str(ntraces) + " nsamples = " + str(SH['ns']))
 
 
     # GET TRACE
@@ -537,7 +540,7 @@ def readSegy(filename, endian='>'):  # modified by A Squelch
 
     Data, SH, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index, endian)
 
-    printverbose("readSegy :  Read segy data", 2)  # modified by A Squelch
+    logger.debug("readSegy :  Read segy data")  # modified by A Squelch
 
     return Data, SH, SegyTraceHeaders    
 
@@ -552,12 +555,12 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
 
     # Calculate number of dummy samples needed to account for Trace Headers
     ndummy_samples = TRACE_HEADER_NUM_BYTES / bps
-    printverbose("readSegyData : ndummy_samples = " + str(ndummy_samples), 6)
+    logger.debug("readSegyData : ndummy_samples = " + str(ndummy_samples))
 
     # READ ALL SEGY TRACE HEADERS
     STH = getAllSegyTraceHeaders(SH, data)
 
-    printverbose("readSegyData : Reading segy data", 1)
+    logger.debug("readSegyData : Reading segy data")
 
     # READ ALL DATA EXCEPT FOR SEGY HEADER
     revision = SH["SegyFormatRevisionNumber"]
@@ -577,34 +580,34 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("readSegyData : SEG-Y revision = " + str(revision), 1)
-    printverbose("readSegyData : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")", 1)
+    logger.debug("readSegyData : SEG-Y revision = " + str(revision))
+    logger.debug("readSegyData : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")")
 
     if SH["DataSampleFormat"] == 1:
-        printverbose("readSegyData : Assuming DSF = 1, IBM FLOATS", 2)
+        logger.debug("readSegyData : Assuming DSF = 1, IBM FLOATS")
         Data1 = getValue(data, index, 'ibm', endian, nd)
     elif SH["DataSampleFormat"] == 2:
-        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 32bit INT", 2)
+        logger.debug("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 32bit INT")
         Data1 = getValue(data, index, 'l', endian, nd)
     elif SH["DataSampleFormat"] == 3:
-        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 16bit INT", 2)
+        logger.debug("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 16bit INT")
         Data1 = getValue(data, index, 'h', endian, nd)
     elif SH["DataSampleFormat"] == 5:
-        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", IEEE", 2)
+        logger.debug("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", IEEE")
         Data1 = getValue(data, index, 'float', endian, nd)
     elif SH["DataSampleFormat"] == 8:
-        printverbose("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 8bit CHAR", 2)
+        logger.debug("readSegyData : Assuming DSF = " + str(SH["DataSampleFormat"]) + ", 8bit CHAR")
         Data1 = getValue(data, index, 'B', endian, nd)
     else:
-        printverbose("readSegyData : DSF = " + str(SH["DataSampleFormat"]) + ", NOT SUPPORTED", 2)
+        logger.debug("readSegyData : DSF = " + str(SH["DataSampleFormat"]) + ", NOT SUPPORTED")
 
     Data = Data1[0]
 
-    printverbose("readSegyData : - reshaping", 2)
+    logger.debug("readSegyData : - reshaping")
     Data = reshape(Data, (SH['ntraces'], SH['ns']+ndummy_samples))
-    printverbose("readSegyData : - stripping header dummy data", 2)
+    logger.debug("readSegyData : - stripping header dummy data")
     Data = Data[: , ndummy_samples: (SH['ns']+ndummy_samples)]
-    printverbose("readSegyData : - transposing", 2)
+    logger.debug("readSegyData : - transposing")
     Data = transpose(Data)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF = 8
@@ -614,7 +617,7 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
                 if Data[i][j] > 128:
                     Data[i][j] = Data[i][j] - 256
 
-    printverbose("readSegyData : Finished reading segy data", 1)
+    logger.debug("readSegyData : Finished reading segy data")
 
     return Data, SH, STH
 
@@ -653,7 +656,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
         SegyHeader[key], index = getValue(data, pos, format, endian)
 
         txt =  str(pos) + " " + str(format) + "  Reading " + key + "=" + str(SegyHeader[key])
-        printverbose(txt, 10)
+        logger.debug(txt)
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
     bps = getBytePerSample(SegyHeader)
@@ -662,7 +665,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
     ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SegyHeader['ns'] * bps + TRACE_HEADER_NUM_BYTES)
     SegyHeader["ntraces"] = ntraces
 
-    printverbose('getSegyHeader : successfully read '+filename, 1)
+    logger.debug('getSegyHeader : successfully read ' + filename)
 
     return SegyHeader
 
@@ -681,7 +684,7 @@ def writeSegy(filename, Data, dt = 1000, STHin={}, SHin={}):
 
     """
 
-    printverbose("writeSegy : Trying to write " + filename, 0)
+    logger.debug("writeSegy : Trying to write " + filename)
 
     N = Data.shape
     ns = N[0]
@@ -718,7 +721,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
 
     """
 
-    printverbose("writeSegyStructure : Trying to write " + filename, 0)
+    logger.debug("writeSegyStructure : Trying to write " + filename)
 
     f = open(filename, 'wb')
 
@@ -738,8 +741,8 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("writeSegyStructure : SEG-Y revision = " + str(revision), 1)
-    printverbose("writeSegyStructure : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")", 1)
+    logger.debug("writeSegyStructure : SEG-Y revision = " + str(revision))
+    logger.debug("writeSegyStructure : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")")
 
     # WRITE SEGY HEADER
 
@@ -760,14 +763,14 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
 
     for itrace in range(SH['ntraces']):        
         index = REEL_HEADER_NUM_BYTES + itrace * sizeT
-        printverbose('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']), 10)
+        logger.debug('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']))
         # WRITE SEGY TRACE HEADER
         for key in STH_def.keys():     
             pos = index+STH_def[key]["pos"]
             format = STH_def[key]["type"]
             value = STH[key][itrace]
             txt =  str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value)
-            printverbose(txt, 40)
+            logger.debug(txt)
             putValue(value, f, pos, format, endian)
 
         # Write Data    
@@ -805,7 +808,7 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
 
     cformat = endian + ctype*number
 
-    printverbose('putValue : cformat :  ' + cformat + ' ctype = ' + ctype, 40)
+    logger.debug('putValue : cformat :  ' + cformat + ' ctype = ' + ctype)
 
     strVal = struct.pack(cformat, value)
     fileid.seek(index)
@@ -848,7 +851,7 @@ def getValue(data, index, ctype='l', endian='>', number=1):
 
     cformat = endian + ctype * number
 
-    printverbose('getValue : cformat :  ' + cformat, 40)
+    logger.debug('getValue : cformat :  ' + cformat)
 
     index_end = index + size * number
 
@@ -867,21 +870,12 @@ def getValue(data, index, ctype='l', endian='>', number=1):
         printverbose('getValue : Ineficient use of 1byte Integer...', -1)
 
     vtxt = 'getValue : '+'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat)
-    printverbose(vtxt, 20)
+    logger.debug(vtxt)
 
     if number == 1:
         return Value[0], index_end
     else:
         return Value, index_end
-
-
-
-def print_version():
-    print 'SegyPY version is ', version
-
-def printverbose(txt, level=1):
-    if level <= verbose:
-        print 'SegyPY', version, ': ', txt
 
 
 ##############
@@ -939,7 +933,7 @@ def getBytePerSample(SH):
         print"  Please check the Endian setting for this file: ", SH["filename"]
         sys.exit()
 
-    printverbose("getBytePerSample :  bps = " + str(bps), 21)
+    logger.debug("getBytePerSample :  bps = " + str(bps))
 
     return bps
 

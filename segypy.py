@@ -42,6 +42,9 @@ logger = logging.getLogger('segpy.segypy')
 version = '0.3.1'   # modified by A Squelch
 verbose = 1
 
+SEGY_REVISION_0 = 0x0000
+SEGY_REVISION_1 = 0x0100
+
 REEL_HEADER_NUM_BYTES = 3600
 TRACE_HEADER_NUM_BYTES = 240
 
@@ -71,36 +74,36 @@ SH_def["dtOrig"]=        {"pos": 3218, "type": "uint16", "def": 1000}
 SH_def["ns"] = {"pos": 3220, "type": "uint16", "def": 0}
 SH_def["nsOrig"] = {"pos": 3222, "type": "uint16", "def": 0}
 SH_def["DataSampleFormat"] = {"pos": 3224, "type": "int16", "def": 5}
-SH_def["DataSampleFormat"]["descr"] = {0: {
+SH_def["DataSampleFormat"]["descr"] = {SEGY_REVISION_0: {
     1: "IBM Float", 
     2: "32 bit Integer", 
     3: "16 bit Integer", 
     8: "8 bit Integer"}}
 
-SH_def["DataSampleFormat"]["descr"][1] = {
+SH_def["DataSampleFormat"]["descr"][SEGY_REVISION_1] = {
     1: "IBM Float", 
     2: "32 bit Integer", 
     3: "16 bit Integer", 
     5: "IEEE",
     8: "8 bit Integer"}
 
-SH_def["DataSampleFormat"]["bps"] = {0: {
+SH_def["DataSampleFormat"]["bps"] = {SEGY_REVISION_0: {
     1: 4, 
     2: 4, 
     3: 2, 
     8: 1}}
-SH_def["DataSampleFormat"]["bps"][1] = {
+SH_def["DataSampleFormat"]["bps"][SEGY_REVISION_1] = {
     1: 4, 
     2: 4, 
     3: 2, 
     5: 4, 
     8: 1}
-SH_def["DataSampleFormat"]["datatype"] = {0: {
+SH_def["DataSampleFormat"]["datatype"] = {SEGY_REVISION_0: {
     1: 'ibm', 
     2: 'l', 
     3: 'h', 
     8: 'B'}}
-SH_def["DataSampleFormat"]["datatype"][1] = {
+SH_def["DataSampleFormat"]["datatype"][SEGY_REVISION_1] = {
     1: 'ibm', 
     2: 'l', 
     3: 'h', 
@@ -140,7 +143,7 @@ STH_def["EnergySourcePoint"]=    {"pos": 16, "type": "int32"}
 STH_def["cdp"]=            {"pos": 20, "type": "int32"}
 STH_def["cdpTrace"]=        {"pos": 24, "type": "int32"}
 STH_def["TraceIdentificationCode"] = {"pos": 28 , "type": "uint16"}
-STH_def["TraceIdentificationCode"]["descr"] = {0: {
+STH_def["TraceIdentificationCode"]["descr"] = {SEGY_REVISION_0: {
     1: "Seismic data", 
     2: "Dead", 
     3: "Dummy", 
@@ -149,7 +152,7 @@ STH_def["TraceIdentificationCode"]["descr"] = {0: {
     6: "Sweep", 
     7: "Timing", 
     8: "Water Break"}}
-STH_def["TraceIdentificationCode"]["descr"][1] = {
+STH_def["TraceIdentificationCode"]["descr"][SEGY_REVISION_1] = {
     -1: "Other",
      0: "Unknown",
      1: "Seismic data",
@@ -196,10 +199,10 @@ STH_def["SourceY"] = {"pos": 76 , "type": "int32"}
 STH_def["GroupX"] = {"pos": 80 , "type": "int32"}
 STH_def["GroupY"] = {"pos": 84 , "type": "int32"}
 STH_def["CoordinateUnits"] = {"pos": 88 , "type": "int16"}
-STH_def["CoordinateUnits"]["descr"] = {1: {
+STH_def["CoordinateUnits"]["descr"] = {SEGY_REVISION_0: {
     1: "Length (meters or feet)",
     2: "Seconds of arc"}}
-STH_def["CoordinateUnits"]["descr"][1] = {
+STH_def["CoordinateUnits"]["descr"][SEGY_REVISION_1] = {
     1: "Length (meters or feet)",
     2: "Seconds of arc",
     3: "Decimal degrees",
@@ -219,38 +222,38 @@ STH_def["MuteTimeEND"] = {"pos": 112 , "type": "int16"}
 STH_def["ns"] = {"pos": 114 , "type": "uint16"}
 STH_def["dt"] = {"pos": 116 , "type": "uint16"}
 STH_def["GainType"] = {"pos": 119 , "type": "int16"}
-STH_def["GainType"]["descr"] = {0: {
+STH_def["GainType"]["descr"] = {SEGY_REVISION_0: {
     1: "Fixes", 
     2: "Binary",
     3: "Floating point"}}
-STH_def["GainType"]["descr"][1] = STH_def["GainType"]["descr"][0]
+STH_def["GainType"]["descr"][SEGY_REVISION_1] = STH_def["GainType"]["descr"][SEGY_REVISION_0]
 STH_def["InstrumentGainConstant"] = {"pos": 120 , "type": "int16"}
 STH_def["InstrumentInitialGain"] = {"pos": 122 , "type": "int16"}
 STH_def["Correlated"] = {"pos": 124 , "type": "int16"}
-STH_def["Correlated"]["descr"] = {0: {
+STH_def["Correlated"]["descr"] = {SEGY_REVISION_0: {
     1: "No", 
     2: "Yes"}}
-STH_def["Correlated"]["descr"][1] = STH_def["Correlated"]["descr"][0]
+STH_def["Correlated"]["descr"][SEGY_REVISION_1] = STH_def["Correlated"]["descr"][SEGY_REVISION_0]
 
 STH_def["SweepFrequencyStart"] = {"pos": 126 , "type": "int16"}
 STH_def["SweepFrequencyEnd"] = {"pos": 128 , "type": "int16"}
 STH_def["SweepLength"] = {"pos": 130 , "type": "int16"}
 STH_def["SweepType"] = {"pos": 132 , "type": "int16"}
-STH_def["SweepType"]["descr"] = {0: {
+STH_def["SweepType"]["descr"] = {SEGY_REVISION_0: {
     1: "linear", 
     2: "parabolic",
     3: "exponential",
     4: "other"}}
-STH_def["SweepType"]["descr"][1] = STH_def["SweepType"]["descr"][0]
+STH_def["SweepType"]["descr"][SEGY_REVISION_1] = STH_def["SweepType"]["descr"][SEGY_REVISION_0]
 
 STH_def["SweepTraceTaperLengthStart"] = {"pos": 134 , "type": "int16"}
 STH_def["SweepTraceTaperLengthEnd"] = {"pos": 136 , "type": "int16"}
 STH_def["TaperType"] = {"pos": 138 , "type": "int16"}
-STH_def["TaperType"]["descr"] = {0: {
+STH_def["TaperType"]["descr"] = {SEGY_REVISION_0: {
     1: "linear", 
     2: "cos2c",
     3: "other"}}
-STH_def["TaperType"]["descr"][1] = STH_def["TaperType"]["descr"][0]
+STH_def["TaperType"]["descr"][SEGY_REVISION_1] = STH_def["TaperType"]["descr"][SEGY_REVISION_0]
 
 STH_def["AliasFilterFrequency"] = {"pos": 140 , "type": "int16"}
 STH_def["AliasFilterSlope"] = {"pos": 142 , "type": "int16"}
@@ -266,11 +269,11 @@ STH_def["HourOfDay"] = {"pos": 160 , "type": "int16"}
 STH_def["MinuteOfHour"] = {"pos": 162 , "type": "int16"}
 STH_def["SecondOfMinute"] = {"pos": 164 , "type": "int16"}
 STH_def["TimeBaseCode"] = {"pos": 166 , "type": "int16"}
-STH_def["TimeBaseCode"]["descr"] = {0: {
+STH_def["TimeBaseCode"]["descr"] = {SEGY_REVISION_0: {
     1: "Local", 
     2: "GMT", 
     3: "Other"}}
-STH_def["TimeBaseCode"]["descr"][1] = {
+STH_def["TimeBaseCode"]["descr"][SEGY_REVISION_1] = {
     1: "Local", 
     2: "GMT", 
     3: "Other", 
@@ -281,11 +284,11 @@ STH_def["GeophoneGroupNumberFirstTraceOrigField"] = {"pos": 172 , "type": "int16
 STH_def["GeophoneGroupNumberLastTraceOrigField"] = {"pos": 174 , "type": "int16"}
 STH_def["GapSize"] = {"pos": 176 , "type": "int16"}
 STH_def["OverTravel"] = {"pos": 178 , "type": "int16"}
-STH_def["OverTravel"]["descr"] = {0: {
+STH_def["OverTravel"]["descr"] = {SEGY_REVISION_0: {
     1: "down (or behind)", 
     2: "up (or ahead)",
     3: "other"}}
-STH_def["OverTravel"]["descr"][1] = STH_def["OverTravel"]["descr"][0]
+STH_def["OverTravel"]["descr"][SEGY_REVISION_1] = STH_def["OverTravel"]["descr"][SEGY_REVISION_0]
 
 
 STH_def["cdpX"] = {"pos": 180 , "type": "int32"}
@@ -295,7 +298,7 @@ STH_def["Crossline3D"] = {"pos": 192 , "type": "int32"}
 STH_def["ShotPoint"] = {"pos": 192 , "type": "int32"}
 STH_def["ShotPointScalar"] = {"pos": 200 , "type": "int16"}
 STH_def["TraceValueMeasurementUnit"] = {"pos": 202 , "type": "int16"}
-STH_def["TraceValueMeasurementUnit"]["descr"] = {1: {
+STH_def["TraceValueMeasurementUnit"]["descr"] = {SEGY_REVISION_1: {
     -1: "Other", 
     0: "Unknown (should be described in Data Sample Measurement Units Stanza) ", 
     1: "Pascal (Pa)", 
@@ -314,7 +317,7 @@ STH_def["TransductionUnit"]["descr"]  = STH_def["TraceValueMeasurementUnit"]["de
 STH_def["TraceIdentifier"] = {"pos": 212 , "type": "int16"}
 STH_def["ScalarTraceHeader"] = {"pos": 214 , "type": "int16"}
 STH_def["SourceType"] = {"pos": 216 , "type": "int16"}
-STH_def["SourceType"]["descr"] = {1: {
+STH_def["SourceType"]["descr"] = {SEGY_REVISION_1: {
     -1: "Other (should be described in Source Type/Orientation stanza)",
      0: "Unknown",
      1: "Vibratory - Vertical orientation",
@@ -553,10 +556,6 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
 
     # READ ALL DATA EXCEPT FOR SEGY HEADER
     revision = SH["SegyFormatRevisionNumber"]
-    if revision == 100:
-        revision = 1
-    if revision == 256:  # added by A Squelch
-        revision = 1
 
     dsf = SH["DataSampleFormat"]
 
@@ -716,10 +715,6 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
     # VERBOSE INF
     revision = SH["SegyFormatRevisionNumber"]
     dsf = SH["DataSampleFormat"]
-    if revision == 100:
-        revision = 1
-    if revision == 256:  # added by A Squelch
-        revision = 1
 
     try:  # block added by A Squelch
         DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
@@ -856,7 +851,7 @@ def getValue(data, index, ctype='l', endian='>', number=1):
     if ctype == 'B':
         logger.warning('getValue : Inefficient use of 1 byte Integer...', 1)
 
-    logger.debug('getValue : '+'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat))
+    logger.debug('getValue : ' + 'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat))
 
     if number == 1:
         return Value[0], index_end
@@ -904,10 +899,6 @@ def ibm2ieee2(ibm_float):
 
 def getBytePerSample(SH):
     revision = SH["SegyFormatRevisionNumber"]
-    if revision == 100:
-        revision = 1
-    if revision == 256:  # added by A Squelch
-        revision = 1
 
     dsf = SH["DataSampleFormat"]
 

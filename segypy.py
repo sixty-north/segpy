@@ -45,10 +45,6 @@ verbose = 1
 REEL_HEADER_NUM_BYTES = 3600
 TRACE_HEADER_NUM_BYTES = 240
 
-#endian = '>' # Big Endian  # modified by A Squelch
-#endian = '<' # Little Endian
-#endian = '=' # Native
-
 l_int = struct.calcsize('i')
 l_uint = struct.calcsize('I')
 l_long = struct.calcsize('l')
@@ -452,12 +448,9 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
 
         pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (itrace - 1)
 
-        txt = "getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos)
-
-        logger.debug(txt)
+        logger.debug("getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos))
         thv[itrace - 1], index = getValue(data, pos, THformat, endian, 1)
-        txt = "getSegyTraceHeader : " + THN + "=" + str(thv[itrace - 1])
-        logger.debug(txt, 30)
+        logger.debug("getSegyTraceHeader : " + THN + "=" + str(thv[itrace - 1]))
 
     return thv
 
@@ -480,12 +473,9 @@ def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by 
 
     pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (ntraces - 1)
 
-    txt = "getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos)
-
-    logger.debug(txt)
+    logger.debug("getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos))
     thv, index = getValue(data, pos, THformat, endian, 1)
-    txt = "getLastSegyTraceHeader : " + THN + "=" + str(thv)
-    logger.debug(txt)
+    logger.debug("getLastSegyTraceHeader : " + THN + "=" + str(thv))
 
     return thv
 
@@ -504,8 +494,7 @@ def getAllSegyTraceHeaders(SH, data='none'):
         sth = getSegyTraceHeader(SH, key, data)      
         SegyTraceHeaders[key] = sth
 
-        txt =  "getAllSegyTraceHeaders :  " + key      
-        logger.debug(txt)
+        logger.debug("getAllSegyTraceHeaders :  " + key)
 
     return SegyTraceHeaders
 
@@ -575,9 +564,9 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     try:  # block added by A Squelch
         DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
     except KeyError:
-        print""
-        print"  An error has occurred interpreting a SEGY binary header key"
-        print"  Please check the Endian setting for this file: ", SH["filename"]
+        # TODO: This should not be critical - we should just convert the exception
+        logger.critical("  An error has occurred interpreting a SEGY binary header key")
+        logger.critical("  Please check the Endian setting for this file: ", SH["filename"])
         sys.exit()
 
     logger.debug("readSegyData : SEG-Y revision = " + str(revision))
@@ -655,8 +644,7 @@ def getSegyHeader(filename, endian='>'):  # modified by A Squelch
 
         SegyHeader[key], index = getValue(data, pos, format, endian)
 
-        txt =  str(pos) + " " + str(format) + "  Reading " + key + "=" + str(SegyHeader[key])
-        logger.debug(txt)
+        logger.debug(str(pos) + " " + str(format) + "  Reading " + key + "=" + str(SegyHeader[key]))
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
     bps = getBytePerSample(SegyHeader)
@@ -769,8 +757,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
             pos = index+STH_def[key]["pos"]
             format = STH_def[key]["type"]
             value = STH[key][itrace]
-            txt =  str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value)
-            logger.debug(txt)
+            logger.debug(str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value))
             putValue(value, f, pos, format, endian)
 
         # Write Data    
@@ -867,10 +854,9 @@ def getValue(data, index, ctype='l', endian='>', number=1):
         Value = struct.unpack(cformat, data[index: index_end])
 
     if ctype == 'B':
-        printverbose('getValue : Ineficient use of 1byte Integer...', -1)
+        logger.warning('getValue : Inefficient use of 1 byte Integer...', 1)
 
-    vtxt = 'getValue : '+'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat)
-    logger.debug(vtxt)
+    logger.debug('getValue : '+'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat))
 
     if number == 1:
         return Value[0], index_end
@@ -928,9 +914,9 @@ def getBytePerSample(SH):
     try:  # block added by A Squelch
         bps = SH_def["DataSampleFormat"]["bps"][revision][dsf]
     except KeyError:
-        print""
-        print"  An error has occurred interpreting a SEGY binary header key"
-        print"  Please check the Endian setting for this file: ", SH["filename"]
+        # TODO: This should not be a critical failure - should just convert exception
+        logging.critical("  An error has occurred interpreting a SEGY binary header key")
+        logging.critical("Please check the Endian setting for this file: {0}".format(SH["filename"]))
         sys.exit()
 
     logger.debug("getBytePerSample :  bps = " + str(bps))

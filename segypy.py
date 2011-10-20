@@ -357,39 +357,6 @@ STH_def["UnassignedInt2"] = {"pos": 236 , "type": "int32"}
 ##############
 # FUNCTIONS
 
-def imageSegy(Data):
-    """
-    imageSegy(Data)
-    Image segy Data
-    """
-    import pylab
-    pylab.imshow(Data)
-    pylab.title('pymat test')
-    pylab.grid(True)
-    pylab.show()
-
-def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
-    """
-    wiggle(Data, SH)
-    """
-    import pylab
-
-    t = range(SH['ns'])
-
-    for i in range(0, SH['ntraces'], skipt):
-
-        trace = Data[: , i]
-        trace[0] = 0
-        trace[SH['ns'] - 1] = 0
-        pylab.plot(i + trace / maxval, t, color='black', linewidth=lwidth)
-        for a in range(len(trace)):
-            if trace[a] < 0:
-                trace[a] = 0
-
-        pylab.fill(i + Data[: , i] / maxval, t, 'k', linewidth=0)
-    pylab.title(SH['filename'])
-    pylab.grid(True)
-    pylab.show()
 
 
 def getDefaultSegyHeader(ntraces=100, ns=100):
@@ -878,37 +845,3 @@ def getBytePerSample(SH):
     logger.debug("getBytePerSample :  bps = " + str(bps))
 
     return bps
-
-
-##############
-# segy class
-class SegyTraceheaderClass:
-    def __init__(self):
-        self.cdp = 0
-
-class SegyHeaderClass:
-    def __str__(self):
-        return "SegyHeaderClass "    
-    def __init__(self):    
-        self.filename = 0
-        self.Trace = version
-
-    def cdp(self):
-        return "Getting CDP trace header"
-    def InlineX(self):
-        return "Getting CDP trace header"
-
-
-
-
-class SegyClass:
-    STH_def = STH_def
-    SH_def = SH_def
-    STH = SegyTraceheaderClass()
-    SH = SegyHeaderClass()
-
-
-    def __init__(self):
-        self.THOMAS = 'Thomas'
-
-

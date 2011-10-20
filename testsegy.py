@@ -15,9 +15,6 @@ filename='ld0057_file_00095.sgy';
 #filename='data_2byteINT.segy';
 #filename='data_4byteINT.segy';
 
-# Set verbose level
-segypy.verbose=1;
-
 # Read Segy File
 Data,SH,STH=segypy.readSegy(filename);
 

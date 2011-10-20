@@ -1,3 +1,4 @@
+
 """
 A python module for reading/writing/manipulating
 SEG-Y formatted filed
@@ -40,7 +41,6 @@ logger = logging.getLogger('segpy.segypy')
 
 # SOME GLOBAL PARAMETERS
 version = '0.3.1'   # modified by A Squelch
-verbose = 1
 
 SEGY_REVISION_0 = 0x0000
 SEGY_REVISION_1 = 0x0100
@@ -48,16 +48,22 @@ SEGY_REVISION_1 = 0x0100
 REEL_HEADER_NUM_BYTES = 3600
 TRACE_HEADER_NUM_BYTES = 240
 
-l_int = struct.calcsize('i')
-l_uint = struct.calcsize('I')
-l_long = struct.calcsize('l')
-l_ulong = struct.calcsize('L')
-l_short = struct.calcsize('h')
-l_ushort = struct.calcsize('H')
 l_char = struct.calcsize('c')
 l_uchar = struct.calcsize('B')
 l_float = struct.calcsize('f')
 
+
+CTYPES = {'l': 'l', 'long': 'l', 'int32': 'l',
+          'L': 'L', 'ulong': 'L', 'uint32': 'L',
+          'h': 'h', 'short': 'h', 'int16': 'h',
+          'H': 'H', 'ushort': 'H', 'uint16': 'H',
+          'c': 'c', 'char': 'c',
+          'B': 'B', 'uchar': 'B',
+          'f': 'f', 'float': 'f',
+          'ibm': None}
+
+def size_in_bytes(ctype):
+    return struct.calcsize(ctype) if ctype != 'ibm' else struct.calcsize('f')
 
 ##############
 # INIT
@@ -719,9 +725,8 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
     try:  # block added by A Squelch
         DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
     except KeyError:
-        print""
-        print"  An error has ocurred interpreting a SEGY binary header key"
-        print"  Please check the Endian setting for this file: ", SH["filename"]
+        logging.critical("  An error has ocurred interpreting a SEGY binary header key")
+        logging.critical("  Please check the Endian setting for this file: {0}".format(SH["filename"]))
         sys.exit()
 
     logger.debug("writeSegyStructure : SEG-Y revision = " + str(revision))
@@ -769,24 +774,7 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
     """
     putValue(data, index, ctype, endian, number)
     """
-    if (ctype == 'l') | (ctype == 'long') | (ctype == 'int32'):
-        ctype = 'l'
-    elif (ctype == 'L') | (ctype == 'ulong') | (ctype == 'uint32'):
-        ctype = 'L'
-    elif (ctype == 'h') | (ctype == 'short') | (ctype == 'int16'):
-        ctype = 'h'
-    elif (ctype == 'H') | (ctype == 'ushort') | (ctype == 'uint16'):
-        ctype = 'H'
-    elif (ctype == 'c') | (ctype == 'char'):
-        ctype = 'c'
-    elif (ctype == 'B') | (ctype == 'uchar'):
-        ctype = 'B'
-    elif (ctype == 'f') | (ctype == 'float'):
-        ctype = 'f'
-    elif ctype == 'ibm':
-        pass
-    else:
-        printverbose('Bad Ctype : ' +ctype, -1)
+    ctype = CTYPES[ctype]
 
     cformat = endian + ctype*number
 
@@ -804,32 +792,9 @@ def getValue(data, index, ctype='l', endian='>', number=1):
     """
     getValue(data, index, ctype, endian, number)
     """
-    if (ctype == 'l') | (ctype == 'long') | (ctype == 'int32'):
-        size = l_long
-        ctype = 'l'
-    elif (ctype == 'L')|(ctype == 'ulong') | (ctype == 'uint32'):
-        size = l_ulong
-        ctype = 'L'
-    elif (ctype == 'h') | (ctype == 'short') | (ctype == 'int16'):
-        size = l_short
-        ctype = 'h'
-    elif (ctype == 'H') | (ctype == 'ushort') | (ctype == 'uint16'):
-        size = l_ushort
-        ctype = 'H'
-    elif (ctype == 'c') | (ctype == 'char'):
-        size = l_char
-        ctype = 'c'
-    elif (ctype == 'B') | (ctype == 'uchar'):
-        size = l_uchar
-        ctype = 'B'
-    elif (ctype == 'f') | (ctype == 'float'):
-        size = l_float
-        ctype = 'f'
-    elif ctype == 'ibm':
-        size = l_float
-    else:
-        printverbose('Bad Ctype : ' +ctype, -1)
 
+    ctype = CTYPES[ctype]
+    size = size_in_bytes(ctype)
 
     cformat = endian + ctype * number
 

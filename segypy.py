@@ -40,6 +40,7 @@ from numpy import arange
 from revisions import SEGY_REVISION_0, SEGY_REVISION_1
 from header_definition import SH_def
 from trace_header_definition import STH_def
+from ibm_float import ibm2ieee2
 
 logger = logging.getLogger('segpy.segypy')
 
@@ -80,7 +81,7 @@ def size_in_bytes(ctype):
 
 
 def getDefaultSegyHeader(ntraces=100, ns=100):
-    """Remove unused import.
+    """
     SH = getDefaultSegyHeader()
     """
     # INITIALIZE DICTIONARYTraceSequenceLine
@@ -416,8 +417,6 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         putValue(value, f, pos, format, endian)
 
     # SEGY TRACES
-
-
     ctype = SH_def['DataSampleFormat']['datatype'][revision][dsf]
     bps = SH_def['DataSampleFormat']['bps'][revision][dsf]
 
@@ -459,7 +458,6 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
     fileid.seek(index)
     fileid.write(strVal)
 
-
     return 1
 
 
@@ -499,42 +497,6 @@ def getValue(data, index, ctype='l', endian='>', number=1):
         return Value, index_end
 
 
-##############
-# MISC FUNCTIONS
-def ibm2Ieee(ibm_float):
-    """
-    ibm2Ieee(ibm_float)
-    Used by permission
-    (C) Secchi Angelo
-    with thanks to Howard Lightstone and Anton Vredegoor. 
-    """
-    i = struct.unpack('>I', ibm_float)[0]
-    sign = [1, -1][bool(i & 0x100000000L)]
-    characteristic = ((i >> 24) & 0x7f) - 64
-    fraction = (i & 0xffffff) / float(0x1000000L)
-    return sign * 16 ** characteristic * fraction
-
-
-
-def ibm2ieee2(ibm_float):
-    """
-    ibm2ieee2(ibm_float)
-    Used by permission
-    (C) Secchi Angelo
-    with thanks to Howard Lightstone and Anton Vredegoor. 
-    """
-    dividend = float(16 ** 6)
-
-    if ibm_float == 0:
-        return 0.0
-    istic, a, b, c = struct.unpack('>BBBB', ibm_float)
-    if istic >= 128:
-        sign= -1.0
-        istic -= 128
-    else:
-        sign = 1.0
-    mant= float(a << 16) + float(b << 8) + float(c)
-    return sign * 16 ** (istic - 64) * (mant / dividend)
 
 
 def getBytePerSample(SH):

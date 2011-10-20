@@ -442,7 +442,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
             f.seek(index + TRACE_HEADER_NUM_BYTES + s * struct.calcsize(cformat))
             f.write(strVal)
 
-    f.close
+    f.close()
 
 
 def putValue(value, fileid, index, ctype='l', endian='>', number=1):

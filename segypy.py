@@ -44,7 +44,7 @@ from ibm_float import ibm2ieee2
 
 logger = logging.getLogger('segpy.segypy')
 
-version = '0.3.1'   # modified by A Squelch
+version = '0.3.1'
 
 REEL_HEADER_NUM_BYTES = 3600
 TRACE_HEADER_NUM_BYTES = 240
@@ -84,7 +84,7 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
     """
     SH = getDefaultSegyHeader()
     """
-    # INITIALIZE DICTIONARYTraceSequenceLine
+    # TraceSequenceLine
     SH = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 
     for key in SH_def.keys(): 
@@ -152,14 +152,14 @@ def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A
     return thv
 
 
-def getLastSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # added by A Squelch
+def getLastSegyTraceHeader(SH, THN='cdp', data=None, endian='>'):  # added by A Squelch
     """
     getLastSegyTraceHeader(SH, TraceHeaderName)
     """
 
     bps = getBytePerSample(SH)
 
-    if data == 'none':
+    if data is None:
         data = open(SH["filename"]).read()
 
     # SET PARAMETERS THAT DEFINE THE LOCATION OF THE LAST HEADER
@@ -196,7 +196,7 @@ def getAllSegyTraceHeaders(SH, data='none'):
     return SegyTraceHeaders
 
 
-def readSegy(filename, endian='>'):  # modified by A Squelch
+def readSegy(filename, endian='>'):
     """
     Data, SegyHeader, SegyTraceHeaders = getSegyHeader(filename)
     """
@@ -252,7 +252,6 @@ def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
     revision = SH["SegyFormatRevisionNumber"]
 
     dsf = SH["DataSampleFormat"]
-
 
     try:  # block added by A Squelch
         DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
@@ -428,7 +427,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
         logger.debug('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']))
         # WRITE SEGY TRACE HEADER
         for key in STH_def.keys():     
-            pos = index+STH_def[key]["pos"]
+            pos = index + STH_def[key]["pos"]
             format = STH_def[key]["type"]
             value = STH[key][itrace]
             logger.debug(str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value))

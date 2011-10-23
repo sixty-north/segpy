@@ -1,13 +1,16 @@
 <component name="ProjectDictionaryState">
   <dictionary name="rjs">
     <words>
+      <w>asctime</w>
       <w>baseplate</w>
       <w>crossline</w>
       <w>datatype</w>
       <w>geophone</w>
       <w>ieee</w>
+      <w>levelname</w>
       <w>millivolts</w>
       <w>multicomponent</w>
+      <w>ntraces</w>
       <w>segpy</w>
       <w>segy</w>
       <w>ulong</w>

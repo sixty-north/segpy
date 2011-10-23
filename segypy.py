@@ -1,18 +1,18 @@
 
 """
 A python module for reading/writing/manipulating
-SEG-Y formatted filed
+SEG-Y formatted files
 
 segy.readSegy                : Read SEGY file
-segy.getSegyHeader           : Get SEGY header
-segy.getSegyTraceHeader      : Get SEGY Trace header
-segy.getAllSegyTraceHeaders  : Get all SEGY Trace headers
+segy.read_reel_header           : Get SEGY header
+segy.read_trace_header      : Get SEGY Trace header
+segy.read_all_trace_headers  : Get all SEGY Trace headers
 segy.getSegyTrace            : Get SEGY Trace header and trace data for one trace
 
 segy.writeSegy               : Write a data to a SEGY file
 segy.writeSegyStructure      : Writes a segpy data structure to a SEGY file
 
-segy.getValue        : Get a value from a binary string
+segy.read_binary_value        : Get a value from a binary string
 segy.ibm2ieee        : Convert IBM floats to IEEE
 
 segy.version         : The version of SegyPY
@@ -26,7 +26,7 @@ segy.verbose         : Amount of verbose information to the screen
 # (C) Thomas Mejer Hansen, 2005-2006
 #
 # with contributions from Pete Forman and Andrew Squelch 2007
-
+import os
 
 import sys
 import struct
@@ -42,6 +42,8 @@ from header_definition import SH_def
 from trace_header_definition import STH_def
 from ibm_float import ibm2ieee2
 
+FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
+logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger('segpy.segypy')
 
 version = '0.3.1'
@@ -124,218 +126,141 @@ def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
         STH["dt"][a] = dt
     return STH
 
-
-def getSegyTraceHeader(SH, THN='cdp', data='none', endian='>'):  # modified by A Squelch
+def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     """
-    getSegyTraceHeader(SH, TraceHeaderName)
+    read_trace_header(reel_header, TraceHeaderName)
     """
 
-    bps = getBytePerSample(SH)
-
-    if data == 'none':
-        data = open(SH["filename"], 'rb').read()
-
+    bps = getBytePerSample(reel_header)
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
-    THpos = STH_def[THN]["pos"]
-    THformat = STH_def[THN]["type"]
-    ntraces = SH["ntraces"]
-    thv = zeros(ntraces)
-    for itrace in range(1, ntraces + 1, 1):
+    trace_header_pos = STH_def[trace_header_name]["pos"]
+    trace_header_format = STH_def[trace_header_name]["type"] # TODO: Be consistent between 'type' and 'format' here.
+    ntraces = reel_header["ntraces"]
+    trace_header_values = zeros(ntraces)
+    binary_reader = create_binary_reader(f, trace_header_format, endian)
+    start_pos = trace_header_pos + REEL_HEADER_NUM_BYTES
+    stride = reel_header["ns"] * bps + TRACE_HEADER_NUM_BYTES
+    end_pos = start_pos + (ntraces - 1) * stride + 1
+    for i, pos in enumerate(xrange(start_pos, end_pos, stride)):
+        trace_header_values[i] = binary_reader(pos)
+    return trace_header_values
 
-        pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (itrace - 1)
+# TODO: Get the parameter ordering of reel_header and f to be consistent
+def read_all_trace_headers(f, reel_header):
+    trace_headers = { 'filename': reel_header["filename"] }
 
-        logger.debug("getSegyTraceHeader : Reading trace header " + THN + " " + str(itrace)  + " of " + str(ntraces) + " " +str(pos))
-        thv[itrace - 1], index = getValue(data, pos, THformat, endian, 1)
-        logger.debug("getSegyTraceHeader : " + THN + "=" + str(thv[itrace - 1]))
+    logger.debug('read_all_trace_headers : trying to get all segy trace headers')
 
-    return thv
+    for key in STH_def.keys():
+        trace_header = read_trace_header(f, reel_header, key)
+        trace_headers[key] = trace_header
+        logger.info("read_all_trace_headers :  " + key)
+
+    return trace_headers
 
 
-def getLastSegyTraceHeader(SH, THN='cdp', data=None, endian='>'):  # added by A Squelch
+def file_length(f):
+    pos = f.tell()
+    f.seek(0, os.SEEK_END)
+    file_size = f.tell()
+    f.seek(pos, os.SEEK_SET)
+    return file_size
+
+
+def readSegy(f, filename, endian='>'):
     """
-    getLastSegyTraceHeader(SH, TraceHeaderName)
-    """
-
-    bps = getBytePerSample(SH)
-
-    if data is None:
-        data = open(SH["filename"]).read()
-
-    # SET PARAMETERS THAT DEFINE THE LOCATION OF THE LAST HEADER
-    # AND THE TRACE NUMBER KEY FIELD
-    THpos = STH_def[THN]["pos"]
-    THformat = STH_def[THN]["type"]
-    ntraces = SH["ntraces"]
-
-    pos = THpos + REEL_HEADER_NUM_BYTES + (SH["ns"] * bps + TRACE_HEADER_NUM_BYTES) * (ntraces - 1)
-
-    logger.debug("getLastSegyTraceHeader : Reading last trace header " + THN + " " + str(pos))
-    thv, index = getValue(data, pos, THformat, endian, 1)
-    logger.debug("getLastSegyTraceHeader : " + THN + "=" + str(thv))
-
-    return thv
-
-
-def getAllSegyTraceHeaders(SH, data='none'):
-    SegyTraceHeaders = {'filename': SH["filename"]}
-
-    logger.debug('getAllSegyTraceHeaders : trying to get all segy trace headers')
-
-
-    if data == 'none':
-        data = open(SH["filename"], 'rb').read()
-
-    for key in STH_def.keys():      
-
-        sth = getSegyTraceHeader(SH, key, data)      
-        SegyTraceHeaders[key] = sth
-
-        logger.debug("getAllSegyTraceHeaders :  " + key)
-
-    return SegyTraceHeaders
-
-
-def readSegy(filename, endian='>'):
-    """
-    Data, SegyHeader, SegyTraceHeaders = getSegyHeader(filename)
+    Data, SegyHeader, trace_headers = read_reel_header(f)
     """
 
-    logger.debug("readSegy : Trying to read " + filename)
+    #data = open(filename, 'rb').read()
 
-    data = open(filename, 'rb').read()
 
-    filesize = len(data)
+    file_size = file_length(f)
 
-    SH = getSegyHeader(filename, endian)  # modified by A Squelch
+    #file_size = len(data)
+    logger.debug("readSegy : Length of data : {0}".format(file_size))
 
-    bps = getBytePerSample(SH)
-
-    ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SH['ns'] * bps + TRACE_HEADER_NUM_BYTES)
-
-    logger.debug("readSegy : Length of data : " + str(filesize))
-
-    SH["ntraces"] = ntraces
-
-    logger.debug("readSegy : ntraces = " + str(ntraces) + " nsamples = " + str(SH['ns']))
-
+    reel_header = read_reel_header(f, filename, endian)  # modified by A Squelch
 
     # GET TRACE
     index = REEL_HEADER_NUM_BYTES
-    nd = (filesize - REEL_HEADER_NUM_BYTES) / bps
+    bytes_per_sample = getBytePerSample(reel_header)
+    num_data = (file_size - REEL_HEADER_NUM_BYTES) / bytes_per_sample
 
-    Data, SH, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index, endian)
+    Data, reel_header, trace_headers = read_traces(f, reel_header, num_data, bytes_per_sample, index, endian)
 
     logger.debug("readSegy :  Read segy data")  # modified by A Squelch
 
-    return Data, SH, SegyTraceHeaders    
+    return Data, reel_header, trace_headers
 
 
-def readSegyData(data, SH, nd, bps, index, endian='>'):  # added by A Squelch
-    """
-    Data, SegyHeader, SegyTraceHeaders = readSegyData(data, SH, nd, bps, index)
+def read_traces(f, reel_header, num_data, bytes_per_sample, index, endian='>'):  # added by A Squelch
+    """Read the trace data.
 
-    This function separated out from readSegy so that it can also be
-    called from other external functions - by A Squelch.
+    values, SegyHeader, SegyTraceHeaders = read_traces(data, reel_header, num_data, bytes_per_sample, index)
+
     """
 
     # Calculate number of dummy samples needed to account for Trace Headers
-    ndummy_samples = TRACE_HEADER_NUM_BYTES / bps
-    logger.debug("readSegyData : ndummy_samples = " + str(ndummy_samples))
+    num_dummy_samples = TRACE_HEADER_NUM_BYTES / bytes_per_sample
+    logger.debug("read_traces : num_dummy_samples = " + str(num_dummy_samples))
 
     # READ ALL SEGY TRACE HEADERS
-    STH = getAllSegyTraceHeaders(SH, data)
+    trace_headers = read_all_trace_headers(f, reel_header)
 
-    logger.debug("readSegyData : Reading segy data")
+    logger.info("read_traces : Reading segy data")
 
-    # READ ALL DATA EXCEPT FOR SEGY HEADER
-    revision = SH["SegyFormatRevisionNumber"]
-
-    dsf = SH["DataSampleFormat"]
-
-    try:  # block added by A Squelch
-        DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
-    except KeyError:
-        # TODO: This should not be critical - we should just convert the exception
-        logger.critical("  An error has occurred interpreting a SEGY binary header key")
-        logger.critical("  Please check the Endian setting for this file: ", SH["filename"])
-        sys.exit()
-
-    logger.debug("readSegyData : SEG-Y revision = " + str(revision))
-    logger.debug("readSegyData : DataSampleFormat = " + str(dsf) + "(" + DataDescr + ")")
-
-    dsf = SH["DataSampleFrmat"]
+    dsf = reel_header["DataSampleFormat"]
     ctype = DATA_SAMPLE_FORMAT[dsf]
     description = CTYPE_DESCRIPTION[ctype]
-    logger.debug("readSegyData : Assuming DSF = {0}, {1}".format(dsf, description))
-    Data1 = getValue(data, index, ctype, endian, nd)
+    logger.debug("read_traces : Assuming DSF = {0}, {1}".format(dsf, description))
+    values, _ = read_binary_value(f, index, ctype, endian, num_data)
 
-    Data = Data1[0]
-
-    logger.debug("readSegyData : - reshaping")
-    Data = reshape(Data, (SH['ntraces'], SH['ns']+ndummy_samples))
-    logger.debug("readSegyData : - stripping header dummy data")
-    Data = Data[: , ndummy_samples: (SH['ns']+ndummy_samples)]
-    logger.debug("readSegyData : - transposing")
-    Data = transpose(Data)
+    logger.debug("read_traces : - reshaping")
+    values = reshape(values, (reel_header['ntraces'], reel_header['ns'] + num_dummy_samples))
+    logger.debug("read_traces : - stripping header dummy data")
+    values = values[: , num_dummy_samples: (reel_header['ns'] + num_dummy_samples)]
+    logger.debug("read_traces : - transposing")
+    values = transpose(values)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF = 8
-    if SH["DataSampleFormat"] == 8:
-        for i in arange(SH['ntraces']):
-            for j in arange(SH['ns']):
-                if Data[i][j] > 128:
-                    Data[i][j] = Data[i][j] - 256
+    if reel_header["DataSampleFormat"] == 8:
+        for i in arange(reel_header['ntraces']):
+            for j in arange(reel_header['ns']):
+                if values[i][j] > 128:
+                    values[i][j] = values[i][j] - 256
 
-    logger.debug("readSegyData : Finished reading segy data")
+    logger.debug("read_traces : Finished reading segy data")
 
-    return Data, SH, STH
+    return values, reel_header, trace_headers
 
 
-def getSegyTrace(SH, itrace, endian='>'):  # modified by A Squelch
+def read_reel_header(f, filename, endian='>'):
     """
-    SegyTraceHeader, SegyTraceData = getSegyTrace(SegyHeader, itrace)
-        itrace : trace number to read
-        THIS DEF IS NOT UPDATED. NOT READY TO USE
-    """    
-    data = open(SH["filename"], 'rb').read()
-
-    bps = getBytePerSample(SH)
-
-
-    # GET TRACE HEADER
-    SegyTraceHeader = []
-
-    # GET TRACE
-    index = 3200 + (itrace - 1) * (TRACE_HEADER_NUM_BYTES + SH['ns'] * bps) + TRACE_HEADER_NUM_BYTES
-    SegyTraceData = getValue(data, index, 'float', endian, SH['ns'])
-    return SegyTraceHeader, SegyTraceData
-
-
-def getSegyHeader(filename, endian='>'):  # modified by A Squelch
+    reel_header = read_reel_header(filename)
     """
-    SegyHeader = getSegyHeader(filename)
-    """
-    data = open(filename, 'rb').read()
+    #data = open(filename, 'rb').read()
 
-    SegyHeader = {'filename': filename}
+    reel_header = {'filename': filename}
     for key in SH_def.keys():
         pos = SH_def[key]["pos"]
         format = SH_def[key]["type"]
 
-        SegyHeader[key], index = getValue(data, pos, format, endian)
+        reel_header[key], index = read_binary_value(f, pos, format, endian)
 
-        logger.debug(str(pos) + " " + str(format) + "  Reading " + key + "=" + str(SegyHeader[key]))
+        logger.debug(str(pos) + " " + str(format) + "  Reading " + key + "=" + str(reel_header[key]))
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
-    bps = getBytePerSample(SegyHeader)
+    bps = getBytePerSample(reel_header)
 
-    filesize = len(data)
-    ntraces = (filesize - REEL_HEADER_NUM_BYTES) / (SegyHeader['ns'] * bps + TRACE_HEADER_NUM_BYTES)
-    SegyHeader["ntraces"] = ntraces
+    file_size = file_length(f)
+    ntraces = (file_size - REEL_HEADER_NUM_BYTES) / (reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES)
+    reel_header["ntraces"] = ntraces
 
-    logger.debug('getSegyHeader : successfully read ' + filename)
+    logger.debug('read_reel_header : successfully read ' + filename)
 
-    return SegyHeader
+    return reel_header
 
 
 def writeSegy(filename, Data, dt = 1000, STHin={}, SHin={}):
@@ -459,10 +384,27 @@ def putValue(value, fileid, index, ctype='l', endian='>', number=1):
 
     return 1
 
-
-def getValue(data, index, ctype='l', endian='>', number=1):
+def create_binary_reader(f, ctype='l', endian='>'):
+    """Create a unary callable which reads a given binary data type from a file.
     """
-    getValue(data, index, ctype, endian, number)
+    ctype = CTYPES[ctype]
+    size = size_in_bytes(ctype)
+
+    cformat = endian + ctype
+
+    def reader(index):
+        f.seek(index, os.SEEK_SET)
+        data = f.read(size)
+        # TODO: Check the content of data before proceeding
+        value = struct.unpack(cformat, data)
+        return value[0]
+
+    return reader
+
+
+def read_binary_value(f, index, ctype='l', endian='>', number=1):
+    """
+    read_binary_value(data, index, ctype, endian, number)
     """
 
     ctype = CTYPES[ctype]
@@ -470,25 +412,30 @@ def getValue(data, index, ctype='l', endian='>', number=1):
 
     cformat = endian + ctype * number
 
-    logger.debug('getValue : cformat :  ' + cformat)
+    logger.debug('read_binary_value : cformat :  ' + cformat)
 
     index_end = index + size * number
 
-    if ctype == 'ibm':
-        # ASSUME IBM FLOAT DATA
-        Value = range(number)        
-        for i in arange(number):
-            index_ibm = i * 4 + index
-            Value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
-        # this returns an array as opposed to a tuple
-    else:
-        # ALL OTHER TYPES OF DATA
-        Value = struct.unpack(cformat, data[index: index_end])
+#    if ctype == 'ibm':
+#        # ASSUME IBM FLOAT DATA
+#        Value = range(number)
+#        for i in arange(number):
+#            index_ibm = i * 4 + index
+#            Value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
+#        # this returns an array as opposed to a tuple
+#    else:
+#       # ALL OTHER TYPES OF DATA
+#        Value = struct.unpack(cformat, data[index: index_end])
 
+    f.seek(index, os.SEEK_SET)
+    data = f.read(size * number)
+    # TODO: Check the content of data before proceeding
+    Value = struct.unpack(cformat, data)
+    
     if ctype == 'B':
-        logger.warning('getValue : Inefficient use of 1 byte Integer...', 1)
+        logger.warning('read_binary_value : Inefficient use of 1 byte Integer...', 1)
 
-    logger.debug('getValue : ' + 'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat))
+    logger.debug('read_binary_value : ' + 'start = ' + str(index) + ' size = ' + str(size) + ' number = ' + str(number) + ' Value = ' + str(Value) + ' cformat = ' + str(cformat))
 
     if number == 1:
         return Value[0], index_end
@@ -514,3 +461,8 @@ def getBytePerSample(SH):
     logger.debug("getBytePerSample :  bps = " + str(bps))
 
     return bps
+
+if __name__ == '__main__':
+    filename = r'C:\Users\rjs\opendtectroot\Blake_Ridge_Hydrates_3D\stack_final_scaled50_int8.sgy'
+    with open(filename, 'rb') as segy:
+        Data, SH, SegyTraceHeaders = readSegy(segy, filename)

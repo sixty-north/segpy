@@ -1,13 +1,17 @@
-SegyPY : A Python module for reading/writing of SEG-Y formatted files
-Copyright (C) 2005 Thomas Mejer Hansen, cultpenguin@gmail.com
+The SEG Y file format is one of several standards developed by the Society of Exploration Geophysicists for storing
+geophysical seismic data. Segpy is a package for reading, writing and manipulating SEG Y data in pure Python.
 
-Currently you can READ IBM Floats, IEEE, 1, 2 and 4 byte INTEGER formatted data, and WRITE anything but IBM Floats.
+Segpy is a fork of the Segypy package originally put together by Thomas Mejer Hansen under an LGPL license. I was
+unsuccessful in my attempts to contact Hansen in order to contribute improvements, hence the fork under a different name, which of course
+remains under the LGPL license.
 
-With time I would like the module to have the capabilities of SegyMAT : http://segymat.sf.net/
+I have cleaned up the code towards being modern, idiomatic Python and made it compatible with Python 2 and Python 3.
 
-Thomas(cultpenguin@gmail.com), July 22, 2005.
+Pull requests, bug reports and suggestions for improvements are most welcome!
 
-## ACKNOWLEDGEMENT ##
-The Ibm2Ieee conversion routines are developed and made availabe for SegyPY by Secchi Angelo, who thanks Howard Lightstone and Anton Vredegoor for their help.
+Authors:
+ - Robert Smallshire 2011 to date
+ - Thomas Mejer Hansen 2005
 
-
+The Ibm2Ieee conversion routines are developed and made availabe for SegyPY by Secchi Angelo, who thanks Howard
+Lightstone and Anton Vredegoor for their help.

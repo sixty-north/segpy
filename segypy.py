@@ -448,6 +448,9 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
 def getBytePerSample(SH):
     revision = SH["SegyFormatRevisionNumber"]
 
+    if revision == 100:
+        revision = SEGY_REVISION_1
+
     dsf = SH["DataSampleFormat"]
 
     try:  # block added by A Squelch

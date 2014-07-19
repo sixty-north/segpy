@@ -79,6 +79,8 @@ CTYPE_DESCRIPTION = { 'ibm' : 'IBM float',
                       'B'   : '8 bit char' }
 
 def size_in_bytes(ctype):
+    if ctype == 'l' and struct.calcsize(ctype) == 8:
+        return 4 #64-bit issue?
     return struct.calcsize(ctype) if ctype != 'ibm' else struct.calcsize('f')
 
 
@@ -89,7 +91,7 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
     # TraceSequenceLine
     SH = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 
-    for key in SH_def.keys(): 
+    for key in SH_def.keys():
 
         tmpkey = SH_def[key]
         if tmpkey.has_key('def'):
@@ -112,12 +114,12 @@ def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
     # INITIALIZE DICTIONARY
     STH = {"TraceSequenceLine": {"pos": 0, "type": "int32"}}
 
-    for key in STH_def.keys(): 
+    for key in STH_def.keys():
 
         tmpkey = STH_def[key]
         STH[key] = zeros(ntraces)
 
-    for a in range(ntraces):            
+    for a in range(ntraces):
         STH["TraceSequenceLine"][a] = a + 1
         STH["TraceSequenceFile"][a] = a + 1
         STH["FieldRecord"][a] = 1000
@@ -267,7 +269,7 @@ def writeSegy(filename, Data, dt = 1000, STHin={}, SHin={}):
     """
     writeSegy(filename, Data, dt)
 
-    Write SEGY 
+    Write SEGY
 
     See also readSegy
 
@@ -334,7 +336,7 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
 
     # WRITE SEGY HEADER
 
-    for key in SH_def.keys():     
+    for key in SH_def.keys():
         pos = SH_def[key]["pos"]
         format = SH_def[key]["type"]
         value = SH[key]
@@ -347,18 +349,18 @@ def writeSegyStructure(filename, Data, SH, STH, endian='>'):  # modified by A Sq
 
     sizeT = TRACE_HEADER_NUM_BYTES + SH['ns'] * bps
 
-    for itrace in range(SH['ntraces']):        
+    for itrace in range(SH['ntraces']):
         index = REEL_HEADER_NUM_BYTES + itrace * sizeT
         logger.debug('Writing Trace #' + str(itrace + 1) + '/' + str(SH['ntraces']))
         # WRITE SEGY TRACE HEADER
-        for key in STH_def.keys():     
+        for key in STH_def.keys():
             pos = index + STH_def[key]["pos"]
             format = STH_def[key]["type"]
             value = STH[key][itrace]
             logger.debug(str(pos) + " " + str(format) + "  Writing " + key + "=" + str(value))
             putValue(value, f, pos, format, endian)
 
-        # Write Data    
+        # Write Data
         cformat = endian + ctype
         for s in range(SH['ns']):
             strVal = struct.pack(cformat, Data[s, itrace])
@@ -408,6 +410,7 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
     """
 
     ctype = CTYPES[ctype]
+
     size = size_in_bytes(ctype)
 
     cformat = endian + ctype * number
@@ -416,22 +419,19 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
 
     index_end = index + size * number
 
-#    if ctype == 'ibm':
-#        # ASSUME IBM FLOAT DATA
-#        Value = range(number)
-#        for i in arange(number):
-#            index_ibm = i * 4 + index
-#            Value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
-#        # this returns an array as opposed to a tuple
-#    else:
-#       # ALL OTHER TYPES OF DATA
-#        Value = struct.unpack(cformat, data[index: index_end])
-
     f.seek(index, os.SEEK_SET)
     data = f.read(size * number)
-    # TODO: Check the content of data before proceeding
-    Value = struct.unpack(cformat, data)
-    
+    if ctype == 'ibm':
+        # ASSUME IBM FLOAT DATA
+        Value = range(number)
+        for i in arange(number):
+            index_ibm = i * 4
+            Value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
+        # this returns an array as opposed to a tuple
+    else:
+        # TODO: Check the content of data before proceeding
+        Value = struct.unpack(cformat, data)
+
     if ctype == 'B':
         logger.warning('read_binary_value : Inefficient use of 1 byte Integer...', 1)
 
@@ -447,6 +447,9 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
 
 def getBytePerSample(SH):
     revision = SH["SegyFormatRevisionNumber"]
+
+    if revision == 100:
+        revision = SEGY_REVISION_1
 
     dsf = SH["DataSampleFormat"]
 

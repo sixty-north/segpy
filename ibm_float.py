@@ -1,3 +1,5 @@
+import struct
+
 def ibm2ieee2(ibm_float):
     """
     ibm2ieee2(ibm_float)

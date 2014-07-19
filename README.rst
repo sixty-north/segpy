@@ -15,7 +15,7 @@ History
 Segpy is a fork of a seemingly abandoned Python SEG Y reader called `SegyPY <http://segymat.sourceforge.net/segypy/>`_
 which was last updated in 2005. I couldn't get a response from the original author of SegyPY and since it the code was
 under an LGPL license I took the decision in 2011 to fork and run a new project on Google Code, under a the name of
-*Segpy* avoid confusion. In July 2014 the project was again migrated from a now defunct Mercural repository on Google
+*Segpy* avoid confusion. In July 2014 the project was again migrated from a now defunct Mercurial repository on Google
 Code to this Git repository on GitHub.
 
 The aim of the revived project is to fix serious problems with the code base in the area of correctness and

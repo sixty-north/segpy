@@ -14,7 +14,7 @@ remains under the LGPL license.
 
 I have cleaned up the code towards being modern, idiomatic Python and made it compatible with Python 2 and Python 3.
 
-Pull requests, bug reports and suggestions for improvements are most welcome!
+**Pull requests, bug reports and suggestions for improvements are most welcome!**
 
 
 Authors

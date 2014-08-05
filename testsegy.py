@@ -46,16 +46,35 @@ def test_render(d_ieee, d_ibm, data):
     pylab.title('TEST')
     pylab.show()
 
-if __name__ == '__main__':
-    filename = 'ld0057_file_00095.sgy'
-    # filename = 'mini.sgy'
-    # filename = 'data_IEEE.segy'
-    # filename = 'data_IBM_REV1.segy'
-    # filename = 'data_IBM_REV0.segy'
-    # filename = 'data_1byteINT.segy'
-    # filename = 'data_2byteINT.segy'
-    # filename = 'data_4byteINT.segy'
 
-    read_results = test_read(filename)
-    # write_results = test_write('testout.segy', *read_results)
-    # test_render(*write_results)
+def parse_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('filename',
+                        help='The SEGY input file')
+
+    parser.add_argument('--output', '-o',
+                        dest='outfile',
+                        default='',
+                        help='The output file (optional).')
+
+    parser.add_argument('--render_test', '-r',
+                        dest='render_test',
+                        action='store_true',
+                        help='Whether to test rendering (only applies if '
+                             'output is produced.)')
+
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    read_results = test_read(args.filename)
+
+    if args.outfile:
+        write_results = test_write(args.outfile, *read_results)
+
+        if args.render_test:
+            test_render(*write_results)

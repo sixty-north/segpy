@@ -1,4 +1,4 @@
-def imageSegy(Data):
+def image_segy(Data):
     """
     imageSegy(Data)
     Image segy Data

@@ -9,20 +9,20 @@ import segypy
 def test_read(filename):
     # Read Segy File
     with open(filename, 'rb') as f:
-        return segypy.readSegy(f, filename)
+        return segypy.read_segy(f, filename)
 
 
 def test_write(filename_out, data, sh, sth):
     sh['DataSampleFormat'] = 5
     sh['SegyFormatRevisionNumber'] = 100
-    segypy.writeSegyStructure(filename_out, data, sh, sth)
+    segypy.write_segy_structure(filename_out, data, sh, sth)
 
     segypy.wiggle(data, sh, 2, .1, .1)
 
     f_ieee = 'data_IEEE.segy'
     f_ibm = 'data_IBM_REV1.segy'
-    d_ieee, sh, sth = segypy.readSegy(f_ieee)
-    d_ibm, sh, sth = segypy.readSegy(f_ibm)
+    d_ieee, sh, sth = segypy.read_segy(f_ieee)
+    d_ibm, sh, sth = segypy.read_segy(f_ibm)
 
     return d_ieee, d_ibm, data
 

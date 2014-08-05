@@ -85,7 +85,7 @@ def size_in_bytes(ctype):
     return struct.calcsize(ctype) if ctype != 'ibm' else struct.calcsize('f')
 
 
-def getDefaultSegyHeader(ntraces=100, ns=100):
+def get_default_segy_header(ntraces=100, ns=100):
     """
     SH = getDefaultSegyHeader()
     """
@@ -107,7 +107,7 @@ def getDefaultSegyHeader(ntraces=100, ns=100):
     return SH
 
 
-def getDefaultSegyTraceHeaders(ntraces=100, ns=100, dt=1000):
+def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
     """
     SH = getDefaultSegyTraceHeader()
     """
@@ -134,7 +134,7 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     read_trace_header(reel_header, TraceHeaderName)
     """
 
-    bps = getBytePerSample(reel_header)
+    bps = get_byte_per_sample(reel_header)
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
     trace_header_pos = STH_def[trace_header_name]["pos"]
@@ -175,7 +175,7 @@ def file_length(f):
     return file_size
 
 
-def readSegy(f, filename, endian='>'):
+def read_segy(f, filename, endian='>'):
     """
     Data, SegyHeader, trace_headers = read_reel_header(f)
     """
@@ -193,7 +193,7 @@ def readSegy(f, filename, endian='>'):
 
     # GET TRACE
     index = REEL_HEADER_NUM_BYTES
-    bytes_per_sample = getBytePerSample(reel_header)
+    bytes_per_sample = get_byte_per_sample(reel_header)
     num_data = (file_size - REEL_HEADER_NUM_BYTES) / bytes_per_sample
 
     Data, reel_header, trace_headers = read_traces(f,
@@ -280,7 +280,7 @@ def read_reel_header(f, filename, endian='>'):
                      "=" + str(reel_header[key]))
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
-    bps = getBytePerSample(reel_header)
+    bps = get_byte_per_sample(reel_header)
 
     file_size = file_length(f)
     ntraces = (file_size - REEL_HEADER_NUM_BYTES) / \
@@ -292,7 +292,7 @@ def read_reel_header(f, filename, endian='>'):
     return reel_header
 
 
-def writeSegy(filename, Data, dt=1000, STHin={}, SHin={}):
+def write_segy(filename, Data, dt=1000, STHin={}, SHin={}):
     """
     writeSegy(filename, Data, dt)
 
@@ -313,8 +313,8 @@ def writeSegy(filename, Data, dt=1000, STHin={}, SHin={}):
     ntraces = N[1]
     print ntraces, ns
 
-    SH = getDefaultSegyHeader(ntraces, ns)
-    STH = getDefaultSegyTraceHeaders(ntraces, ns, dt)
+    SH = get_default_segy_header(ntraces, ns)
+    STH = get_default_segy_trace_headers(ntraces, ns, dt)
 
     # ADD STHin, if exists...
     for key in STHin.keys():
@@ -327,14 +327,14 @@ def writeSegy(filename, Data, dt=1000, STHin={}, SHin={}):
         print key
         SH[key] = SHin[key]
 
-    writeSegyStructure(filename, Data, SH, STH)
+    write_segy_structure(filename, Data, SH, STH)
 
 
-def writeSegyStructure(filename,
-                       Data,
-                       SH,
-                       STH,
-                       endian='>'):  # modified by A Squelch
+def write_segy_structure(filename,
+                         Data,
+                         SH,
+                         STH,
+                         endian='>'):  # modified by A Squelch
     """
     writeSegyStructure(filename, Data, SegyHeader, SegyTraceHeaders)
 
@@ -374,7 +374,7 @@ def writeSegyStructure(filename,
         pos = SH_def[key]["pos"]
         format = SH_def[key]["type"]
         value = SH[key]
-        putValue(value, f, pos, format, endian)
+        put_value(value, f, pos, format, endian)
 
     # SEGY TRACES
     ctype = SH_def['DataSampleFormat']['datatype'][revision][dsf]
@@ -396,7 +396,7 @@ def writeSegyStructure(filename,
                          str(format) +
                          "  Writing " + key +
                          "=" + str(value))
-            putValue(value, f, pos, format, endian)
+            put_value(value, f, pos, format, endian)
 
         # Write Data
         cformat = endian + ctype
@@ -410,7 +410,7 @@ def writeSegyStructure(filename,
     f.close()
 
 
-def putValue(value, fileid, index, ctype='l', endian='>', number=1):
+def put_value(value, fileid, index, ctype='l', endian='>', number=1):
     """
     putValue(data, index, ctype, endian, number)
     """
@@ -490,7 +490,7 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
         return Value, index_end
 
 
-def getBytePerSample(SH):
+def get_byte_per_sample(SH):
     revision = SH["SegyFormatRevisionNumber"]
 
     if revision == 100:
@@ -517,4 +517,4 @@ if __name__ == '__main__':
     filename = r'C:\Users\rjs\opendtectroot\Blake_Ridge_Hydrates_3D'\
                r'\stack_final_scaled50_int8.sgy'
     with open(filename, 'rb') as segy:
-        Data, SH, SegyTraceHeaders = readSegy(segy, filename)
+        Data, SH, SegyTraceHeaders = read_segy(segy, filename)

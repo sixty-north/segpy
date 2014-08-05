@@ -1,5 +1,6 @@
 import struct
 
+
 def ibm2ieee2(ibm_float):
     """
     ibm2ieee2(ibm_float)
@@ -13,9 +14,9 @@ def ibm2ieee2(ibm_float):
         return 0.0
     istic, a, b, c = struct.unpack('>BBBB', ibm_float)
     if istic >= 128:
-        sign= -1.0
+        sign = -1.0
         istic -= 128
     else:
         sign = 1.0
-    mant= float(a << 16) + float(b << 8) + float(c)
+    mant = float(a << 16) + float(b << 8) + float(c)
     return sign * 16 ** (istic - 64) * (mant / dividend)

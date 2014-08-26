@@ -5,12 +5,12 @@ SEG Y Header Definition
 from revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
 SH_def = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
-SH_def["Line"]=            {"pos": 3204, "type": "int32", "def": 0}
-SH_def["Reel"]=            {"pos": 3208, "type": "int32", "def": 0}
-SH_def["DataTracePerEnsemble"]=    {"pos": 3212, "type": "int16", "def": 0}
+SH_def["Line"] = {"pos": 3204, "type": "int32", "def": 0}
+SH_def["Reel"] = {"pos": 3208, "type": "int32", "def": 0}
+SH_def["DataTracePerEnsemble"] = {"pos": 3212, "type": "int16", "def": 0}
 SH_def["AuxiliaryTracePerEnsemble"] = {"pos": 3214, "type": "int16", "def": 0}
-SH_def["dt"]=            {"pos": 3216, "type": "uint16", "def": 1000}
-SH_def["dtOrig"]=        {"pos": 3218, "type": "uint16", "def": 1000}
+SH_def["dt"] = {"pos": 3216, "type": "uint16", "def": 1000}
+SH_def["dtOrig"] = {"pos": 3218, "type": "uint16", "def": 1000}
 SH_def["ns"] = {"pos": 3220, "type": "uint16", "def": 0}
 SH_def["nsOrig"] = {"pos": 3222, "type": "uint16", "def": 0}
 SH_def["DataSampleFormat"] = {"pos": 3224, "type": "int16", "def": 5}
@@ -47,7 +47,7 @@ SH_def["DataSampleFormat"]["datatype"][SEGY_REVISION_1] = {
     1: 'ibm',
     2: 'l',
     3: 'h',
-#    5: 'float',
+    #    5: 'float',
     5: 'f',
     8: 'B'}
 
@@ -68,7 +68,8 @@ SH_def["MeasurementSystem"] = {"pos": 3254, "type": "int16", "def": 0}
 SH_def["ImpulseSignalPolarity"] = {"pos": 3256, "type": "int16", "def": 0}
 SH_def["VibratoryPolarityCode"] = {"pos": 3258, "type": "int16", "def": 0}
 SH_def["Unassigned1"] = {"pos": 3260, "type": "int16", "n": 120, "def": 0}
-SH_def["SegyFormatRevisionNumber"] = {"pos": 3500, "type": "uint16", "def": 100}
+SH_def["SegyFormatRevisionNumber"] = {
+    "pos": 3500, "type": "uint16", "def": 100}
 SH_def["FixedLengthTraceFlag"] = {"pos": 3502, "type": "uint16", "def": 0}
 SH_def["NumberOfExtTextualHeaders"] = {"pos": 3504, "type": "uint16", "def": 0}
 SH_def["Unassigned2"] = {"pos": 3506, "type": "int16", "n": 47, "def": 0}

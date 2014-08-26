@@ -1,4 +1,4 @@
-def imageSegy(Data):
+def image_segy(Data):
     """
     imageSegy(Data)
     Image segy Data
@@ -8,6 +8,7 @@ def imageSegy(Data):
     pylab.title('pymat test')
     pylab.grid(True)
     pylab.show()
+
 
 def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
     """
@@ -19,7 +20,7 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
 
     for i in range(0, SH['ntraces'], skipt):
 
-        trace = Data[: , i]
+        trace = Data[:, i]
         trace[0] = 0
         trace[SH['ns'] - 1] = 0
         pylab.plot(i + trace / maxval, t, color='black', linewidth=lwidth)
@@ -27,9 +28,7 @@ def wiggle(Data, SH, skipt=1, maxval=8, lwidth=0.1):
             if trace[a] < 0:
                 trace[a] = 0
 
-        pylab.fill(i + Data[: , i] / maxval, t, 'k', linewidth=0)
+        pylab.fill(i + Data[:, i] / maxval, t, 'k', linewidth=0)
     pylab.title(SH['filename'])
     pylab.grid(True)
     pylab.show()
-
-  

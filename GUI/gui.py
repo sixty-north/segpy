@@ -222,14 +222,14 @@ class SimpleTest:
 			print dialog.get_filename(), 'selected'
 			filename  = dialog.get_filename()
 			dialog.destroy()
-			self.segy = segypy.readSegy(filename)
+			self.segy = segypy.read_segy(filename)
 		
 			update_segyheader(self)	
 			update_segytraceheader(self)
 			update_segyplot(self)
 
 	def on_new1_activate(self, button):
-		self.segy = segypy.readSegy('../data_4byteINT.segy')
+		self.segy = segypy.read_segy('../data_4byteINT.segy')
 		update_segyheader(self)
 		update_segytraceheader(self,1)
 		update_segyplot(self)

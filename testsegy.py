@@ -2,55 +2,79 @@
 #
 # testsegy.py
 #
-import struct
 
 import segypy
 
-filename='ld0057_file_00095.sgy';
-#filename='mini.sgy'
-#filename='data_IEEE.segy';
-#filename='data_IBM_REV1.segy';
-#filename='data_IBM_REV0.segy';
-#filename='data_1byteINT.segy';
-#filename='data_2byteINT.segy';
-#filename='data_4byteINT.segy';
 
-# Read Segy File
-Data,SH,STH=segypy.readSegy(filename);
+def test_read(filename):
+    # Read Segy File
+    with open(filename, 'rb') as f:
+        return segypy.read_segy(f, filename)
 
 
+def test_write(filename_out, data, sh, sth):
+    sh['DataSampleFormat'] = 5
+    sh['SegyFormatRevisionNumber'] = 100
+    segypy.write_segy_structure(filename_out, data, sh, sth)
 
-exit
+    segypy.wiggle(data, sh, 2, .1, .1)
 
+    f_ieee = 'data_IEEE.segy'
+    f_ibm = 'data_IBM_REV1.segy'
+    d_ieee, sh, sth = segypy.read_segy(f_ieee)
+    d_ibm, sh, sth = segypy.read_segy(f_ibm)
 
-filename_out='testout.segy';
-SH['DataSampleFormat']=5;
-SH['SegyFormatRevisionNumber']=100;
-segypy.writeSegyStructure(filename_out,Data,SH,STH);
-
-segypy.wiggle(Data,SH,2,.1,.1)
-
-f_ieee='data_IEEE.segy';
-f_ibm='data_IBM_REV1.segy';
-d_ieee,SH,STH=segypy.readSegy(f_ieee);
-d_ibm,SH,STH=segypy.readSegy(f_ibm);
+    return d_ieee, d_ibm, data
 
 
-import pylab
+def test_render(d_ieee, d_ibm, data):
+    import pylab
+
+    # imshow(Data)
+    pylab.figure(1)
+    pylab.imshow(d_ieee)
+    pylab.title('ieee')
+    pylab.show()
+
+    pylab.figure(2)
+    pylab.imshow(d_ibm)
+    pylab.title('IBM')
+    pylab.show()
+
+    pylab.figure(3)
+    pylab.imshow(data)
+    pylab.title('TEST')
+    pylab.show()
 
 
-#imshow(Data)
-pylab.figure(1)
-pylab.imshow(d_ieee)
-pylab.title('ieee')
-pylab.show()
+def parse_args():
+    import argparse
 
-pylab.figure(2)
-pylab.imshow(d_ibm)
-pylab.title('IBM')
-pylab.show()
+    parser = argparse.ArgumentParser()
 
-pylab.figure(3)
-pylab.imshow(Data)
-pylab.title('TEST')
-pylab.show()
+    parser.add_argument('filename',
+                        help='The SEGY input file')
+
+    parser.add_argument('--output', '-o',
+                        dest='outfile',
+                        default='',
+                        help='The output file (optional).')
+
+    parser.add_argument('--render_test', '-r',
+                        dest='render_test',
+                        action='store_true',
+                        help='Whether to test rendering (only applies if '
+                             'output is produced.)')
+
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    read_results = test_read(args.filename)
+
+    if args.outfile:
+        write_results = test_write(args.outfile, *read_results)
+
+        if args.render_test:
+            test_render(*write_results)

@@ -25,6 +25,7 @@ segy.verbose         : Amount of verbose information to the screen
 # (C) Thomas Mejer Hansen, 2005-2006
 #
 # with contributions from Pete Forman and Andrew Squelch 2007
+from collections import namedtuple
 import os
 
 import sys
@@ -118,10 +119,22 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
 
 
 def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
-    """
-    read_trace_header(reel_header, TraceHeaderName)
-    """
+    """Read a particular trace header entry for all traces.
 
+    Args:
+        f: A seekable file-linke-object containing the binary SEG Y data.
+
+        reel_header: A dictionary obtained by parsing the reel-header using the read_reel_header() function. The
+            dictionary must contain integer values for both the 'ntraces' (number of traces) and 'ns' (number of
+            samples per trace) keys.
+
+        trace_header_name: The name of the entry to read from the trace header.
+
+        endian: '>' or '<' for big-endian and little-endian respectively.
+
+    Returns:
+        A numpy.ndarray containing the requested header entry values for each trace, in SEG Y file order.
+    """
     bps = get_byte_per_sample(reel_header)
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
@@ -140,19 +153,58 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     return trace_header_values
 
 
-# TODO: Get the parameter ordering of reel_header and f to be consistent
-def read_all_trace_headers(f, reel_header):
+def read_all_trace_headers(f, reel_header, endian='>'):
+    """Read all trace headers.
+
+    Args:
+        f: A seekable file-linke-object containing the binary SEG Y data.
+
+        reel_header: A dictionary obtained by parsing the reel-header using the read_reel_header() function. The
+            dictionary must contain integer values for both the 'ntraces' (number of traces) and 'ns' (number of
+            samples per trace) keys.
+
+        endian: '>' or '<' for big-endian and little-endian respectively.
+
+    Returns:
+        A dictionary mapping string trace header names to numpy.ndarray trace header values, in SEG Y file order.
+    """
     trace_headers = {'filename': reel_header['filename']}
 
     logger.debug('read_all_trace_headers : '
                  'trying to get all segy trace headers')
 
-    for key in TRACE_HEADER_DEF.keys():
-        trace_header = read_trace_header(f, reel_header, key)
+    for i, key in enumerate(TRACE_HEADER_DEF):
+        trace_header = read_trace_header(f, reel_header, key, endian)
         trace_headers[key] = trace_header
-        logger.info("read_all_trace_headers :  " + key)
+        logger.info("read_all_trace_headers : {!r} {} of {} ".format(key, i, len(TRACE_HEADER_DEF)))
 
     return trace_headers
+
+
+TraceAttributeSpec = namedtuple('Record', ['name', 'pos', 'type'])
+
+
+def compile_trace_header_format(endian='>'):
+
+    record_specs = sorted([TraceAttributeSpec(name, TRACE_HEADER_DEF[name]['pos'], TRACE_HEADER_DEF[name]['type']) for name in TRACE_HEADER_DEF],
+                          key=lambda r : r.pos)
+
+    fmt = [endian]
+    length = 0
+    for record_spec in record_specs:
+
+        shortfall = length - record_spec.pos
+        if shortfall:
+            fmt.append(str(shortfall) + 'x')  # Ignore bytes
+            length += shortfall
+
+        ctype = CTYPES[record_spec.type]
+        fmt.append(ctype)
+        length += size_in_bytes(ctype)
+
+    assert length == TRACE_HEADER_NUM_BYTES
+
+    return struct.Struct(''.join(fmt))
 
 
 def file_length(f):
@@ -215,7 +267,7 @@ def read_traces(f,
     logger.debug("read_traces : num_dummy_samples = " + str(num_dummy_samples))
 
     # READ ALL SEGY TRACE HEADERS
-    trace_headers = read_all_trace_headers(f, reel_header)
+    trace_headers = read_all_trace_headers(f, reel_header, endian)
 
     logger.info("read_traces : Reading segy data")
 
@@ -254,7 +306,7 @@ def read_reel_header(f, endian='>'):
     """
     filename = _filename(f)
     reel_header = {'filename': filename}
-    for key in HEADER_DEF.keys():
+    for key in HEADER_DEF:
         pos = HEADER_DEF[key]['pos']
         format = HEADER_DEF[key]['type']
 
@@ -501,10 +553,12 @@ def get_byte_per_sample(header):
 
 
 def main():
-    filename = r'C:\Users\rjs\opendtectroot\Blake_Ridge_Hydrates_3D' \
-               r'\stack_final_scaled50_int8.sgy'
-    with open(filename, 'rb') as segy:
-        data, header, trace_header = read_segy(segy)
+    s = compile_trace_header_format()
+    pass
+
+    #filename = 'data/stack_final_scaled50_int8.sgy'
+    #with open(filename, 'rb') as segy:
+    #    data, header, trace_headers = read_segy(segy)
 
 
 if __name__ == '__main__':

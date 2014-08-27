@@ -121,10 +121,10 @@ def update_segyheader(self):
 	
 		# INSERT INTO TREEMODEL
 		self.SHtree= {"init": 1}
-		for key in segypy.SH_def.keys(): 
-				SHkey=segypy.SH_def[key]
+		for key in segypy.HEADER_DEF.keys():
+				SHkey=segypy.HEADER_DEF[key]
 				if (SHkey.has_key('descr')):
-						descr = segypy.SH_def[key]['descr'][0][self.segy[1][key]]
+						descr = segypy.HEADER_DEF[key]['descr'][0][self.segy[1][key]]
 				else:
 						descr = ''
 				insert_row(self.treemodel1,None,key,descr,self.segy[1][key])
@@ -136,11 +136,11 @@ def update_segytraceheader(self,itrace=1):
 	
 		# INSERT INTO TREEMODEL
 		self.STHtree= {"init": 1}
-		for key in segypy.STH_def.keys(): 
-				STHkey=segypy.STH_def[key]
+		for key in segypy.TRACE_HEADER_DEF.keys():
+				STHkey=segypy.TRACE_HEADER_DEF[key]
 				if (STHkey.has_key('descr')):
 						try:
-							descr = segypy.STH_def[key]['descr'][0][self.segy[2][key][itrace-1]]
+							descr = segypy.TRACE_HEADER_DEF[key]['descr'][0][self.segy[2][key][itrace-1]]
 						except:
 							descr='Not Defined'
 				else:

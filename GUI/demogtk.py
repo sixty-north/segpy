@@ -68,10 +68,10 @@ class appgui:
 
     model=self.treemodel
     treeSTH=insert_row(model,None,'Segy Trace Header', '')
-    for key in segypy.STH_def.keys(): 
+    for key in segypy.TRACE_HEADER_DEF.keys():
     	insert_row(model,treeSTH,key, 'An Empty Row')
     treeSH=insert_row(model,None,'Segy Header', 'SH')
-    for key in segypy.SH_def.keys(): 
+    for key in segypy.HEADER_DEF.keys():
     	insert_row(model,treeSH,key, 'An Empty Row')
 
 

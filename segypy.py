@@ -37,8 +37,8 @@ from numpy import zeros
 from numpy import arange
 
 from revisions import SEGY_REVISION_1
-from header_definition import SH_def
-from trace_header_definition import STH_def
+from header_definition import HEADER_DEF
+from trace_header_definition import TRACE_HEADER_DEF
 from ibm_float import ibm2ieee2
 
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
@@ -91,9 +91,9 @@ def get_default_segy_header(ntraces=100, ns=100):
     # TraceSequenceLine
     SH = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 
-    for key in SH_def.keys():
+    for key in HEADER_DEF.keys():
 
-        tmpkey = SH_def[key]
+        tmpkey = HEADER_DEF[key]
         if 'def' in tmpkey:
             val = tmpkey['def']
         else:
@@ -113,9 +113,9 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
     # INITIALIZE DICTIONARY
     STH = {"TraceSequenceLine": {"pos": 0, "type": "int32"}}
 
-    for key in STH_def.keys():
+    for key in TRACE_HEADER_DEF.keys():
 
-        tmpkey = STH_def[key] # TODO: What is going on here?
+        tmpkey = TRACE_HEADER_DEF[key] # TODO: What is going on here?
         STH[key] = zeros(ntraces)
 
     for a in range(ntraces):
@@ -136,10 +136,10 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     bps = get_byte_per_sample(reel_header)
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
-    trace_header_pos = STH_def[trace_header_name]["pos"]
+    trace_header_pos = TRACE_HEADER_DEF[trace_header_name]["pos"]
 
     # TODO: Be consistent between 'type' and 'format' here.
-    trace_header_format = STH_def[trace_header_name]["type"]
+    trace_header_format = TRACE_HEADER_DEF[trace_header_name]["type"]
     ntraces = reel_header["ntraces"]
     trace_header_values = zeros(ntraces)
     binary_reader = create_binary_reader(f, trace_header_format, endian)
@@ -158,7 +158,7 @@ def read_all_trace_headers(f, reel_header):
     logger.debug('read_all_trace_headers : '
                  'trying to get all segy trace headers')
 
-    for key in STH_def.keys():
+    for key in TRACE_HEADER_DEF.keys():
         trace_header = read_trace_header(f, reel_header, key)
         trace_headers[key] = trace_header
         logger.info("read_all_trace_headers :  " + key)
@@ -270,9 +270,9 @@ def read_reel_header(f, endian='>'):
     """
     filename = _filename(f)
     reel_header = {'filename': filename}
-    for key in SH_def.keys():
-        pos = SH_def[key]["pos"]
-        format = SH_def[key]["type"]
+    for key in HEADER_DEF.keys():
+        pos = HEADER_DEF[key]["pos"]
+        format = HEADER_DEF[key]["type"]
 
         reel_header[key], index = read_binary_value(f, pos, format, endian)
 
@@ -359,7 +359,7 @@ def write_segy_structure(filename,
     dsf = SH["DataSampleFormat"]
 
     try:  # block added by A Squelch
-        DataDescr = SH_def["DataSampleFormat"]["descr"][revision][dsf]
+        DataDescr = HEADER_DEF["DataSampleFormat"]["descr"][revision][dsf]
     except KeyError:
         logging.critical("  An error has ocurred interpreting a SEGY binary"
                          "header key")
@@ -374,15 +374,15 @@ def write_segy_structure(filename,
 
     # WRITE SEGY HEADER
 
-    for key in SH_def.keys():
-        pos = SH_def[key]["pos"]
-        format = SH_def[key]["type"]
+    for key in HEADER_DEF.keys():
+        pos = HEADER_DEF[key]["pos"]
+        format = HEADER_DEF[key]["type"]
         value = SH[key]
         put_value(value, f, pos, format, endian)
 
     # SEGY TRACES
-    ctype = SH_def['DataSampleFormat']['datatype'][revision][dsf]
-    bps = SH_def['DataSampleFormat']['bps'][revision][dsf]
+    ctype = HEADER_DEF['DataSampleFormat']['datatype'][revision][dsf]
+    bps = HEADER_DEF['DataSampleFormat']['bps'][revision][dsf]
 
     sizeT = TRACE_HEADER_NUM_BYTES + SH['ns'] * bps
 
@@ -392,9 +392,9 @@ def write_segy_structure(filename,
                      str(itrace + 1) +
                      '/' + str(SH['ntraces']))
         # WRITE SEGY TRACE HEADER
-        for key in STH_def.keys():
-            pos = index + STH_def[key]["pos"]
-            format = STH_def[key]["type"]
+        for key in TRACE_HEADER_DEF.keys():
+            pos = index + TRACE_HEADER_DEF[key]["pos"]
+            format = TRACE_HEADER_DEF[key]["type"]
             value = STH[key][itrace]
             logger.debug(str(pos) + " " +
                          str(format) +
@@ -503,7 +503,7 @@ def get_byte_per_sample(SH):
     dsf = SH["DataSampleFormat"]
 
     try:  # block added by A Squelch
-        bps = SH_def["DataSampleFormat"]["bps"][revision][dsf]
+        bps = HEADER_DEF["DataSampleFormat"]["bps"][revision][dsf]
     except KeyError:
         # TODO: This should not be a critical failure - should just convert
         # exception

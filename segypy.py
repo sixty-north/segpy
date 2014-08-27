@@ -174,20 +174,24 @@ def file_length(f):
     return file_size
 
 
-def read_segy(f, filename, endian='>'):
+def _filename(f):
+    return f.name if hasattr(f, 'name') else '<unknown>'
+
+
+def read_segy(f, endian='>'):
     """
     Data, SegyHeader, trace_headers = read_reel_header(f)
     """
 
     # data = open(filename, 'rb').read()
 
+    filename = _filename(f)
     file_size = file_length(f)
 
     # file_size = len(data)
     logger.debug("readSegy : Length of data : {0}".format(file_size))
 
     reel_header = read_reel_header(f,
-                                   filename,
                                    endian)  # modified by A Squelch
 
     # GET TRACE
@@ -260,12 +264,11 @@ def read_traces(f,
     return values, reel_header, trace_headers
 
 
-def read_reel_header(f, filename, endian='>'):
+def read_reel_header(f, endian='>'):
     """
-    reel_header = read_reel_header(filename)
+    reel_header = read_reel_header(file_handle)
     """
-    # data = open(filename, 'rb').read()
-
+    filename = _filename(f)
     reel_header = {'filename': filename}
     for key in SH_def.keys():
         pos = SH_def[key]["pos"]

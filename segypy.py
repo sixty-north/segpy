@@ -31,10 +31,7 @@ import sys
 import struct
 import logging
 
-from numpy import transpose
-from numpy import reshape
-from numpy import zeros
-from numpy import arange
+from numpy import (transpose, reshape, zeros, arange)
 
 from revisions import canonicalize_revision
 from header_definition import HEADER_DEF
@@ -91,14 +88,8 @@ def get_default_segy_header(ntraces=100, ns=100):
     # TraceSequenceLine
     header = {'Job': {'pos': 3200, 'type': 'int32', 'def': 0}}
 
-    for key in HEADER_DEF.keys():
-
-        tmpkey = HEADER_DEF[key]
-        if 'def' in tmpkey:
-            val = tmpkey['def']
-        else:
-            val = 0
-        header[key] = val
+    for key in HEADER_DEF:
+        header[key] = HEADER_DEF[key].get('def', 0)
 
     header['ntraces'] = ntraces
     header['ns'] = ns
@@ -113,9 +104,7 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
     # INITIALIZE DICTIONARY
     trace_header = {'TraceSequenceLine': {'pos': 0, 'type': 'int32'}}
 
-    for key in TRACE_HEADER_DEF.keys():
-
-        tmpkey = TRACE_HEADER_DEF[key] # TODO: What is going on here?
+    for key in TRACE_HEADER_DEF:
         trace_header[key] = zeros(ntraces)
 
     for a in range(ntraces):
@@ -144,7 +133,7 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     trace_header_values = zeros(ntraces)
     binary_reader = create_binary_reader(f, trace_header_format, endian)
     start_pos = trace_header_pos + REEL_HEADER_NUM_BYTES
-    stride = reel_header["ns"] * bps + TRACE_HEADER_NUM_BYTES
+    stride = reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES
     end_pos = start_pos + (ntraces - 1) * stride + 1
     for i, pos in enumerate(xrange(start_pos, end_pos, stride)):
         trace_header_values[i] = binary_reader(pos)
@@ -183,16 +172,11 @@ def read_segy(f, endian='>'):
     data, header, trace_headers = read_reel_header(f)
     """
 
-    # data = open(filename, 'rb').read()
-
-    filename = _filename(f)
     file_size = file_length(f)
 
-    # file_size = len(data)
-    logger.debug("readSegy : Length of data : {0}".format(file_size))
+    logger.debug("read_segy : Length of data : {0}".format(file_size))
 
-    reel_header = read_reel_header(f,
-                                   endian)  # modified by A Squelch
+    reel_header = read_reel_header(f, endian)  # modified by A Squelch
 
     # GET TRACE
     index = REEL_HEADER_NUM_BYTES
@@ -206,7 +190,7 @@ def read_segy(f, endian='>'):
                                                    index,
                                                    endian)
 
-    logger.debug("readSegy :  Read segy data")  # modified by A Squelch
+    logger.debug("read_segy :  Read segy data")  # modified by A Squelch
 
     return data, reel_header, trace_headers
 
@@ -287,7 +271,7 @@ def read_reel_header(f, endian='>'):
     file_size = file_length(f)
     ntraces = (file_size - REEL_HEADER_NUM_BYTES) / \
               (reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES)
-    reel_header["ntraces"] = ntraces
+    reel_header['ntraces'] = ntraces
 
     logger.debug('read_reel_header : successfully read ' + filename)
 
@@ -357,11 +341,11 @@ def write_segy_structure(filename,
     f = open(filename, 'wb')
 
     # VERBOSE INF
-    revision = canonicalize_revision(header["SegyFormatRevisionNumber"])
-    dsf = header["DataSampleFormat"]
+    revision = canonicalize_revision(header['SegyFormatRevisionNumber'])
+    dsf = header['DataSampleFormat']
 
     try:  # block added by A Squelch
-        data_descriptor = HEADER_DEF["DataSampleFormat"]["descr"][revision][dsf]
+        data_descriptor = HEADER_DEF['DataSampleFormat']['descr'][revision][dsf]
     except KeyError:
         logging.critical("  An error has occurred interpreting a SEGY binary"
                          "header key")

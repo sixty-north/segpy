@@ -89,7 +89,7 @@ def get_default_segy_header(ntraces=100, ns=100):
     header = getDefaultSegyHeader()
     """
     # TraceSequenceLine
-    header = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
+    header = {'Job': {'pos': 3200, 'type': 'int32', 'def': 0}}
 
     for key in HEADER_DEF.keys():
 
@@ -100,8 +100,8 @@ def get_default_segy_header(ntraces=100, ns=100):
             val = 0
         header[key] = val
 
-    header["ntraces"] = ntraces
-    header["ns"] = ns
+    header['ntraces'] = ntraces
+    header['ns'] = ns
 
     return header
 
@@ -111,7 +111,7 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
     SH = getDefaultSegyTraceHeader()
     """
     # INITIALIZE DICTIONARY
-    trace_header = {"TraceSequenceLine": {"pos": 0, "type": "int32"}}
+    trace_header = {'TraceSequenceLine': {'pos': 0, 'type': 'int32'}}
 
     for key in TRACE_HEADER_DEF.keys():
 
@@ -119,12 +119,12 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
         trace_header[key] = zeros(ntraces)
 
     for a in range(ntraces):
-        trace_header["TraceSequenceLine"][a] = a + 1
-        trace_header["TraceSequenceFile"][a] = a + 1
-        trace_header["FieldRecord"][a] = 1000
-        trace_header["TraceNumber"][a] = a + 1
-        trace_header["ns"][a] = ns
-        trace_header["dt"][a] = dt
+        trace_header['TraceSequenceLine'][a] = a + 1
+        trace_header['TraceSequenceFile'][a] = a + 1
+        trace_header['FieldRecord'][a] = 1000
+        trace_header['TraceNumber'][a] = a + 1
+        trace_header['ns'][a] = ns
+        trace_header['dt'][a] = dt
     return trace_header
 
 
@@ -136,11 +136,11 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     bps = get_byte_per_sample(reel_header)
 
     # MAKE SOME LOOKUP TABLE THAT HOLDS THE LOCATION OF HEADERS
-    trace_header_pos = TRACE_HEADER_DEF[trace_header_name]["pos"]
+    trace_header_pos = TRACE_HEADER_DEF[trace_header_name]['pos']
 
     # TODO: Be consistent between 'type' and 'format' here.
-    trace_header_format = TRACE_HEADER_DEF[trace_header_name]["type"]
-    ntraces = reel_header["ntraces"]
+    trace_header_format = TRACE_HEADER_DEF[trace_header_name]['type']
+    ntraces = reel_header['ntraces']
     trace_header_values = zeros(ntraces)
     binary_reader = create_binary_reader(f, trace_header_format, endian)
     start_pos = trace_header_pos + REEL_HEADER_NUM_BYTES
@@ -153,7 +153,7 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
 
 # TODO: Get the parameter ordering of reel_header and f to be consistent
 def read_all_trace_headers(f, reel_header):
-    trace_headers = {'filename': reel_header["filename"]}
+    trace_headers = {'filename': reel_header['filename']}
 
     logger.debug('read_all_trace_headers : '
                  'trying to get all segy trace headers')
@@ -235,7 +235,7 @@ def read_traces(f,
 
     logger.info("read_traces : Reading segy data")
 
-    dsf = reel_header["DataSampleFormat"]
+    dsf = reel_header['DataSampleFormat']
     ctype = DATA_SAMPLE_FORMAT[dsf]
     description = CTYPE_DESCRIPTION[ctype]
     logger.debug("read_traces : Assuming DSF = {0}, {1}".format(
@@ -253,7 +253,7 @@ def read_traces(f,
     values = transpose(values)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF = 8
-    if reel_header["DataSampleFormat"] == 8:
+    if reel_header['DataSampleFormat'] == 8:
         for i in arange(reel_header['ntraces']):
             for j in arange(reel_header['ns']):
                 if values[i][j] > 128:
@@ -271,8 +271,8 @@ def read_reel_header(f, endian='>'):
     filename = _filename(f)
     reel_header = {'filename': filename}
     for key in HEADER_DEF.keys():
-        pos = HEADER_DEF[key]["pos"]
-        format = HEADER_DEF[key]["type"]
+        pos = HEADER_DEF[key]['pos']
+        format = HEADER_DEF[key]['type']
 
         reel_header[key], index = read_binary_value(f, pos, format, endian)
 
@@ -312,11 +312,11 @@ def write_segy(filename, data, dt=1000, trace_header_in=None, header_in=None):
     if trace_header_in is None:
         trace_header_in = {}
 
-    logger.debug("writeSegy : Trying to write " + filename)
+    logger.debug("write_segy : Trying to write " + filename)
 
-    N = data.shape
-    ns = N[0]
-    ntraces = N[1]
+    shape = data.shape
+    ns = shape[0]
+    ntraces = shape[1]
     print ntraces, ns
 
     header = get_default_segy_header(ntraces, ns)
@@ -395,8 +395,8 @@ def write_segy_structure(filename,
                      '/' + str(header['ntraces']))
         # WRITE SEGY TRACE HEADER
         for key in TRACE_HEADER_DEF.keys():
-            pos = index + TRACE_HEADER_DEF[key]["pos"]
-            format = TRACE_HEADER_DEF[key]["type"]
+            pos = index + TRACE_HEADER_DEF[key]['pos']
+            format = TRACE_HEADER_DEF[key]['type']
             value = trace_header[key][itrace]
             logger.debug(str(pos) + " " +
                          str(format) +
@@ -426,9 +426,9 @@ def put_value(value, fileid, index, ctype='l', endian='>', number=1):
 
     logger.debug('putValue : cformat :  ' + cformat + ' ctype = ' + ctype)
 
-    strVal = struct.pack(cformat, value)
+    str_val = struct.pack(cformat, value)
     fileid.seek(index)
-    fileid.write(strVal)
+    fileid.write(str_val)
 
     return 1
 

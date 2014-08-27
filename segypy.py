@@ -36,7 +36,7 @@ from numpy import reshape
 from numpy import zeros
 from numpy import arange
 
-from revisions import SEGY_REVISION_1
+from revisions import canonicalize_revision
 from header_definition import HEADER_DEF
 from trace_header_definition import TRACE_HEADER_DEF
 from ibm_float import ibm2ieee2
@@ -355,7 +355,7 @@ def write_segy_structure(filename,
     f = open(filename, 'wb')
 
     # VERBOSE INF
-    revision = header["SegyFormatRevisionNumber"]
+    revision = canonicalize_revision(header["SegyFormatRevisionNumber"])
     dsf = header["DataSampleFormat"]
 
     try:  # block added by A Squelch
@@ -495,11 +495,7 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
 
 
 def get_byte_per_sample(header):
-    revision = header["SegyFormatRevisionNumber"]
-
-    if revision == 100:
-        revision = SEGY_REVISION_1
-
+    revision = canonicalize_revision(header["SegyFormatRevisionNumber"])
     dsf = header["DataSampleFormat"]
 
     try:  # block added by A Squelch

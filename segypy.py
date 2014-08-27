@@ -1,6 +1,5 @@
-
 """
-A python module for reading/writing/manipulating
+A Python module for reading/writing/manipulating
 SEG-Y formatted files
 
 segy.readSegy                : Read SEGY file
@@ -292,7 +291,7 @@ def read_reel_header(f, filename, endian='>'):
     return reel_header
 
 
-def write_segy(filename, Data, dt=1000, STHin={}, SHin={}):
+def write_segy(filename, Data, dt=1000, STHin=None, SHin=None):
     """
     writeSegy(filename, Data, dt)
 
@@ -305,6 +304,8 @@ def write_segy(filename, Data, dt=1000, STHin={}, SHin={}):
     MAKE OPTIONAL INPUT FOR ALL SEGYHTRACEHEADER VALUES
 
     """
+    if SHin is None: SHin = {}
+    if STHin is None: STHin = {}
 
     logger.debug("writeSegy : Trying to write " + filename)
 

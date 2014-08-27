@@ -180,7 +180,7 @@ def _filename(f):
 
 def read_segy(f, endian='>'):
     """
-    Data, SegyHeader, trace_headers = read_reel_header(f)
+    data, header, trace_headers = read_reel_header(f)
     """
 
     # data = open(filename, 'rb').read()
@@ -199,7 +199,7 @@ def read_segy(f, endian='>'):
     bytes_per_sample = get_byte_per_sample(reel_header)
     num_data = (file_size - REEL_HEADER_NUM_BYTES) / bytes_per_sample
 
-    Data, reel_header, trace_headers = read_traces(f,
+    data, reel_header, trace_headers = read_traces(f,
                                                    reel_header,
                                                    num_data,
                                                    bytes_per_sample,
@@ -208,7 +208,7 @@ def read_segy(f, endian='>'):
 
     logger.debug("readSegy :  Read segy data")  # modified by A Squelch
 
-    return Data, reel_header, trace_headers
+    return data, reel_header, trace_headers
 
 
 def read_traces(f,
@@ -296,19 +296,21 @@ def read_reel_header(f, endian='>'):
 
 def write_segy(filename, data, dt=1000, trace_header_in=None, header_in=None):
     """
-    writeSegy(filename, Data, dt)
+    write_segy(filename, data, dt)
 
     Write SEGY
 
-    See also readSegy
+    See also read_segy
 
     (c) 2005, Thomas Mejer Hansen
 
     MAKE OPTIONAL INPUT FOR ALL SEGYHTRACEHEADER VALUES
 
     """
-    if header_in is None: header_in = {}
-    if trace_header_in is None: trace_header_in = {}
+    if header_in is None:
+        header_in = {}
+    if trace_header_in is None:
+        trace_header_in = {}
 
     logger.debug("writeSegy : Trying to write " + filename)
 
@@ -340,7 +342,7 @@ def write_segy_structure(filename,
                          trace_header,
                          endian='>'):  # modified by A Squelch
     """
-    writeSegyStructure(filename, Data, SegyHeader, SegyTraceHeaders)
+    writeSegyStructure(filename, data, header, trace_header)
 
     Write SEGY file using SegyPy data structures
 
@@ -359,9 +361,9 @@ def write_segy_structure(filename,
     dsf = header["DataSampleFormat"]
 
     try:  # block added by A Squelch
-        DataDescr = HEADER_DEF["DataSampleFormat"]["descr"][revision][dsf]
+        data_descriptor = HEADER_DEF["DataSampleFormat"]["descr"][revision][dsf]
     except KeyError:
-        logging.critical("  An error has ocurred interpreting a SEGY binary"
+        logging.critical("  An error has occurred interpreting a SEGY binary"
                          "header key")
         logging.critical("  Please check the Endian setting for this "
                          "file: {0}".format(header["filename"]))
@@ -370,7 +372,7 @@ def write_segy_structure(filename,
     logger.debug("writeSegyStructure : SEG-Y revision = " + str(revision))
     logger.debug("writeSegyStructure : DataSampleFormat = " +
                  str(dsf) +
-                 "(" + DataDescr + ")")
+                 "(" + data_descriptor + ")")
 
     # WRITE SEGY HEADER
 

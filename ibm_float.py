@@ -1,22 +1,49 @@
-import struct
+import sys
 
+_P24 = float(pow(2, 24))
 
-def ibm2ieee2(ibm_float):
-    """
-    ibm2ieee2(ibm_float)
-    Used by permission
-    (C) Secchi Angelo
-    with thanks to Howard Lightstone and Anton Vredegoor.
-    """
-    dividend = float(16 ** 6)
+if sys.version_info >= (3, 0):
 
-    if ibm_float == 0:
-        return 0.0
-    istic, a, b, c = struct.unpack('>BBBB', ibm_float)
-    if istic >= 128:
-        sign = -1.0
-        istic -= 128
-    else:
-        sign = 1.0
-    mant = float(a << 16) + float(b << 8) + float(c)
-    return sign * 16 ** (istic - 64) * (mant / dividend)
+    def ibm2ieee(big_endian_bytes):
+        """Interpret a bytes object as a big-endian IBM float.
+
+        Args:
+            big_endian_bytes (bytes): A string containing at least four bytes.
+
+        Returns:
+            The floating point value.
+        """
+        a, b, c, d = big_endian_bytes
+
+        if a == b == c == c == 0:
+            return 0.0
+
+        sign = 1 if (a & 0x80) else -1
+        exponent = a & 0x7f
+        mantissa = ((b << 16) | (c << 8) | d) / _P24
+        value = sign * mantissa * pow(16, exponent - 64)
+        return value
+else:
+
+    def ibm2ieee(big_endian_bytes):
+        """Interpret a byte string as a big-endian IBM float.
+
+        Args:
+            big_endian_bytes (str): A string containing at least four bytes.
+
+        Returns:
+            The floating point value.
+        """
+        a = ord(big_endian_bytes[0])
+        b = ord(big_endian_bytes[1])
+        c = ord(big_endian_bytes[2])
+        d = ord(big_endian_bytes[3])
+
+        if a == b == c == c == 0:
+            return 0.0
+
+        sign = 1 if (a & 0x80) else -1
+        exponent = a & 0x7f
+        mantissa = ((b << 16) | (c << 8) | d) / _P24
+        value = sign * mantissa * pow(16, exponent - 64)
+        return value

@@ -96,6 +96,7 @@ class CatalogBuilder:
         is_rm, diff = self._is_row_major(i_min, j_min, j_max)
         if is_rm:
             return RowMajorCatalog(i_min, i_max, j_min, j_max, diff)
+        return DictionaryCatalog(self._catalog)
 
     def _is_row_major(self, i_min, j_min, j_max):
         """Does row major ordering predict values from keys?
@@ -110,7 +111,6 @@ class CatalogBuilder:
             be predicted from the keys by assuming a row-major ordering,
             otherwise False. If True, the second element will be a constant
             offset, otherwise it can be ignored.
-        ordering
         """
         diff = None
         for (i, j), actual_value in self._catalog:
@@ -121,8 +121,6 @@ class CatalogBuilder:
             if current_diff != diff:
                 return False, None
         return True, diff
-
-        return DictionaryCatalog(self._catalog)
 
 
 class RowMajorCatalog(Mapping):

@@ -3,31 +3,50 @@ from __future__ import print_function
 from portability import seekable
 from util import file_length, filename_from_handle
 from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES
-from toolkit import (extract_revision, bytes_per_sample, read_reel_header, catalog_traces, read_binary_values,
-                     compile_trace_header_format, TraceHeader, REEL_HEADER_NUM_BYTES, TRACE_HEADER_NUM_BYTES)
+from toolkit import (extract_revision,
+                     bytes_per_sample,
+                     read_reel_header,
+                     catalog_traces,
+                     read_binary_values,
+                     compile_trace_header_format,
+                     TraceHeader,
+                     REEL_HEADER_NUM_BYTES,
+                     TRACE_HEADER_NUM_BYTES)
 
 
 def create_reader(fh, endian='>'):
-    """Create a SegYReader (or one of its subclasses) based on performing a scan of SEG Y data.
+    """Create a SegYReader (or one of its subclasses) based on performing
+    a scan of SEG Y data.
 
-    This function is the preferred method for creating SegYReader objects. It reads basic header
-    information and attempts to build indexes for traces, CDP numbers (for 2D surveys), and inline
-    and cross line co-ordinates (for 3D surveys) to facilitate subsequent random-access to traces.
+    This function is the preferred method for creating SegYReader
+    objects. It reads basic header information and attempts to build
+    indexes for traces, CDP numbers (for 2D surveys), and inline and
+    cross line co-ordinates (for 3D surveys) to facilitate subsequent
+    random-access to traces.
 
     Args:
-        fh: A file-like-object open in binary mode positioned such that the
-            beginning of the reel header will be the next byte to be read. For disk-based
-            SEG Y files, this is the beginning of the file.
+        fh: A file-like-object open in binary mode positioned such
+            that the beginning of the reel header will be the next
+            byte to be read. For disk-based SEG Y files, this is the
+            beginning of the file.
 
-        endian: '>' for big-endian data (the standard and default), '<' for
-            little-endian (non-standard)
+        endian: '>' for big-endian data (the standard and default), '<'
+                for little-endian (non-standard)
+
+    Raises:
+        ValueError: ``fh`` is unsuitable for some reason, such as not
+                    being open, not being seekable, not being in
+                    binary mode, or being too short.
 
     Returns:
-        A SegYReader object. Depending on the exact type of the SegYReader returned different capabilities may be
-        available. Inspect the returned object to determine these capabilities, or be prepared for capabilities not
-        defined in the SegYReader base class to be unavailable.  The underlying file-like object must remain open
-        for the duration of use of the returned reader object. It is the caller's responsibility to close the
-        underlying file.
+        A SegYReader object. Depending on the exact type of the
+        SegYReader returned different capabilities may be
+        available. Inspect the returned object to determine these
+        capabilities, or be prepared for capabilities not defined in
+        the SegYReader base class to be unavailable.  The underlying
+        file-like object must remain open for the duration of use of
+        the returned reader object. It is the caller's responsibility
+        to close the underlying file.
 
     Example:
 
@@ -37,18 +56,23 @@ def create_reader(fh, endian='>'):
 
     """
     if fh.encoding is not None:
-        raise TypeError("SegYReader must be provided with a binary mode file object")
+        raise TypeError(
+            "SegYReader must be provided with a binary mode file object")
 
     if not seekable(fh):
-        raise TypeError("SegYReader must be provided with a seekable file object")
+        raise TypeError(
+            "SegYReader must be provided with a seekable file object")
 
     if fh.closed:
-        raise ValueError("SegYReader must be provided with an open file object")
+        raise ValueError(
+            "SegYReader must be provided with an open file object")
 
     num_file_bytes = file_length(fh)
     if num_file_bytes < REEL_HEADER_NUM_BYTES:
-        raise ValueError("SEG Y file {!r} of {} bytes is too short".format(filename_from_handle(fh),
-                                                                           num_file_bytes))
+        raise ValueError(
+            "SEG Y file {!r} of {} bytes is too short".format(
+                filename_from_handle(fh),
+                num_file_bytes))
     if endian not in ('<', '>'):
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
@@ -59,37 +83,43 @@ def create_reader(fh, endian='>'):
     trace_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, endian)
 
     if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, reel_header, trace_catalog, cdp_catalog, endian)
+        return SegYReader2D(fh, reel_header, trace_catalog,
+                            cdp_catalog, endian)
 
     if cdp_catalog is None and line_catalog is not None:
-        return SegYReader3D(fh, reel_header, trace_catalog, line_catalog, endian)
+        return SegYReader3D(fh, reel_header, trace_catalog,
+                            line_catalog, endian)
 
     return SegYReader(fh, reel_header, trace_catalog, endian)
 
 
 class SegYReader(object):
+
     """A basic SEG Y reader.
 
-    Use to obtain read the reel header, the trace headers or trace values. Traces can be accessed
-    only by trace index.
+    Use to obtain read the reel header, the trace headers or trace
+    values. Traces can be accessed only by trace index.
     """
 
     def __init__(self, fh, reel_header, trace_catalog, endian='>'):
         """Initialize a SegYReader around a file-like-object.
 
         Note:
-            Usually a SegYReader is most easily constructed using the create_reader() function.
+            Usually a SegYReader is most easily constructed using the
+            create_reader() function.
 
         Args:
-            fh: A file-like object, which must support seeking and support binary reading.
+            fh: A file-like object, which must support seeking and
+            support binary reading.
 
             reel_header: A dictionary containing reel header data.
 
-            trace_catalog: A mapping from zero-based trace index to the byte-offset to
-                individual traces within the file.
+            trace_catalog: A mapping from zero-based trace index to
+                the byte-offset to individual traces within the file.
 
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
+
         """
         self._fh = fh
         self._endian = endian
@@ -99,13 +129,15 @@ class SegYReader(object):
         self._trace_catalog = trace_catalog
 
         self._revision = extract_revision(self._reel_header)
-        self._bytes_per_sample = bytes_per_sample(self._reel_header, self.revision)
+        self._bytes_per_sample = bytes_per_sample(
+            self._reel_header, self.revision)
 
     def trace_indexes(self):
         """An iterator over zero-based trace indexes.
 
         Returns:
-            An iterator which yields integers in the range zero to num_traces() - 1
+            An iterator which yields integers in the range zero to
+            num_traces() - 1
         """
         return iter(self._trace_catalog)
 
@@ -120,8 +152,8 @@ class SegYReader(object):
             trace_index: An integer in the range zero to num_traces() - 1
 
         Returns:
-            A 2-tuple containing a TraceHeader as the first item and a sequence of numeric trace samples
-            as the second item.
+            A 2-tuple containing a TraceHeader as the first item and a
+            sequence of numeric trace samples as the second item.
 
         Example:
 
@@ -134,7 +166,8 @@ class SegYReader(object):
         dsf = self._reel_header['DataSampleFormat']
         ctype = DATA_SAMPLE_FORMAT[dsf]
         pos = self._trace_catalog[trace_index] + TRACE_HEADER_NUM_BYTES
-        trace_values = read_binary_values(self._fh, pos, ctype, num_samples, self._endian)
+        trace_values = read_binary_values(
+            self._fh, pos, ctype, num_samples, self._endian)
         return trace_header, trace_values
 
     def read_trace_header(self, trace_index):
@@ -155,7 +188,8 @@ class SegYReader(object):
         pos = self._trace_catalog[trace_index]
         self._fh.seek(pos)
         data = self._fh.read(TRACE_HEADER_NUM_BYTES)
-        trace_header = TraceHeader._make(self._trace_header_format.unpack(data))
+        trace_header = TraceHeader._make(
+            self._trace_header_format.unpack(data))
         return trace_header
 
     @property
@@ -163,7 +197,9 @@ class SegYReader(object):
         """The spatial dimensionality of the data.
 
         Returns:
-            3 for 3D seismic volumes, 2 for 2D seismic lines, 1 for a single trace, otherwise 0.
+            3 for 3D seismic volumes, 2 for 2D seismic lines, 1 for a
+            single trace, otherwise 0.
+
         """
         return self._dimensionality()
 
@@ -222,31 +258,40 @@ class SegYReader(object):
 class SegYReader3D(SegYReader):
     """A reader for 3D seismic data.
 
-    In addition to the capabilities provided by the SegYReader base class, this reader
-    provides an index to facilitate random access to individual traces via crossline and
-    inline co-ordinates.
+    In addition to the capabilities provided by the SegYReader base
+    class, this reader provides an index to facilitate random access
+    to individual traces via crossline and inline co-ordinates.
     """
 
-    def __init__(self, fh, reel_header, trace_catalog, line_catalog, endian='>'):
+    def __init__(self,
+                 fh,
+                 reel_header,
+                 trace_catalog,
+                 line_catalog,
+                 endian='>'):
         """Initialize a SegYReader3D around a file-like-object.
 
         Note:
-            Usually a SegYReader is most easily constructed using the create_reader() function.
+            Usually a SegYReader is most easily constructed using the
+            create_reader() function.
 
         Args:
-            fh: A file-like object, which must support seeking and support binary reading.
+            fh: A file-like object, which must support seeking and
+                support binary reading.
 
             reel_header: A dictionary containing reel header data.
 
-            trace_catalog: A mapping from zero-based trace indexes to the byte-offset to
-                individual traces within the file.
+            trace_catalog: A mapping from zero-based trace indexes to
+                the byte-offset to individual traces within the file.
 
-            line_catalog: A mapping from (xline, inline) tuples to trace_indexes.
+            line_catalog: A mapping from (xline, inline) tuples to
+                trace_indexes.
 
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader3D, self).__init__(fh, reel_header, trace_catalog, endian)
+        super(SegYReader3D, self).__init__(
+            fh, reel_header, trace_catalog, endian)
         self._line_catalog = line_catalog
 
     def _dimensionality(self):
@@ -271,7 +316,8 @@ class SegYReader3D(SegYReader):
             return len(set(i for i, j in self._line_catalog))
 
     def inline_xline_numbers(self):
-        """An iterator over all (xline_number, inline_number) tuples corresponding to traces.
+        """An iterator over all (xline_number, inline_number) tuples
+        corresponding to traces.
         """
         return iter(self._line_catalog)
 
@@ -279,12 +325,14 @@ class SegYReader3D(SegYReader):
         """Obtain the trace index given an xline and a inline.
 
         Note:
-            Do not assume that all combinations of crossline and inline co-ordinates are valid.
-            The volume may not be rectangular.  Valid values can be obtained from the
+            Do not assume that all combinations of crossline and
+            inline co-ordinates are valid.  The volume may not be
+            rectangular.  Valid values can be obtained from the
             inline_xline_numbers() iterator.
 
-            Furthermore, inline and crossline numbers should not be relied upon to be zero- or one-based
-            indexes (although they may be).
+            Furthermore, inline and crossline numbers should not be
+            relied upon to be zero- or one-based indexes (although
+            they may be).
 
         Args:
             xline: A crossline number.
@@ -298,26 +346,34 @@ class SegYReader3D(SegYReader):
 
 class SegYReader2D(SegYReader):
 
-    def __init__(self, fh, reel_header, trace_catalog, cdp_catalog, endian='>'):
+    def __init__(self,
+                 fh,
+                 reel_header,
+                 trace_catalog,
+                 cdp_catalog,
+                 endian='>'):
         """Initialize a SegYReader2D around a file-like-object.
 
         Note:
-            Usually a SegYReader is most easily constructed using the create_reader() function.
+            Usually a SegYReader is most easily constructed using the
+            create_reader() function.
 
         Args:
-            fh: A file-like object, which must support seeking and support binary reading.
+            fh: A file-like object, which must support seeking and
+                support binary reading.
 
             reel_header: A dictionary containing reel header data.
 
-            trace_catalog: A mapping from zero-based trace index to the byte-offset to
-                individual traces within the file.
+            trace_catalog: A mapping from zero-based trace index to
+                the byte-offset to individual traces within the file.
 
             cdp_catalog: A mapping from CDP numbers to trace_indexes.
 
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader2D, self).__init__(fh, reel_header, trace_catalog, endian)
+        super(SegYReader2D, self).__init__(
+            fh, reel_header, trace_catalog, endian)
         self._cdp_catalog = cdp_catalog
 
     def _dimensionality(self):
@@ -335,12 +391,14 @@ class SegYReader2D(SegYReader):
         """Obtain the trace index given an xline and a inline.
 
         Note:
-            Do not assume that all combinations of crossline and inline co-ordinates are valid.
-            The volume may not be rectangular.  Valid values can be obtained from the
+            Do not assume that all combinations of crossline and
+            inline co-ordinates are valid.  The volume may not be
+            rectangular.  Valid values can be obtained from the
             inline_xline_numbers() iterator.
 
-            Furthermore, inline and crossline numbers should not be relied upon to be zero- or one-based
-            indexes (although they may be).
+            Furthermore, inline and crossline numbers should not be
+            relied upon to be zero- or one-based indexes (although
+            they may be).
 
         Args:
             xline: A crossline number.
@@ -364,7 +422,8 @@ def main(argv=None):
         print("Filename:             ", segy_reader.filename)
         print("SEG Y revision:       ", segy_reader.revision)
         print("Number of traces:     ", segy_reader.num_traces())
-        print("Data format:          ", segy_reader.data_sample_format_description)
+        print("Data format:          ",
+              segy_reader.data_sample_format_description)
         print("Dimensionality:       ", segy_reader.dimensionality)
 
         try:
@@ -380,4 +439,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     main()
-

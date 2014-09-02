@@ -29,23 +29,28 @@ class CatalogBuilder:
     def add(self, index, value):
         """Add an item.
 
-        Each index must be unique if create() is to be subsequently called successfully,
-        although duplicate index values will be accepted by this call without complaint.
+        Each index must be unique if create() is to be subsequently
+        called successfully, although duplicate index values will be
+        accepted by this call without complaint.
+
         """
         self._catalog.append((index, value))
 
     def create(self):
         """Create a possibly more optimized representation of the mapping.
 
-        In this worst case, this method returns an object which is essentially an immutable dictionary. In the best
-        case, the space savings can be vast.
+        In this worst case, this method returns an object which is
+        essentially an immutable dictionary. In the best case, the
+        space savings can be vast.
 
         Returns:
-            A mapping, if a unique mapping from indexes to values is possible, otherwise None.
+            A mapping, if a unique mapping from indexes to values is
+            possible, otherwise None.
+
         """
 
-        # This method examines the contents of the mapping using various heuristics to come up with
-        # a better representation.
+        # This method examines the contents of the mapping using
+        # various heuristics to come up with a better representation.
 
         if len(self._catalog) < 2:
             return DictionaryCatalog(self._catalog)
@@ -56,7 +61,8 @@ class CatalogBuilder:
         if contains_duplicates(index for index, value in self._catalog):
             return None
 
-        if all(isinstance(index, Sequence) and (len(index) == 2) for index, value in self._catalog):
+        if all(isinstance(index, Sequence) and (len(index) == 2)
+               for index, value in self._catalog):
             return self._create_catalog_2()
 
         return self._create_catalog_1()
@@ -79,10 +85,18 @@ class CatalogBuilder:
 
         if index_stride is not None and value_stride is None:
             # Regular index - regular keys and arbitrary values
-            return RegularCatalog(index_min, index_max, index_stride, (value for index, value in self._catalog))
+            return RegularCatalog(index_min,
+                                  index_max,
+                                  index_stride,
+                                  (value for index, value in self._catalog))
 
         assert (index_stride is not None) and (value_stride is not None)
-        catalog = LinearRegularCatalog(index_min, index_max, index_stride, value_min, value_max, value_stride)
+        catalog = LinearRegularCatalog(index_min,
+                                       index_max,
+                                       index_stride,
+                                       value_min,
+                                       value_max,
+                                       value_stride)
         return catalog
 
     def _create_catalog_2(self):
@@ -128,8 +142,9 @@ class CatalogBuilder:
 class RowMajorCatalog(Mapping):
     """A mapping which assumes a row-major ordering of a two-dimensional matrix.
 
-    This is the ordering of items in a two-dimensional matrix where in the (i, j)
-    key tuple the j value changes fastest when iterating through the items in order.
+    This is the ordering of items in a two-dimensional matrix where in
+    the (i, j) key tuple the j value changes fastest when iterating
+    through the items in order.
 
     A RowMajorCatalog predicts the value v from the key (i, j) according to the
     following formula:
@@ -189,14 +204,16 @@ class RowMajorCatalog(Mapping):
 
     def __getitem__(self, key):
         i, j = key
-        if not (self._i_min <= i <= self._i_max) and (self._j_min <= j <= self._j_max):
+        if not (self._i_min <= i <= self._i_max) and \
+               (self._j_min <= j <= self._j_max):
             raise KeyError("{!r} key {!r} out of range".format(self, key))
         value = (i - self._i_min) * self._j_max + (j - self._j_min) + self._c
         return value
 
     def __contains__(self, key):
         i, j = key
-        return (self._i_min <= i <= self._i_max) and (self._j_min <= j <= self._j_max)
+        return (self._i_min <= i <= self._i_max) and \
+               (self._j_min <= j <= self._j_max)
 
     def __len__(self):
         return (self._i_max - self._i_min) * (self._j_max - self._j_min)
@@ -207,8 +224,9 @@ class RowMajorCatalog(Mapping):
                 yield (i, j)
 
     def __repr__(self):
-        return '{}({}, {}, {}, {}, {})'.format(self.__class__.__name__,
-                                               self._i_min, self._i_max, self._j_min, self._j_max, self._c)
+        return '{}({}, {}, {}, {}, {})'.format(
+            self.__class__.__name__,
+            self._i_min, self._i_max, self._j_min, self._j_max, self._c)
 
 
 class DictionaryCatalog(Mapping):
@@ -231,7 +249,8 @@ class DictionaryCatalog(Mapping):
         return item in self._items
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, repr.repr(self._items.items()))
+        return '{}({})'.format(
+            self.__class__.__name__, repr.repr(self._items.items()))
 
 
 class RegularCatalog(Mapping):
@@ -251,10 +270,16 @@ class RegularCatalog(Mapping):
             key_max: The maximum key.
             key_stride: The difference between successive keys.
             values: An iterable series of values corresponding to the keys.
+
+        Raises:
+            ValueError: There is any inconsistency in the keys, stride,
+                and/or values.
         """
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ("RegularIndex key range {!r} is not a multiple of stride {!r}".format(key_stride, key_range))
+            raise ValueError("RegularIndex key range {!r} is not "
+                             "a multiple of stride {!r}".format(
+                                 key_stride, key_range))
         self._key_min = key_min
         self._key_max = key_max
         self._key_stride = key_stride
@@ -276,21 +301,29 @@ class RegularCatalog(Mapping):
         return len(self._values)
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and ((key - self._key_min) % self._key_stride == 0)
+        return (self._key_min <= key <= self._key_max) and \
+               ((key - self._key_min) % self._key_stride == 0)
 
     def __iter__(self):
-        return iter(range(self._key_min, self._key_max + 1, self._index_stride))
+        return iter(range(self._key_min,
+                          self._key_max + 1,
+                          self._index_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {})'.format(self.__class__.__name, self._key_min, self._key_max, self._key_stride,
-                                           repr.repr(self._values))
+        return '{}({}, {}, {}, {})'.format(
+            self.__class__.__name,
+            self._key_min,
+            self._key_max,
+            self._key_stride,
+            repr.repr(self._values))
 
 
 class LinearRegularCatalog(Mapping):
     """A mapping which assumes a linear relationship between keys and values.
 
-    This is the ordering of items in a two-dimensional matrix where in the (i, j)
-    key tuple the j value changes fastest when iterating through the items in order.
+    This is the ordering of items in a two-dimensional matrix where in
+    the (i, j) key tuple the j value changes fastest when iterating
+    through the items in order.
 
     A LinearRegularCatalog predicts the value v from the key according to the
     following formula:
@@ -298,7 +331,13 @@ class LinearRegularCatalog(Mapping):
         v = (value_max - value_min) / (key_max - key_min) * (key - key_min) + value_min
     """
 
-    def __init__(self, key_min, key_max, key_stride, value_min, value_max, value_stride):
+    def __init__(self,
+                 key_min,
+                 key_max,
+                 key_stride,
+                 value_min,
+                 value_max,
+                 value_stride):
         """Initialize a LinearRegularCatalog.
 
         Args:
@@ -307,19 +346,29 @@ class LinearRegularCatalog(Mapping):
             key_stride: The difference between successive keys.
             value_min: The minimum value.
             value_max: The maximum value.
+
+        Raises:
+            ValueError: There is any inconsistency in the keys, strides,
+                and/or values.
         """
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ("{} key range {!r} is not a multiple of key stride {!r}".format(
-                self.__class__.__name__, key_stride, key_range))
+            raise ValueError("{} key range {!r} is not "
+                             "a multiple of key stride {!r}".format(
+                                 self.__class__.__name__,
+                                 key_stride,
+                                 key_range))
         self._key_min = key_min
         self._key_max = key_max
         self._key_stride = key_stride
 
         value_range = value_max - value_min
         if value_range % value_stride != 0:
-            raise ("{} value range {!r} is not a multiple of value stride {!r}".format(
-                self.__class__.__name__, value_stride, value_range))
+            raise ValueError("{} value range {!r} is not "
+                             "a multiple of value stride {!r}".format(
+                                 self.__class__.__name__,
+                                 value_stride,
+                                 value_range))
         self._value_min = value_min
         self._value_max = value_max
         self._value_stride = value_stride
@@ -327,10 +376,14 @@ class LinearRegularCatalog(Mapping):
         num_keys = (self._key_max - self._key_min) // self._key_stride
         num_values = (self._value_max - self._value_min) // self._value_stride
         if num_keys != num_values:
-            raise ("{} inconsistent number of keys {} and values {}".format(
-                self.__class__.__name__, num_keys, num_values))
+            raise ValueError("{} inconsistent number of "
+                             "keys {} and values {}".format(
+                                 self.__class__.__name__,
+                                 num_keys,
+                                 num_values))
 
-        self._m = Fraction(self._value_max - self._value_min, self._key_max - self._key_min)
+        self._m = Fraction(self._value_max - self._value_min,
+                           self._key_max - self._key_min)
 
     def __getitem__(self, key):
         if not (self._key_min <= key <= self._key_max):
@@ -347,11 +400,18 @@ class LinearRegularCatalog(Mapping):
         return 1 + (self._key_max - self._key_min) // self._key_stride
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and ((key - self._key_min) % self._key_stride == 0)
+        return (self._key_min <= key <= self._key_max) and \
+               ((key - self._key_min) % self._key_stride == 0)
 
     def __iter__(self):
         return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {}, {}, {})'.format(self.__class__.__name__,
-            self._key_min, self._key_max, self._key_stride, self._value_min, self._value_max, self._value_stride)
+        return '{}({}, {}, {}, {}, {}, {})'.format(
+            self.__class__.__name__,
+            self._key_min,
+            self._key_max,
+            self._key_stride,
+            self._value_min,
+            self._value_max,
+            self._value_stride)

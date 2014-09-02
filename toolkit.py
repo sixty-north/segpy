@@ -120,7 +120,8 @@ def catalog_traces(fh, bps, endian='>'):
             little-endian (non-standard)
 
     Returns:
-        An immutable sequence containing byte offsets to the beginning of each trace.
+        A tuple of the form `(trace-catalog, cdp-catalog, line-catalog)` where
+        each catalog is an instance of ``collections.Mapping``.
     """
     trace_header_format = compile_trace_header_format(endian)
 
@@ -140,7 +141,9 @@ def catalog_traces(fh, bps, endian='>'):
         samples_bytes = num_samples * bps
         trace_catalog_builder.add(trace_number, pos_begin)
         # Should we check the data actually exists?
-        line_catalog.add((trace_header.Inline3D, trace_header.Crossline3D), trace_number)
+        line_catalog.add((trace_header.Inline3D,
+                          trace_header.Crossline3D),
+                         trace_number)
         cdp_catalog.add(trace_header.cdp, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
@@ -173,9 +176,12 @@ def read_binary_values(fh, pos, ctype='l', count=1, endian='>'):
     buf = fh.read(block_size)
 
     if len(buf) < block_size:
-        raise EOFError("{} bytes requested but only {} available".format(block_size, len(buf)))
+        raise EOFError("{} bytes requested but only {} available".format(
+            block_size, len(buf)))
 
-    values = unpack_ibm_floats(buf, count) if fmt == 'ibm' else unpack_values(buf, count, item_size, fmt)
+    values = (unpack_ibm_floats(buf, count)
+              if fmt == 'ibm'
+              else unpack_values(buf, count, item_size, fmt))
     assert len(values) == count
     return values
 
@@ -184,7 +190,8 @@ def unpack_ibm_floats(data, count):
     """Unpack a series of binary-encoded big-endian single-precision IBM floats.
 
     Args:
-        data: A sequence of bytes. (Python 2 - a str object, Python 3 - a bytes object)
+        data: A sequence of bytes. (Python 2 - a str object,
+            Python 3 - a bytes object)
 
         count: The number of floats to be read.
 
@@ -198,38 +205,50 @@ def unpack_values(buf, count, item_size, fmt, endian='>'):
     """Unpack a series items from a byte string.
 
     Args:
-        data: A sequence of bytes. (Python 2 - a str object, Python 3 - a bytes object)
+        data: A sequence of bytes. (Python 2 - a str object,
+            Python 3 - a bytes object)
 
         count: The number of floats to be read.
 
-        fmt: A format code (one of the values in the datatype.CTYPES dictionary)
+        fmt: A format code (one of the values in the datatype.CTYPES
+            dictionary)
 
     Returns:
         A sequence of objects with type corresponding to the format code.
     """
     c_format = '{}{}{}'.format(endian, count, fmt)
     return struct.unpack(c_format, buf)
-    # We could use array.fromfile() here. On the one hand it's likely to be faster and more compact,
-    # On the other, it only works on "real" files, not arbitrary file-like-objects and it would require us
-    # to handle endian byte swapping ourselves.
+    # We could use array.fromfile() here. On the one hand it's likely
+    # to be faster and more compact,
+    #
+    # On the other, it only works on "real" files, not arbitrary
+    # file-like-objects and it would require us to handle endian byte
+    # swapping ourselves.
 
 
 _TraceAttributeSpec = namedtuple('Record', ['name', 'pos', 'type'])
 
 
 def compile_trace_header_format(endian='>'):
-    """Compile a format string for use with the struct module from the trace header definition.
+    """Compile a format string for use with the struct module from the
+    trace header definition.
 
     Args:
         endian: '>' for big-endian data (the standard and default), '<' for
             little-endian (non-standard)
 
     Returns:
-        A string which can be used with the struct module for parsing trace headers.
+        A string which can be used with the struct module for parsing
+        trace headers.
+
     """
 
-    record_specs = sorted([_TraceAttributeSpec(name, TRACE_HEADER_DEF[name]['pos'], TRACE_HEADER_DEF[name]['type']) for name in TRACE_HEADER_DEF],
-                          key=lambda r : r.pos)
+    record_specs = sorted(
+        [_TraceAttributeSpec(name,
+                             TRACE_HEADER_DEF[name]['pos'],
+                             TRACE_HEADER_DEF[name]['type'])
+         for name in TRACE_HEADER_DEF],
+        key=lambda r: r.pos)
 
     fmt = [endian]
     length = 0
@@ -251,11 +270,14 @@ def compile_trace_header_format(endian='>'):
 
 def _compile_trace_header_record():
     """Build a TraceHeader namedtuple from the trace header definition"""
-    record_specs = sorted([_TraceAttributeSpec(name, TRACE_HEADER_DEF[name]['pos'], TRACE_HEADER_DEF[name]['type']) for name in TRACE_HEADER_DEF],
-                          key=lambda r : r.pos)
-    return namedtuple('TraceHeader', (record_spec.name for record_spec in record_specs))
+    record_specs = sorted(
+        [_TraceAttributeSpec(name,
+                             TRACE_HEADER_DEF[name]['pos'],
+                             TRACE_HEADER_DEF[name]['type'])
+         for name in TRACE_HEADER_DEF],
+        key=lambda r: r.pos)
+    return namedtuple('TraceHeader',
+                      (record_spec.name for record_spec in record_specs))
 
 
 TraceHeader = _compile_trace_header_record()
-
-

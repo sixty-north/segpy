@@ -33,7 +33,7 @@ def contains_duplicates(sorted_iterable):
 
 
 def measure_stride(iterable):
-    """Determine whether successive numeric items differ by a contant amount.
+    """Determine whether successive numeric items differ by a constant amount.
 
     Args:
         iterable: An iterable series of numeric values.

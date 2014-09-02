@@ -11,7 +11,7 @@ class CatalogBuilder:
     values used, a more compact or efficient representation of the mapping
     is possible than, say, a regular dictionary. The CatalogBuilder
     accumulates values and then, once all values have been added, analyzes
-    the keys and values to produce an more optimized representation of the
+    the keys and values to produce a more optimized representation of the
     mapping.
     """
 

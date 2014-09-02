@@ -7,7 +7,7 @@ TRACE_HEADER_DEF["TraceNumber"] = {"pos": 12, "type": "int32"}
 TRACE_HEADER_DEF["EnergySourcePoint"] = {"pos": 16, "type": "int32"}
 TRACE_HEADER_DEF["cdp"] = {"pos": 20, "type": "int32"}
 TRACE_HEADER_DEF["cdpTrace"] = {"pos": 24, "type": "int32"}
-TRACE_HEADER_DEF["TraceIdentificationCode"] = {"pos": 28, "type": "uint16"}
+TRACE_HEADER_DEF["TraceIdentificationCode"] = {"pos": 28, "type": "int16"}
 TRACE_HEADER_DEF["TraceIdentificationCode"]["descr"] = {SEGY_REVISION_0: {
     1: "Seismic data",
     2: "Dead",

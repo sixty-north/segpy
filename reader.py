@@ -270,7 +270,7 @@ class SegYReader3D(SegYReader):
             # TODO: Memoize
             return len(set(i for i, j in self._line_catalog))
 
-    def inline_xlines(self):
+    def inline_xline_numbers(self):
         """An iterator over all (xline_number, inline_number) tuples corresponding to traces.
         """
         return iter(self._line_catalog)
@@ -281,7 +281,7 @@ class SegYReader3D(SegYReader):
         Note:
             Do not assume that all combinations of crossline and inline co-ordinates are valid.
             The volume may not be rectangular.  Valid values can be obtained from the
-            inline_xlines() iterator.
+            inline_xline_numbers() iterator.
 
             Furthermore, inline and crossline numbers should not be relied upon to be zero- or one-based
             indexes (although they may be).
@@ -337,7 +337,7 @@ class SegYReader2D(SegYReader):
         Note:
             Do not assume that all combinations of crossline and inline co-ordinates are valid.
             The volume may not be rectangular.  Valid values can be obtained from the
-            inline_xlines() iterator.
+            inline_xline_numbers() iterator.
 
             Furthermore, inline and crossline numbers should not be relied upon to be zero- or one-based
             indexes (although they may be).

@@ -277,10 +277,10 @@ class RegularCatalog(Mapping):
         return (self._key_min <= key <= self._key_max) and ((key - self._key_min) % self._key_stride == 0)
 
     def __iter__(self):
-        return iter(range(self._key_min, self._key_max + 1, self._index_stride))
+        return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {})'.format(self.__class__.__name, self._key_min, self._key_max, self._key_stride,
+        return '{}({}, {}, {}, {})'.format(self.__class__.__name__, self._key_min, self._key_max, self._key_stride,
                                            repr.repr(self._values))
 
 

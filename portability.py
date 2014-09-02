@@ -1,5 +1,4 @@
 import os
-from util import file_length
 
 
 def seekable(fh):

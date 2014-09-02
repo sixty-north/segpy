@@ -50,7 +50,7 @@ TRACE_HEADER_DEF["DataUse"]["descr"] = {0: {
     2: "Test"}}
 TRACE_HEADER_DEF["DataUse"]["descr"][1] = TRACE_HEADER_DEF["DataUse"]["descr"][0]
 TRACE_HEADER_DEF["offset"] = {"pos": 36, "type": "int32"}
-TRACE_HEADER_DEF["ReceiverGroupElevation"] = {"pos": 40, "type": "int32"}
+TTRACE_HEADER_DEF["ReceiverGroupElevation"] = {"pos": 40, "type": "int32"}
 TRACE_HEADER_DEF["SourceSurfaceElevation"] = {"pos": 44, "type": "int32"}
 TRACE_HEADER_DEF["SourceDepth"] = {"pos": 48, "type": "int32"}
 TRACE_HEADER_DEF["ReceiverDatumElevation"] = {"pos": 52, "type": "int32"}

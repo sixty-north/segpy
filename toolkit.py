@@ -108,9 +108,22 @@ def read_reel_header(fh, endian='>'):
 
 
 def catalog_traces(fh, bps, endian='>'):
-    """Determine the file offsets of each trace in the SEG Y file.
+    """Build catalogs to facilitate random access to trace data.
 
-     Args:
+    Four catalogs will be build:
+
+     1. A catalog mapping trace index (0-based) to the position of that
+        trace header in the file.
+
+     2. A catalog mapping trace index (0-based) to the number of samples
+        in that trace,
+
+     3. A catalog mapping CDP number to the trace index.
+
+     4. A catalog mapping an (inline, crossline) number 2-tuple to
+        trace index.
+
+    Args:
         fh: A file-like-object open in binary mode.
 
         bps: The number of bytes per sample, such as obtained by a call to
@@ -120,16 +133,21 @@ def catalog_traces(fh, bps, endian='>'):
             little-endian (non-standard)
 
     Returns:
-        A tuple of the form `(trace-catalog, cdp-catalog, line-catalog)` where
-        each catalog is an instance of ``collections.Mapping``.
+        A 4-tuple of the form (trace-offset-catalog,
+                               trace-length-catalog,
+                               cdp-catalog,
+                               line-catalog)` where
+        each catalog is an instance of ``collections.Mapping`` or None
+        if no catalog could be built.
     """
     trace_header_format = compile_trace_header_format(endian)
 
     pos_begin = REEL_HEADER_NUM_BYTES
 
-    trace_catalog_builder = CatalogBuilder()
-    line_catalog = CatalogBuilder()
-    cdp_catalog = CatalogBuilder()
+    trace_offset_catalog_builder = CatalogBuilder()
+    trace_length_catalog_builder = CatalogBuilder()
+    line_catalog_builder = CatalogBuilder()
+    cdp_catalog_builder = CatalogBuilder()
 
     for trace_number in itertools.count():
         fh.seek(pos_begin)
@@ -138,19 +156,21 @@ def catalog_traces(fh, bps, endian='>'):
             break
         trace_header = TraceHeader._make(trace_header_format.unpack(data))
         num_samples = trace_header.ns
+        trace_length_catalog_builder.add(trace_number, num_samples)
         samples_bytes = num_samples * bps
-        trace_catalog_builder.add(trace_number, pos_begin)
+        trace_offset_catalog_builder.add(trace_number, pos_begin)
         # Should we check the data actually exists?
-        line_catalog.add((trace_header.Inline3D,
+        line_catalog_builder.add((trace_header.Inline3D,
                           trace_header.Crossline3D),
                          trace_number)
-        cdp_catalog.add(trace_header.cdp, trace_number)
+        cdp_catalog_builder.add(trace_header.cdp, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
 
-    return (trace_catalog_builder.create(),
-            cdp_catalog.create(),
-            line_catalog.create())
+    return (trace_offset_catalog_builder.create(),
+            trace_length_catalog_builder.create(),
+            cdp_catalog_builder.create(),
+            line_catalog_builder.create())
 
 
 def read_binary_values(fh, pos, ctype='l', count=1, endian='>'):

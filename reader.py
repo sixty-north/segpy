@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from portability import seekable
 from util import file_length, filename_from_handle
-from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES
+from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_bytes
 from toolkit import (extract_revision,
                      bytes_per_sample,
                      read_reel_header,
@@ -14,7 +14,7 @@ from toolkit import (extract_revision,
                      TRACE_HEADER_NUM_BYTES)
 
 
-def create_reader(fh, endian='>'):
+def create_reader(fh, endian='>', progress=None):
     """Create a SegYReader (or one of its subclasses) based on performing
     a scan of SEG Y data.
 
@@ -32,6 +32,11 @@ def create_reader(fh, endian='>'):
 
         endian: '>' for big-endian data (the standard and default), '<'
                 for little-endian (non-standard)
+
+        progress: A unary callable which will be passed a number
+            between zero and one indicating the progress made. If
+            provided, this callback will be invoked at least once with
+            an argument equal to one.
 
     Raises:
         ValueError: ``fh`` is unsuitable for some reason, such as not
@@ -80,17 +85,17 @@ def create_reader(fh, endian='>'):
     revision = extract_revision(reel_header)
     bps = bytes_per_sample(reel_header, revision)
 
-    trace_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, endian)
+    trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, endian, progress)
 
     if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, reel_header, trace_catalog,
+        return SegYReader2D(fh, reel_header, trace_offset_catalog, trace_length_catalog,
                             cdp_catalog, endian)
 
     if cdp_catalog is None and line_catalog is not None:
-        return SegYReader3D(fh, reel_header, trace_catalog,
+        return SegYReader3D(fh, reel_header, trace_offset_catalog, trace_length_catalog,
                             line_catalog, endian)
 
-    return SegYReader(fh, reel_header, trace_catalog, endian)
+    return SegYReader(fh, reel_header, trace_offset_catalog, endian)
 
 
 class SegYReader(object):
@@ -101,7 +106,7 @@ class SegYReader(object):
     values. Traces can be accessed only by trace index.
     """
 
-    def __init__(self, fh, reel_header, trace_catalog, endian='>'):
+    def __init__(self, fh, reel_header, trace_offset_catalog, trace_length_catalog, endian='>'):
         """Initialize a SegYReader around a file-like-object.
 
         Note:
@@ -117,6 +122,9 @@ class SegYReader(object):
             trace_catalog: A mapping from zero-based trace index to
                 the byte-offset to individual traces within the file.
 
+            trace_length_catalog: A mapping from zero-based trace index to the
+                number of samples in that trace.
+
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
 
@@ -126,7 +134,8 @@ class SegYReader(object):
         self._trace_header_format = compile_trace_header_format(self._endian)
 
         self._reel_header = reel_header
-        self._trace_catalog = trace_catalog
+        self._trace_offset_catalog = trace_offset_catalog
+        self._trace_length_catalog = trace_length_catalog
 
         self._revision = extract_revision(self._reel_header)
         self._bytes_per_sample = bytes_per_sample(
@@ -139,36 +148,58 @@ class SegYReader(object):
             An iterator which yields integers in the range zero to
             num_traces() - 1
         """
-        return iter(self._trace_catalog)
+        return iter(self._trace_offset_catalog)
 
     def num_traces(self):
         """The number of traces"""
-        return len(self._trace_catalog)
+        return len(self._trace_offset_catalog)
 
-    def read_trace(self, trace_index):
+    def read_trace(self, trace_index, start=None, stop=None):
         """Read a specific trace.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
 
+            start: Optional zero-based start sample index. The default
+                is to read from the first (i.e. zeroth) sample.
+
+            stop: Optional zero-based stop sample index. Following Python
+                slice convention this is one beyond the end.
+
         Returns:
-            A 2-tuple containing a TraceHeader as the first item and a
-            sequence of numeric trace samples as the second item.
+            A sequence of numeric trace samples.
 
         Example:
 
-            first_trace_header, first_trace_samples = segy_reader.read_trace(0)
+            first_trace_samples = segy_reader.read_trace(0)
+            part_of_second_trace_samples = segy_reader.read_trace(1, 1000, 2000)
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index out of range.")
-        trace_header = self.read_trace_header(trace_index)
-        num_samples = trace_header.ns
+
+        num_samples_in_trace = self._trace_length_catalog[trace_index]
+
+        start_sample = start if start is not None else 0
+        stop_sample = stop if stop is not None else num_samples_in_trace
+
+        if not (0 <= stop_sample <= num_samples_in_trace):
+            raise ValueError("read_trace(): stop value {} out of range 0 to {}"
+                             .format(stop, num_samples_in_trace))
+
+        if not (0 <= start_sample <= stop_sample):
+            raise ValueError("read_trace(): start value {} out of range 0 to {}"
+                             .format(start, stop_sample))
+
         dsf = self._reel_header['DataSampleFormat']
         ctype = DATA_SAMPLE_FORMAT[dsf]
-        pos = self._trace_catalog[trace_index] + TRACE_HEADER_NUM_BYTES
+        start_pos = (self._trace_offset_catalog[trace_index]
+                     + TRACE_HEADER_NUM_BYTES
+                     + start_sample * size_in_bytes(CTYPES[ctype]))
+        num_samples_to_read = stop_sample - start_sample
+
         trace_values = read_binary_values(
-            self._fh, pos, ctype, num_samples, self._endian)
-        return trace_header, trace_values
+            self._fh, start_pos, ctype, num_samples_to_read, self._endian)
+        return trace_values
 
     def read_trace_header(self, trace_index):
         """Read a specific trace.
@@ -184,8 +215,8 @@ class SegYReader(object):
             first_trace_header, first_trace_samples = segy_reader.read_trace(0)
         """
         if not (0 <= trace_index < self.num_traces()):
-            raise ValueError("Trace index out of range.")
-        pos = self._trace_catalog[trace_index]
+            raise ValueError("Trace index {} out of range".format(trace_index))
+        pos = self._trace_offset_catalog[trace_index]
         self._fh.seek(pos)
         data = self._fh.read(TRACE_HEADER_NUM_BYTES)
         trace_header = TraceHeader._make(
@@ -266,7 +297,8 @@ class SegYReader3D(SegYReader):
     def __init__(self,
                  fh,
                  reel_header,
-                 trace_catalog,
+                 trace_offset_catalog,
+                 trace_length_catalog,
                  line_catalog,
                  endian='>'):
         """Initialize a SegYReader3D around a file-like-object.
@@ -281,8 +313,11 @@ class SegYReader3D(SegYReader):
 
             reel_header: A dictionary containing reel header data.
 
-            trace_catalog: A mapping from zero-based trace indexes to
+            trace_offset_catalog: A mapping from zero-based trace indexes to
                 the byte-offset to individual traces within the file.
+
+            trace_length_catalog: A mapping from zero-based trace indexes to
+                the number of samples in that trace.
 
             line_catalog: A mapping from (xline, inline) tuples to
                 trace_indexes.
@@ -291,7 +326,7 @@ class SegYReader3D(SegYReader):
                 little-endian (non-standard)
         """
         super(SegYReader3D, self).__init__(
-            fh, reel_header, trace_catalog, endian)
+            fh, reel_header, trace_offset_catalog, trace_length_catalog, endian)
         self._line_catalog = line_catalog
 
     def _dimensionality(self):
@@ -349,7 +384,8 @@ class SegYReader2D(SegYReader):
     def __init__(self,
                  fh,
                  reel_header,
-                 trace_catalog,
+                 trace_offset_catalog,
+                 trace_length_catalog,
                  cdp_catalog,
                  endian='>'):
         """Initialize a SegYReader2D around a file-like-object.
@@ -364,8 +400,11 @@ class SegYReader2D(SegYReader):
 
             reel_header: A dictionary containing reel header data.
 
-            trace_catalog: A mapping from zero-based trace index to
+            trace_catalog_offset: A mapping from zero-based trace index to
                 the byte-offset to individual traces within the file.
+
+            trace_length_catalog: A mapping from zero-based trace indexes to
+                the number of samples in that trace.
 
             cdp_catalog: A mapping from CDP numbers to trace_indexes.
 
@@ -373,7 +412,7 @@ class SegYReader2D(SegYReader):
                 little-endian (non-standard)
         """
         super(SegYReader2D, self).__init__(
-            fh, reel_header, trace_catalog, endian)
+            fh, reel_header, trace_offset_catalog, trace_length_catalog, endian)
         self._cdp_catalog = cdp_catalog
 
     def _dimensionality(self):
@@ -415,10 +454,27 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
+    class ProgressBar(object):
+
+        def __init__(self, num_chars, character='.'):
+            self._num_chars = num_chars
+            self._character = character
+            self._ratchet = 0
+
+        def __call__(self, proportion):
+            existing = self._num_marks(self._ratchet)
+            required = self._num_marks(proportion)
+            print(self._character * (required - existing), end='')
+            self._ratchet = proportion
+
+        def _num_marks(self, p):
+            return int(round(p * self._num_chars))
+
     filename = argv[0]
 
     with open(filename, 'rb') as segy_file:
-        segy_reader = create_reader(segy_file)
+        segy_reader = create_reader(segy_file, progress=ProgressBar(30))
+        print()
         print("Filename:             ", segy_reader.filename)
         print("SEG Y revision:       ", segy_reader.revision)
         print("Number of traces:     ", segy_reader.num_traces())
@@ -436,6 +492,11 @@ def main(argv=None):
             print("Number of crosslines: ", segy_reader.num_xlines())
         except AttributeError:
             pass
+
+        #trace_index = segy_reader.trace_index(20, 300)
+        #trace_data = segy_reader.read_trace(trace_index, 200, 800)
+        pass
+
 
 if __name__ == '__main__':
     main()

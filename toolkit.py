@@ -10,6 +10,7 @@ from reel_header_definition import HEADER_DEF
 from ibm_float import ibm2ieee
 from revisions import canonicalize_revision
 from trace_header_definition import TRACE_HEADER_DEF
+from util import file_length
 
 
 REEL_HEADER_NUM_BYTES = 3600
@@ -107,16 +108,24 @@ def read_reel_header(fh, endian='>'):
     return reel_header
 
 
-def catalog_traces(fh, bps, endian='>'):
+_READ_PROPORTION = 0.75  # The proportion of time spent in catalog_traces
+                         # reading the file. Determined empirically.
+
+
+def catalog_traces(fh, bps, endian='>', progress=None):
     """Build catalogs to facilitate random access to trace data.
+
+    Note:
+        This function can take significant time to run, proportional
+        to the number of traces in the SEG Y file.
 
     Four catalogs will be build:
 
      1. A catalog mapping trace index (0-based) to the position of that
         trace header in the file.
 
-     2. A catalog mapping trace index (0-based) to the number of samples
-        in that trace,
+     2. A catalog mapping trace index (0-based) to the number of
+        samples in that trace.
 
      3. A catalog mapping CDP number to the trace index.
 
@@ -126,11 +135,16 @@ def catalog_traces(fh, bps, endian='>'):
     Args:
         fh: A file-like-object open in binary mode.
 
-        bps: The number of bytes per sample, such as obtained by a call to
-            bytes_per_sample()
+        bps: The number of bytes per sample, such as obtained by a call
+            to bytes_per_sample()
 
-        endian: '>' for big-endian data (the standard and default), '<' for
-            little-endian (non-standard)
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
+
+        progress: A unary callable which will be passed a number
+            between zero and one indicating the progress made. If
+            provided, this callback will be invoked at least once with
+            an argument equal to 1
 
     Returns:
         A 4-tuple of the form (trace-offset-catalog,
@@ -140,7 +154,14 @@ def catalog_traces(fh, bps, endian='>'):
         each catalog is an instance of ``collections.Mapping`` or None
         if no catalog could be built.
     """
+    progress_callback = progress if progress is not None else lambda p: None
+
+    if not callable(progress_callback):
+        raise TypeError("catalog_traces(): progress callback must be callable")
+
     trace_header_format = compile_trace_header_format(endian)
+
+    length = file_length(fh)
 
     pos_begin = REEL_HEADER_NUM_BYTES
 
@@ -150,6 +171,7 @@ def catalog_traces(fh, bps, endian='>'):
     cdp_catalog_builder = CatalogBuilder()
 
     for trace_number in itertools.count():
+        progress_callback(_READ_PROPORTION * pos_begin / length)
         fh.seek(pos_begin)
         data = fh.read(TRACE_HEADER_NUM_BYTES)
         if len(data) < TRACE_HEADER_NUM_BYTES:
@@ -161,16 +183,31 @@ def catalog_traces(fh, bps, endian='>'):
         trace_offset_catalog_builder.add(trace_number, pos_begin)
         # Should we check the data actually exists?
         line_catalog_builder.add((trace_header.Inline3D,
-                          trace_header.Crossline3D),
-                         trace_number)
+                                  trace_header.Crossline3D),
+                                 trace_number)
         cdp_catalog_builder.add(trace_header.cdp, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
 
-    return (trace_offset_catalog_builder.create(),
-            trace_length_catalog_builder.create(),
-            cdp_catalog_builder.create(),
-            line_catalog_builder.create())
+    progress_callback(_READ_PROPORTION)
+
+    trace_offset_catalog = trace_offset_catalog_builder.create()
+    progress_callback(_READ_PROPORTION + (_READ_PROPORTION / 4))
+
+    trace_length_catalog = trace_length_catalog_builder.create()
+    progress_callback(_READ_PROPORTION + (_READ_PROPORTION / 2))
+
+    cdp_catalog = cdp_catalog_builder.create()
+    progress_callback(_READ_PROPORTION + (_READ_PROPORTION * 3 / 4))
+
+    line_catalog = line_catalog_builder.create()
+    progress_callback(1)
+
+    return (trace_offset_catalog,
+            trace_length_catalog,
+            cdp_catalog,
+            line_catalog)
+
 
 
 def read_binary_values(fh, pos, ctype='l', count=1, endian='>'):

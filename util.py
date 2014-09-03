@@ -1,4 +1,5 @@
 import itertools
+import time
 import os
 
 
@@ -108,3 +109,8 @@ def filename_from_handle(fh):
         return fh.name
     except AttributeError:
         return '<unknown>'
+
+
+def now_millis():
+    millis = int(round(time.time() * 1000))
+    return millis

@@ -83,6 +83,19 @@ class CatalogBuilder:
         value_max = self._catalog[-1][1]
         value_stride = measure_stride(value for index, value in self._catalog)
 
+        if index_stride is not None and value_stride == 0:
+            assert value_min == value_max
+            return RegularConstantCatalog(index_min,
+                                          index_max,
+                                          index_stride,
+                                          value_min)
+
+        if index_stride is None and value_stride == 0:
+            assert value_min == value_max
+            return ConstantCatalog(
+                    (index for index, value in self._catalog),
+                    value_min)
+
         if index_stride is not None and value_stride is None:
             # Regular index - regular keys and arbitrary values
             return RegularCatalog(index_min,
@@ -251,6 +264,103 @@ class DictionaryCatalog(Mapping):
             self.__class__.__name__, repr.repr(self._items.items()))
 
 
+class RegularConstantCatalog(Mapping):
+    """Mapping with keys ordered with regular spacing along the number line.
+
+    The values associated with the keys are constant.
+    """
+
+    def __init__(self, key_min, key_max, key_stride, value):
+        """Initialize a RegularConstantCatalog.
+
+        The catalog is initialized by a description of how the keys
+        are distributed along the number line, and a value which
+        corresponds with all keys.
+
+        Args:
+            key_min: The minimum key.
+            key_max: The maximum key.
+            key_stride: The difference between successive keys.
+            value: A value associated with all keys.
+        """
+        key_range = key_max - key_min
+        if key_range % key_stride != 0:
+            raise ValueError("RegularIndex key range {!r} is not "
+                             "a multiple of stride {!r}".format(
+                                 key_stride, key_range))
+        self._key_min = key_min
+        self._key_max = key_max
+        self._key_stride = key_stride
+        self._value = value
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError("{!r} does not contain key {!r}".format(self, key))
+        return self._value
+
+    def __len__(self):
+        return 1 + (self._key_max - self._key_min) / self._key_stride
+
+    def __contains__(self, key):
+        return (self._key_min <= key <= self._key_max) and \
+               ((key - self._key_min) % self._key_stride == 0)
+
+    def __iter__(self):
+        return iter(range(self._key_min,
+                          self._key_max + 1,
+                          self._key_stride))
+
+    def __repr__(self):
+        return '{}({}, {}, {}, {})'.format(
+            self.__class__.__name__,
+            self._key_min,
+            self._key_max,
+            self._key_stride,
+            self._value)
+
+
+class ConstantCatalog(Mapping):
+    """Mapping with keys ordered with regular spacing along the number line.
+
+    The values associated with the keys are constant.
+    """
+
+    def __init__(self, keys, value):
+        """Initialize a RegularConstantCatalog.
+
+        The catalog is initialized by a description with an iterable series of
+        keys and a constant value to be associated with all the keys.
+
+        Args:
+            keys: An iterable series of distinct keys.
+            key_max: The maximum key.
+            key_stride: The difference between successive keys.
+            value: A value associated with all keys.
+        """
+        self._items = frozenset(keys)
+        self._value = value
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError("{!r} does not contain key {!r}".format(self, key))
+        return self._value
+
+    def __len__(self):
+        return len(self._items)
+
+    def __contains__(self, key):
+        return key in self._items
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __repr__(self):
+        return '{}({}, {})'.format(
+            self.__class__.__name__,
+            repr.repr(self._items),
+            self._value)
+
+
 class RegularCatalog(Mapping):
     """Mapping with keys ordered with regular spacing along the number line.
 
@@ -260,8 +370,9 @@ class RegularCatalog(Mapping):
     def __init__(self, key_min, key_max, key_stride, values):
         """Initialize a RegularCatalog.
 
-        The catalog is initialized by provided a description of how the keys
-        along the number line, and an iterable series of corresponding values.
+        The catalog is initialized by a description of how the keys
+        are distributed along the number line, and an iterable series of
+        corresponding values.
 
         Args:
             key_min: The minimum key.

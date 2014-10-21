@@ -2,59 +2,33 @@ from __future__ import print_function
 
 import sys
 from math import frexp, isnan, isinf
-from portability import long_int, byte_string
+from portability import long_int, byte_string, four_bytes
 
 
 _IBM_FLOAT32_BITS_PRECISION = 24
 _L24 = long_int(2) ** _IBM_FLOAT32_BITS_PRECISION
 _F24 = float(pow(2, _IBM_FLOAT32_BITS_PRECISION))
 
-if sys.version_info >= (3, 0):
 
-    def ibm2ieee(big_endian_bytes):
-        """Interpret a bytes object as a big-endian IBM float.
+def ibm2ieee(big_endian_bytes):
+    """Interpret a byte string as a big-endian IBM float.
 
-        Args:
-            big_endian_bytes (bytes): A string containing at least four bytes.
+    Args:
+        big_endian_bytes (str): A string containing at least four bytes.
 
-        Returns:
-            The floating point value.
-        """
-        a, b, c, d = big_endian_bytes
+    Returns:
+        The floating point value.
+    """
+    a, b, c, d = four_bytes(big_endian_bytes)
 
-        if a == b == c == c == 0:
-            return 0.0
+    if a == b == c == c == 0:
+        return 0.0
 
-        sign = -1 if (a & 0x80) else 1
-        exponent = a & 0x7f
-        mantissa = ((b << 16) | (c << 8) | d) / _F24
-        value = sign * mantissa * pow(16, exponent - 64)
-        return value
-
-else:
-
-    def ibm2ieee(big_endian_bytes):
-        """Interpret a byte string as a big-endian IBM float.
-
-        Args:
-            big_endian_bytes (str): A string containing at least four bytes.
-
-        Returns:
-            The floating point value.
-        """
-        a = ord(big_endian_bytes[0])
-        b = ord(big_endian_bytes[1])
-        c = ord(big_endian_bytes[2])
-        d = ord(big_endian_bytes[3])
-
-        if a == b == c == c == 0:
-            return 0.0
-
-        sign = -1 if (a & 0x80) else 1
-        exponent = a & 0x7f
-        mantissa = ((b << 16) | (c << 8) | d) / _F24
-        value = sign * mantissa * pow(16, exponent - 64)
-        return value
+    sign = -1 if (a & 0x80) else 1
+    exponent = a & 0x7f
+    mantissa = ((b << 16) | (c << 8) | d) / _F24
+    value = sign * mantissa * pow(16, exponent - 64)
+    return value
 
 
 def ieee2ibm(f):

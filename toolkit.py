@@ -7,10 +7,11 @@ import struct
 from catalog import CatalogBuilder
 from datatypes import CTYPES, size_in_bytes
 from reel_header_definition import HEADER_DEF
-from ibm_float import ibm2ieee
+from ibm_float import ibm2ieee, ieee2ibm
 from revisions import canonicalize_revision
 from trace_header_definition import TRACE_HEADER_DEF
 from util import file_length
+from portability import EMPTY_BYTE_STRING
 
 
 REEL_HEADER_NUM_BYTES = 3600
@@ -208,16 +209,36 @@ def catalog_traces(fh, bps, endian='>', progress=None):
             cdp_catalog,
             line_catalog)
 
+def read_trace_header(fh, trace_header_format, pos=None):
+    """Read a trace header.
+
+    Args:
+        fh: A file-like-object open in binary mode.
+
+        trace_header_format: A Struct object, such as obtained from a
+            call to compile_trace_header_format()
+
+        pos: The file offset in bytes from the beginning from which the data
+            is to be read.
+
+    Returns:
+        A TraceHeader object.
+    """
+    if pos is not None:
+        fh.seek(pos)
+    data = fh.read(TRACE_HEADER_NUM_BYTES)
+    trace_header = TraceHeader._make(
+        trace_header_format.unpack(data))
+    return trace_header
 
 
-def read_binary_values(fh, pos, ctype='l', count=1, endian='>'):
+def read_binary_values(fh, pos=None, ctype='l', count=1, endian='>'):
     """Read a series of values from a binary file.
 
     Args:
         fh: A file-like-object open in binary mode.
 
-        pos: The file offset in bytes from the beginning from which the data
-            is to be read.
+c
 
         ctype: The SEG Y data type.
 
@@ -270,6 +291,9 @@ def unpack_values(buf, count, item_size, fmt, endian='>'):
         fmt: A format code (one of the values in the datatype.CTYPES
             dictionary)
 
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
+
     Returns:
         A sequence of objects with type corresponding to the format code.
     """
@@ -281,6 +305,84 @@ def unpack_values(buf, count, item_size, fmt, endian='>'):
     # On the other, it only works on "real" files, not arbitrary
     # file-like-objects and it would require us to handle endian byte
     # swapping ourselves.
+
+
+def write_trace_header(fh, trace_header, trace_header_format, pos=None):
+    """Write a TraceHeader to file.
+
+    Args:
+        fh: A file-like object open in binary mode for writing.
+
+        trace_header: A TraceHeader object.
+
+        trace_header_format: A Struct object, such as obtained from a
+            call to compile_trace_header_format()
+
+        pos: An optional file offset in bytes from the beginning of the
+            file. Defaults to the current file position.
+    """
+    if pos is not None:
+        fh.seek(pos, os.SEEK_SET)
+    buf = trace_header_format.pack(trace_header)
+    fh.write(buf)
+
+
+def write_trace_values(fh, values, ctype='l', pos=None):
+    write_binary_values(fh, values, ctype, pos)
+
+
+def write_binary_values(fh, values, ctype='l', pos=None):
+    """Write a series on values to a file.
+
+    Args:
+        fh: A file-like-object open for writing in binary mode.
+
+        values: An iterable series of values.
+
+        ctype: The SEG Y data type.
+
+        pos: An optional offset from the beginning of the file. If omitted,
+            any writing is done at the current file position.
+    """
+    fmt = CTYPES[ctype]
+
+    if pos is not None:
+        fh.seek(pos, os.SEEK_SET)
+
+    buf = (pack_ibm_floats(values)
+           if fmt == 'ibm'
+           else pack_values(values, fmt))
+
+    fh.write(buf)
+
+
+def pack_ibm_floats(values):
+    """Pack floats into binary-encoded big-endian single-precision IBM floats.
+
+    Args:
+        values: An iterable series of numeric values.
+
+    Returns:
+        A sequence of bytes. (Python 2 - a str object, Python 3 - a bytes
+            object)
+    """
+    return EMPTY_BYTE_STRING.join(ieee2ibm(value) for value in values)
+
+
+def pack_values(values, fmt, endian='>'):
+    """Pack values into binary encoded big-endian byte strings.
+
+    Args:
+        values: An iterable series of values.
+
+        fmt: A format code (one of the values in the datatype.CTYPES
+            dictionary)
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
+    """
+    c_format = '{}{}{}'.format(endian, len(values), fmt)
+    return struct.pack(c_format, *values)
 
 
 _TraceAttributeSpec = namedtuple('Record', ['name', 'pos', 'type'])

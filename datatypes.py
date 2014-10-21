@@ -34,6 +34,7 @@ CTYPES = {'l': 'l',
 
           'ibm': 'ibm'}
 
+
 # TODO This is redundant with data in the SH_def below
 CTYPE_DESCRIPTION = {'ibm': 'IBM float',
                      'l':   '32 bit signed integer',

@@ -1,6 +1,6 @@
 from collections import Mapping, Sequence, OrderedDict
 from fractions import Fraction
-import repr
+from portability import reprlib
 from util import contains_duplicates, measure_stride, minmax
 
 
@@ -261,7 +261,7 @@ class DictionaryCatalog(Mapping):
 
     def __repr__(self):
         return '{}({})'.format(
-            self.__class__.__name__, repr.repr(self._items.items()))
+            self.__class__.__name__, reprlib.repr(self._items.items()))
 
 
 class RegularConstantCatalog(Mapping):
@@ -357,7 +357,7 @@ class ConstantCatalog(Mapping):
     def __repr__(self):
         return '{}({}, {})'.format(
             self.__class__.__name__,
-            repr.repr(self._items),
+            reprlib.repr(self._items),
             self._value)
 
 
@@ -424,7 +424,7 @@ class RegularCatalog(Mapping):
             self._key_min,
             self._key_max,
             self._key_stride,
-            repr.repr(self._values))
+            reprlib.repr(self._values))
 
 
 class LinearRegularCatalog(Mapping):

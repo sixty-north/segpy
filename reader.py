@@ -6,10 +6,10 @@ from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_byt
 from toolkit import (extract_revision,
                      bytes_per_sample,
                      read_reel_header,
+                     read_trace_header,
                      catalog_traces,
                      read_binary_values,
                      compile_trace_header_format,
-                     TraceHeader,
                      REEL_HEADER_NUM_BYTES,
                      TRACE_HEADER_NUM_BYTES)
 
@@ -60,7 +60,7 @@ def create_reader(fh, endian='>', progress=None):
             print(reader.num_traces())
 
     """
-    if fh.encoding is not None:
+    if hasattr(fh, 'encoding') and fh.encoding is not None:
         raise TypeError(
             "SegYReader must be provided with a binary mode file object")
 
@@ -217,10 +217,7 @@ class SegYReader(object):
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
         pos = self._trace_offset_catalog[trace_index]
-        self._fh.seek(pos)
-        data = self._fh.read(TRACE_HEADER_NUM_BYTES)
-        trace_header = TraceHeader._make(
-            self._trace_header_format.unpack(data))
+        trace_header = read_trace_header(self._fh, pos)
         return trace_header
 
     @property

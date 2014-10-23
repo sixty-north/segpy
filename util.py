@@ -18,6 +18,21 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
+def batched(iterable, batch_size):
+    """
+    """
+    pending = []
+    batch = pending
+
+    for item in iterable:
+        pending.append(item)
+        if len(pending) == batch_size:
+            batch = pending
+            pending = []
+            yield batch
+
+    if len(pending) > 0:
+        yield batch
 
 def contains_duplicates(sorted_iterable):
     """Determine in an iterable series contains duplicates.

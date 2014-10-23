@@ -47,7 +47,6 @@ HEADER_DEF["DataSampleFormat"]["datatype"][SEGY_REVISION_1] = {
     1: 'ibm',
     2: 'l',
     3: 'h',
-    #    5: 'float',
     5: 'f',
     8: 'B'}
 

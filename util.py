@@ -18,6 +18,7 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
+
 def batched(iterable, batch_size):
     """
     """
@@ -33,6 +34,13 @@ def batched(iterable, batch_size):
 
     if len(pending) > 0:
         yield batch
+
+
+def pad(iterable, padding=None, size=None):
+    if size is None:
+        return itertools.chain(iterable, itertools.repeat(padding))
+    return itertools.islice(pad(iterable, padding), size)
+
 
 def contains_duplicates(sorted_iterable):
     """Determine in an iterable series contains duplicates.
@@ -131,3 +139,8 @@ def filename_from_handle(fh):
 def now_millis():
     millis = int(round(time.time() * 1000))
     return millis
+
+
+def round_up(integer, multiple):
+    """Round up to the nearest multiple"""
+    return integer if integer % multiple == 0 else integer + multiple - integer % multiple

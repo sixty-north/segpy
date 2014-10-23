@@ -5,16 +5,16 @@ from util import file_length, filename_from_handle
 from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_bytes
 from toolkit import (extract_revision,
                      bytes_per_sample,
-                     read_reel_header,
+                     read_binary_reel_header,
                      read_trace_header,
                      catalog_traces,
                      read_binary_values,
                      compile_trace_header_format,
                      REEL_HEADER_NUM_BYTES,
-                     TRACE_HEADER_NUM_BYTES)
+                     TRACE_HEADER_NUM_BYTES, read_textual_reel_header, read_extended_textual_headers)
 
 
-def create_reader(fh, endian='>', progress=None):
+def create_reader(fh, encoding=None, endian='>', progress=None):
     """Create a SegYReader (or one of its subclasses) based on performing
     a scan of SEG Y data.
 
@@ -29,6 +29,10 @@ def create_reader(fh, endian='>', progress=None):
             that the beginning of the reel header will be the next
             byte to be read. For disk-based SEG Y files, this is the
             beginning of the file.
+
+        encoding: An optional text encoding for the textual headers. If
+            None (the default) a heuristic will be used to guess the
+            header encoding.
 
         endian: '>' for big-endian data (the standard and default), '<'
                 for little-endian (non-standard)
@@ -81,21 +85,24 @@ def create_reader(fh, endian='>', progress=None):
     if endian not in ('<', '>'):
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
-    reel_header = read_reel_header(fh, endian)
-    revision = extract_revision(reel_header)
-    bps = bytes_per_sample(reel_header, revision)
+    textual_reel_header = read_textual_reel_header(fh, encoding)
+    binary_reel_header = read_binary_reel_header(fh, endian)
+    extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
+    revision = extract_revision(binary_reel_header)
+    bps = bytes_per_sample(binary_reel_header, revision)
 
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, endian, progress)
 
     if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, reel_header, trace_offset_catalog, trace_length_catalog,
-                            cdp_catalog, endian)
+        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, cdp_catalog)
 
     if cdp_catalog is None and line_catalog is not None:
-        return SegYReader3D(fh, reel_header, trace_offset_catalog, trace_length_catalog,
-                            line_catalog, endian)
+        return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, line_catalog)
 
-    return SegYReader(fh, reel_header, trace_offset_catalog, endian)
+    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                      endian)
 
 
 class SegYReader(object):
@@ -106,10 +113,17 @@ class SegYReader(object):
     values. Traces can be accessed only by trace index.
     """
 
-    def __init__(self, fh, reel_header, trace_offset_catalog, trace_length_catalog, endian='>'):
+    def __init__(self,
+                 fh,
+                 textual_reel_header,
+                 binary_reel_header,
+                 extended_textual_header,
+                 trace_offset_catalog,
+                 trace_length_catalog,
+                 endian='>'):
         """Initialize a SegYReader around a file-like-object.
 
-        Note:
+                Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
@@ -117,7 +131,12 @@ class SegYReader(object):
             fh: A file-like object, which must support seeking and
             support binary reading.
 
-            reel_header: A dictionary containing reel header data.
+            textual_reel_header: A sequence of forty 80-character Unicode strings
+                containing header data.
+
+            binary_reel_header: A dictionary containing reel header data.
+
+            extended_textual_header: A Unicode string (which may be empty).
 
             trace_catalog: A mapping from zero-based trace index to
                 the byte-offset to individual traces within the file.
@@ -133,13 +152,15 @@ class SegYReader(object):
         self._endian = endian
         self._trace_header_format = compile_trace_header_format(self._endian)
 
-        self._reel_header = reel_header
+        self._textual_reel_header = textual_reel_header
+        self._binary_reel_header = binary_reel_header
+        self._extended_textual_header = extended_textual_header
         self._trace_offset_catalog = trace_offset_catalog
         self._trace_length_catalog = trace_length_catalog
 
-        self._revision = extract_revision(self._reel_header)
+        self._revision = extract_revision(self._binary_reel_header)
         self._bytes_per_sample = bytes_per_sample(
-            self._reel_header, self.revision)
+            self._binary_reel_header, self.revision)
 
     def trace_indexes(self):
         """An iterator over zero-based trace indexes.
@@ -190,7 +211,7 @@ class SegYReader(object):
             raise ValueError("read_trace(): start value {} out of range 0 to {}"
                              .format(start, stop_sample))
 
-        dsf = self._reel_header['DataSampleFormat']
+        dsf = self._binary_reel_header['DataSampleFormat']
         ctype = DATA_SAMPLE_FORMAT[dsf]
         start_pos = (self._trace_offset_catalog[trace_index]
                      + TRACE_HEADER_NUM_BYTES
@@ -235,13 +256,28 @@ class SegYReader(object):
         return 1 if self.num_traces() == 1 else 0
 
     @property
-    def reel_header(self):
-        """The reel header, sometimes known as the binary header.
+    def textual_reel_header(self):
+        """The textual real header.
 
-        Returns:
-            A dictionary containing data from the reel header.
+        An immutable sequence of forty Unicode strings each 80 characters long.
         """
-        return self._reel_header
+        return self._textual_reel_header
+
+    @property
+    def binary_reel_header(self):
+        """The binary reel header.
+
+        A dictionary containing data from the reel header.
+        """
+        return self._binary_reel_header
+
+    @property
+    def extended_textual_header(self):
+        """The concatenation of any extended textual headers as a Unicode string.
+
+        If there were no headers, the string may be empty.
+        """
+        return self._extended_textual_header
 
     @property
     def filename(self):
@@ -274,7 +310,7 @@ class SegYReader(object):
         Returns:
             One of the values from datatypes.DATA_SAMPLE_FORMAT
         """
-        return DATA_SAMPLE_FORMAT[self._reel_header['DataSampleFormat']]
+        return DATA_SAMPLE_FORMAT[self._binary_reel_header['DataSampleFormat']]
 
     @property
     def data_sample_format_description(self):
@@ -293,14 +329,16 @@ class SegYReader3D(SegYReader):
 
     def __init__(self,
                  fh,
-                 reel_header,
+                 textual_reel_header,
+                 binary_reel_header,
+                 extended_textual_header,
                  trace_offset_catalog,
                  trace_length_catalog,
                  line_catalog,
                  endian='>'):
         """Initialize a SegYReader3D around a file-like-object.
 
-        Note:
+                Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
@@ -308,7 +346,7 @@ class SegYReader3D(SegYReader):
             fh: A file-like object, which must support seeking and
                 support binary reading.
 
-            reel_header: A dictionary containing reel header data.
+            binary_reel_header: A dictionary containing reel header data.
 
             trace_offset_catalog: A mapping from zero-based trace indexes to
                 the byte-offset to individual traces within the file.
@@ -322,8 +360,8 @@ class SegYReader3D(SegYReader):
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader3D, self).__init__(
-            fh, reel_header, trace_offset_catalog, trace_length_catalog, endian)
+        super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_header,
+                                           trace_offset_catalog, trace_length_catalog, endian)
         self._line_catalog = line_catalog
 
     def _dimensionality(self):
@@ -333,27 +371,27 @@ class SegYReader3D(SegYReader):
         """The number of distinct inlines in the survey
         """
         try:
-            return self._line_catalog.j_max - self._line_catalog.j_min
+            return self._line_catalog.i_max - self._line_catalog.i_min + 1
         except AttributeError:
             # TODO: Memoize
-            return len(set(j for i, j in self._line_catalog))
+            return len(set(i for i, j in self._line_catalog))
 
     def num_xlines(self):
         """The number of distinct crosslines in the survey
         """
         try:
-            return self._line_catalog.i_max - self._line_catalog.i_min
+            return self._line_catalog.j_max - self._line_catalog.j_min + 1
         except AttributeError:
             # TODO: Memoize
-            return len(set(i for i, j in self._line_catalog))
+            return len(set(j for i, j in self._line_catalog))
 
     def inline_xline_numbers(self):
-        """An iterator over all (xline_number, inline_number) tuples
+        """An iterator over all  (inline_number, xline_number) tuples
         corresponding to traces.
         """
         return iter(self._line_catalog)
 
-    def trace_index(self, xline, inline):
+    def trace_index(self, inline, xline):
         """Obtain the trace index given an xline and a inline.
 
         Note:
@@ -367,27 +405,28 @@ class SegYReader3D(SegYReader):
             they may be).
 
         Args:
-            xline: A crossline number.
             inline: An inline number.
+            xline: A crossline number.
 
         Returns:
             A trace index which can be used with read_trace().
         """
-        return self._line_catalog[(xline, inline)]
+        return self._line_catalog[(inline, xline)]
 
 
 class SegYReader2D(SegYReader):
 
     def __init__(self,
                  fh,
-                 reel_header,
+                 textual_reel_header,
+                 binary_reel_header,
+                 extended_textual_header,
                  trace_offset_catalog,
                  trace_length_catalog,
-                 cdp_catalog,
-                 endian='>'):
+                 cdp_catalog, endian='>'):
         """Initialize a SegYReader2D around a file-like-object.
 
-        Note:
+                Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
@@ -395,7 +434,7 @@ class SegYReader2D(SegYReader):
             fh: A file-like object, which must support seeking and
                 support binary reading.
 
-            reel_header: A dictionary containing reel header data.
+            binary_reel_header: A dictionary containing reel header data.
 
             trace_catalog_offset: A mapping from zero-based trace index to
                 the byte-offset to individual traces within the file.
@@ -408,8 +447,8 @@ class SegYReader2D(SegYReader):
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader2D, self).__init__(
-            fh, reel_header, trace_offset_catalog, trace_length_catalog, endian)
+        super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_header,
+                                           trace_offset_catalog, trace_length_catalog, endian)
         self._cdp_catalog = cdp_catalog
 
     def _dimensionality(self):
@@ -490,10 +529,14 @@ def main(argv=None):
         except AttributeError:
             pass
 
-        #trace_index = segy_reader.trace_index(20, 300)
-        #trace_data = segy_reader.read_trace(trace_index, 200, 800)
-        pass
-
+        print("=== BEGIN TEXTUAL REEL HEADER ===")
+        for line in segy_reader.textual_reel_header:
+            print(line[3:])
+        print("=== END TEXTUAL REEL HEADER ===")
+        print()
+        print("=== BEGIN EXTENDED TEXTUAL HEADER ===")
+        print(segy_reader.extended_textual_header)
+        print("=== END EXTENDED TEXTUAL_HEADER ===")
 
 if __name__ == '__main__':
     main()

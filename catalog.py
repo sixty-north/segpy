@@ -128,6 +128,11 @@ class CatalogBuilder:
     def _is_row_major(self, i_min, j_min, j_max):
         """Does row major ordering predict values from keys?
 
+        In row-major order the last dimension is contiguous, and so changes
+        quickest, when moving through the elements in storage order. Hence
+        the number of rows is the number of distinct i values and the numbers
+        of elements in each row (i.e. columns) is the number of distinct j.
+
         Args:
             i_min: The minimum i value.
             j_min: The minimum j value.
@@ -141,7 +146,7 @@ class CatalogBuilder:
         """
         diff = None
         for (i, j), actual_value in self._catalog:
-            proposed_value = (i - i_min) * j_max + (j - j_min)
+            proposed_value = (i - i_min) * (j_max + 1 - j_min) + (j - j_min)
             current_diff = actual_value - proposed_value
             if diff is None:
                 diff = current_diff
@@ -218,7 +223,7 @@ class RowMajorCatalog(Mapping):
         if not (self._i_min <= i <= self._i_max) and \
                (self._j_min <= j <= self._j_max):
             raise KeyError("{!r} key {!r} out of range".format(self, key))
-        value = (i - self._i_min) * self._j_max + (j - self._j_min) + self._c
+        value = (i - self._i_min) * (self._j_max + 1 - self._j_min) + (j - self._j_min) + self._c
         return value
 
     def __contains__(self, key):
@@ -227,7 +232,7 @@ class RowMajorCatalog(Mapping):
                (self._j_min <= j <= self._j_max)
 
     def __len__(self):
-        return (self._i_max - self._i_min) * (self._j_max - self._j_min)
+        return (self._i_max - self._i_min) * (self._j_max + 1 - self._j_min)
 
     def __iter__(self):
         for i in range(self._i_min, self._i_max + 1):

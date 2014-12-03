@@ -1,4 +1,5 @@
 from __future__ import print_function
+from array import array
 
 from portability import seekable
 from util import file_length, filename_from_handle
@@ -391,7 +392,7 @@ class SegYReader3D(SegYReader):
         """
         return iter(self._line_catalog)
 
-    def trace_index(self, inline, xline):
+    def trace_index(self, inline_xline):
         """Obtain the trace index given an xline and a inline.
 
         Note:
@@ -405,13 +406,12 @@ class SegYReader3D(SegYReader):
             they may be).
 
         Args:
-            inline: An inline number.
-            xline: A crossline number.
+            inline_xline: A 2-tuple of inline number, crossline number.
 
         Returns:
             A trace index which can be used with read_trace().
         """
-        return self._line_catalog[(inline, xline)]
+        return self._line_catalog[inline_xline]
 
 
 class SegYReader2D(SegYReader):
@@ -537,6 +537,9 @@ def main(argv=None):
         print("=== BEGIN EXTENDED TEXTUAL HEADER ===")
         print(segy_reader.extended_textual_header)
         print("=== END EXTENDED TEXTUAL_HEADER ===")
+
+        trace_index = segy_reader.trace_index((105, 150))
+        trace = segy_reader.read_trace(trace_index)
 
 if __name__ == '__main__':
     main()

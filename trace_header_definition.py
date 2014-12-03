@@ -7,7 +7,7 @@ TRACE_HEADER_DEF["TraceNumber"] = {"pos": 12, "type": "int32"}
 TRACE_HEADER_DEF["EnergySourcePoint"] = {"pos": 16, "type": "int32"}
 TRACE_HEADER_DEF["cdp"] = {"pos": 20, "type": "int32"}
 TRACE_HEADER_DEF["cdpTrace"] = {"pos": 24, "type": "int32"}
-TRACE_HEADER_DEF["TraceIdentificationCode"] = {"pos": 28, "type": "uint16"}
+TRACE_HEADER_DEF["TraceIdentificationCode"] = {"pos": 28, "type": "int16"}
 TRACE_HEADER_DEF["TraceIdentificationCode"]["descr"] = {SEGY_REVISION_0: {
     1: "Seismic data",
     2: "Dead",
@@ -86,7 +86,7 @@ TRACE_HEADER_DEF["MuteTimeStart"] = {"pos": 110, "type": "int16"}
 TRACE_HEADER_DEF["MuteTimeEND"] = {"pos": 112, "type": "int16"}
 TRACE_HEADER_DEF["ns"] = {"pos": 114, "type": "uint16"}
 TRACE_HEADER_DEF["dt"] = {"pos": 116, "type": "uint16"}
-TRACE_HEADER_DEF["GainType"] = {"pos": 119, "type": "int16"}
+TRACE_HEADER_DEF["GainType"] = {"pos": 118, "type": "int16"}
 TRACE_HEADER_DEF["GainType"]["descr"] = {SEGY_REVISION_0: {
     1: "Fixes",
     2: "Binary",
@@ -167,7 +167,7 @@ TRACE_HEADER_DEF["cdpX"] = {"pos": 180, "type": "int32"}
 TRACE_HEADER_DEF["cdpY"] = {"pos": 184, "type": "int32"}
 TRACE_HEADER_DEF["Inline3D"] = {"pos": 188, "type": "int32"}
 TRACE_HEADER_DEF["Crossline3D"] = {"pos": 192, "type": "int32"}
-TRACE_HEADER_DEF["ShotPoint"] = {"pos": 192, "type": "int32"}
+TRACE_HEADER_DEF["ShotPoint"] = {"pos": 196, "type": "int32"}
 TRACE_HEADER_DEF["ShotPointScalar"] = {"pos": 200, "type": "int16"}
 TRACE_HEADER_DEF["TraceValueMeasurementUnit"] = {"pos": 202, "type": "int16"}
 TRACE_HEADER_DEF["TraceValueMeasurementUnit"]["descr"] = {SEGY_REVISION_1: {

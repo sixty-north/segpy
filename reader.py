@@ -239,7 +239,7 @@ class SegYReader(object):
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
         pos = self._trace_offset_catalog[trace_index]
-        trace_header = read_trace_header(self._fh, pos)
+        trace_header = read_trace_header(self._fh, self._trace_header_format, pos)
         return trace_header
 
     @property
@@ -538,8 +538,9 @@ def main(argv=None):
         print(segy_reader.extended_textual_header)
         print("=== END EXTENDED TEXTUAL_HEADER ===")
 
-        trace_index = segy_reader.trace_index((105, 150))
-        trace = segy_reader.read_trace(trace_index)
+        for trace_index in segy_reader.trace_indexes():
+            trace_header = segy_reader.read_trace_header(trace_index)
+            print("Inline {}, Crossline {}, Shotpoint {}".format(trace_header.Inline3D, trace_header.Crossline3D, trace_header.ShotPoint))
 
 if __name__ == '__main__':
     main()

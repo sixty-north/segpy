@@ -1,8 +1,10 @@
 from array import array
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import itertools
+from itertools import zip_longest
 import os
 import struct
+import re
 
 from catalog import CatalogBuilder
 from datatypes import CTYPES, size_in_bytes
@@ -10,9 +12,12 @@ from encoding import guess_encoding
 from binary_reel_header_definition import HEADER_DEF
 from ibm_float import ibm2ieee, ieee2ibm
 from revisions import canonicalize_revision
+import textual_reel_header_definition
 from trace_header_definition import TRACE_HEADER_DEF
-from util import file_length, batched, pad, round_up
+from util import file_length, batched, pad, round_up, complementary_slices
 from portability import EMPTY_BYTE_STRING
+
+
 
 CARD_LENGTH = 80
 CARDS_PER_HEADER = 40
@@ -476,6 +481,95 @@ def unpack_values(buf, count, item_size, fmt, endian='>'):
     # swapping ourselves.
 
 
+def format_standard_textual_header(revision, **kwargs):
+    """Produce a standard SEG Y textual header.
+
+    Args:
+        revision: The SEG Y revision.
+
+        **kwargs: Named arguments corresponding to the values in the
+            textual_reel_header_definition.TEMPLATE_FIELD_NAMES dictionary,
+            which in turn correspond to the placeholders in the
+            textual_reel_header_definition.TEMPLATE string.  Any omitted
+            arguments will result in placeholders being replaced by spaces.
+            If the end_marker argument is not supplied, an appropriate end
+            marker will be selected based on the SEG Y revision. For standard
+            end markers consider using textual_reel_header_definition.END_TEXTUAL_HEADER
+            or textual_reel_header_definition.END_EBCDIC.
+
+    Returns:
+        A list of forty Unicode strings.
+
+    Usage:
+        header = format_standard_textual_header(1,
+                                            client="Lundin",
+                                            company="Western Geco",
+                                            crew_number=123,
+                                            processing1="Sixty North AS",
+                                            sweep_start_hz=10,
+                                            sweep_end_hz=1000,
+                                            sweep_length_ms=10000,
+                                            sweep_channel_number=3,
+                                            sweep_type='spread')
+
+    """
+
+    kwargs.setdefault('end_marker', textual_reel_header_definition.END_MARKERS[revision])
+
+    template = textual_reel_header_definition.TEMPLATE
+
+    placeholder_slices = parse_template(template)
+    background_slices = complementary_slices(placeholder_slices.values(), 0, len(template))
+
+    chunks = []
+    for bg_slice, placeholder in zip_longest(background_slices, placeholder_slices.items()):
+
+        if bg_slice is not None:
+            chunks.append(template[bg_slice])
+
+        if placeholder is not None:
+            ph_name, ph_slice = placeholder
+            ph_arg_name = textual_reel_header_definition.TEMPLATE_FIELD_NAMES[ph_name]
+            ph_value = kwargs.pop(ph_arg_name, '')
+            ph_len = ph_slice.stop - ph_slice.start
+            substitute = str(ph_value)[:ph_len].ljust(ph_len, ' ')
+            chunks.append(substitute)
+
+    if len(kwargs) > 0:
+        raise TypeError("The following keyword arguments did not correspond to template placeholders: {!r}"
+                        .format(list(kwargs.keys())))
+
+    concatenation = ''.join(chunks)
+    lines = concatenation.splitlines(keepends=False)
+
+    return lines[1:]  # Omit the first and last lines, which are artifacts of the multiline string template
+
+
+def parse_template(template):
+    """Parse a template to produce a dictionary of placeholders.
+
+    Args:
+        template: The template string containing { field-name } style fixed-width fields.
+
+    Returns:
+        A OrderedDict mapping field names to slices objects which can be used to index
+        into the template string. The order of the entries is the same as the order within
+        which they occur in the template.
+    """
+    PATTERN = r'\{\s*(\w*)\s*\}'
+    regex = re.compile(PATTERN)
+    matches = regex.finditer(template)
+
+    fields = OrderedDict()
+    for match in matches:
+        name = match.group(1)
+        start = match.start()
+        end = match.end()
+        fields[name] = slice(start, end)
+
+    return fields
+
+
 def write_textual_reel_header(fh, lines, encoding):
     """Write the SEG Y card image header, also known as the textual header
 
@@ -721,3 +815,16 @@ def _compile_trace_header_record():
 TraceHeader = _compile_trace_header_record()
 
 
+if __name__ == '__main__':
+    from pprint import pprint as pp
+    header = format_standard_textual_header(1,
+                                            client="Lundin",
+                                            company="Western Geco",
+                                            crew_number=123,
+                                            processing1="Sixty North AS",
+                                            sweep_start_hz=10,
+                                            sweep_end_hz=1000,
+                                            sweep_length_ms=10000,
+                                            sweep_channel_number=3,
+                                            sweep_type='spread')
+    pp(header, width=200)

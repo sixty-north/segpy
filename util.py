@@ -42,6 +42,61 @@ def pad(iterable, padding=None, size=None):
     return itertools.islice(pad(iterable, padding), size)
 
 
+def complementary_slices(slices, start=None, stop=None):
+    """Compute a complementary set of slices which alternate with given slices to form a contiguous range.
+
+    Given,
+
+        Start                          Stop
+           [-----)    [-----) [----)
+
+    produces,
+
+        [--)     [----)     [-)    [---)
+
+    Args:
+        slices: An sequence of existing slices
+        start: An optional start index, defaults to the start of the first slice.
+        stop: An optional one-beyond-the-end index, defaults to the stop attribute of the last slice.
+
+    Yields:
+        A complementary series of slices which alternate with the supplied slices.  The number of returned
+        slices will always be len(slices) + 1 since both leading and trailing slices will always be returned.
+        Note the some of the returned slices may be 'empty' (having zero length).
+    """
+    if start is None:
+        start = slices[0].start
+
+    if stop is None:
+        stop = slices[-1].stop
+
+    index = start
+    for s in slices:
+        yield slice(index, s.start)
+        index = s.stop
+
+    yield slice(index, stop)
+
+
+def roundrobin(*iterables):
+    """Take items from each iterable in turn until all iterables are exhausted.
+
+    roundrobin('ABC', 'D', 'EF') --> A D E B F C
+    """
+    # Recipe credited to George Sakkis
+    pending = len(iterables)
+    nexts = itertools.cycle(iter(it).__next__ for it in iterables)
+    while pending:
+        try:
+            for n in nexts:
+                print
+                yield n()
+        except StopIteration:
+            pending -= 1
+            nexts = itertools.cycle(itertools.islice(nexts, pending))
+
+
+
 def contains_duplicates(sorted_iterable):
     """Determine in an iterable series contains duplicates.
 

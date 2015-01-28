@@ -103,7 +103,7 @@ def create_reader(fh, encoding=None, endian='>', progress=None):
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog)
 
-    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog, trace_length_catalog,
                       endian)
 
 

@@ -2,7 +2,7 @@
 SEG Y Header Definition
 """
 
-from revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
 HEADER_DEF = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 HEADER_DEF["Line"] = {"pos": 3204, "type": "int32", "def": 0}

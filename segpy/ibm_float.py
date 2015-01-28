@@ -1,8 +1,8 @@
 from __future__ import print_function
 
-import sys
 from math import frexp, isnan, isinf
-from portability import long_int, byte_string, four_bytes
+
+from segpy.portability import long_int, byte_string, four_bytes
 
 
 _IBM_FLOAT32_BITS_PRECISION = 24

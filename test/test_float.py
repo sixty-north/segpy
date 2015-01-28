@@ -1,5 +1,6 @@
 import unittest
-from ibm_float import ieee2ibm, ibm2ieee
+
+from segpy.ibm_float import ieee2ibm, ibm2ieee
 
 
 class Ibm2Ieee(unittest.TestCase):
@@ -19,7 +20,6 @@ class Ibm2Ieee(unittest.TestCase):
     def test_negative_118_625(self):
         # Example taken from Wikipedia http://en.wikipedia.org/wiki/IBM_Floating_Point_Architecture
         self.assertEqual(ibm2ieee((0b11000010, 0b01110110, 0b10100000, 0b00000000)), -118.625)
-
 
 
 class Ieee2Ibm(unittest.TestCase):

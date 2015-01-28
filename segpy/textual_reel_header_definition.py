@@ -1,4 +1,4 @@
-from revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
 TEMPLATE = """
 C 1 CLIENT { client             } COMPANY { company           } CREW NO {crew  }

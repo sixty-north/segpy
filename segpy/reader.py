@@ -1,18 +1,19 @@
 from __future__ import print_function
-from array import array
 
-from portability import seekable
-from util import file_length, filename_from_handle
-from datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_bytes
-from toolkit import (extract_revision,
-                     bytes_per_sample,
-                     read_binary_reel_header,
-                     read_trace_header,
-                     catalog_traces,
-                     read_binary_values,
-                     compile_trace_header_format,
-                     REEL_HEADER_NUM_BYTES,
-                     TRACE_HEADER_NUM_BYTES, read_textual_reel_header, read_extended_textual_headers)
+from segpy.portability import seekable
+from segpy.util import file_length, filename_from_handle
+from segpy.datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_bytes
+from segpy.toolkit import (extract_revision,
+                           bytes_per_sample,
+                           read_binary_reel_header,
+                           read_trace_header,
+                           catalog_traces,
+                           read_binary_values,
+                           compile_trace_header_format,
+                           REEL_HEADER_NUM_BYTES,
+                           TRACE_HEADER_NUM_BYTES,
+                           read_textual_reel_header,
+                           read_extended_textual_headers)
 
 
 def create_reader(fh, encoding=None, endian='>', progress=None):
@@ -107,18 +108,17 @@ def create_reader(fh, encoding=None, endian='>', progress=None):
 
 
 class SegYReader(object):
-
     """A basic SEG Y reader.
 
-    Use to obtain read the reel header, the trace headers or trace
-    values. Traces can be accessed only by trace index.
+    Use to obtain read the reel header, the trace_samples headers or trace_samples
+    values. Traces can be accessed only by trace_samples index.
     """
 
     def __init__(self,
                  fh,
                  textual_reel_header,
                  binary_reel_header,
-                 extended_textual_header,
+                 extended_textual_headers,
                  trace_offset_catalog,
                  trace_length_catalog,
                  endian='>'):
@@ -137,13 +137,13 @@ class SegYReader(object):
 
             binary_reel_header: A dictionary containing reel header data.
 
-            extended_textual_header: A Unicode string (which may be empty).
+            extended_textual_headers: A sequence of sequences of Unicode strings.
 
-            trace_catalog: A mapping from zero-based trace index to
+            trace_offset_catalog: A mapping from zero-based trace_samples index to
                 the byte-offset to individual traces within the file.
 
-            trace_length_catalog: A mapping from zero-based trace index to the
-                number of samples in that trace.
+            trace_length_catalog: A mapping from zero-based trace_samples index to the
+                number of samples in that trace_samples.
 
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
@@ -155,7 +155,8 @@ class SegYReader(object):
 
         self._textual_reel_header = textual_reel_header
         self._binary_reel_header = binary_reel_header
-        self._extended_textual_header = extended_textual_header
+        self._extended_textual_headers = extended_textual_headers
+
         self._trace_offset_catalog = trace_offset_catalog
         self._trace_length_catalog = trace_length_catalog
 
@@ -164,7 +165,7 @@ class SegYReader(object):
             self._binary_reel_header, self.revision)
 
     def trace_indexes(self):
-        """An iterator over zero-based trace indexes.
+        """An iterator over zero-based trace_samples indexes.
 
         Returns:
             An iterator which yields integers in the range zero to
@@ -176,8 +177,16 @@ class SegYReader(object):
         """The number of traces"""
         return len(self._trace_offset_catalog)
 
-    def read_trace(self, trace_index, start=None, stop=None):
-        """Read a specific trace.
+    def max_num_trace_samples(self):
+        """The number of samples in the trace_samples with the most samples."""
+        return self._trace_length_catalog.value_max()
+
+    def num_trace_samples(self, trace_index):
+        """The number of samples in the specified trace_samples."""
+        return self._trace_length_catalog[trace_index]
+
+    def trace_samples(self, trace_index, start=None, stop=None):
+        """Read a specific trace_samples.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
@@ -189,27 +198,27 @@ class SegYReader(object):
                 slice convention this is one beyond the end.
 
         Returns:
-            A sequence of numeric trace samples.
+            A sequence of numeric trace_samples samples.
 
         Example:
 
-            first_trace_samples = segy_reader.read_trace(0)
-            part_of_second_trace_samples = segy_reader.read_trace(1, 1000, 2000)
+            first_trace_samples = segy_reader.trace_samples(0)
+            part_of_second_trace_samples = segy_reader.trace_samples(1, 1000, 2000)
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index out of range.")
 
-        num_samples_in_trace = self._trace_length_catalog[trace_index]
+        num_samples_in_trace = self.num_trace_samples(trace_index)
 
         start_sample = start if start is not None else 0
         stop_sample = stop if stop is not None else num_samples_in_trace
 
         if not (0 <= stop_sample <= num_samples_in_trace):
-            raise ValueError("read_trace(): stop value {} out of range 0 to {}"
+            raise ValueError("trace_samples(): stop value {} out of range 0 to {}"
                              .format(stop, num_samples_in_trace))
 
         if not (0 <= start_sample <= stop_sample):
-            raise ValueError("read_trace(): start value {} out of range 0 to {}"
+            raise ValueError("trace_samples(): start value {} out of range 0 to {}"
                              .format(start, stop_sample))
 
         dsf = self._binary_reel_header['DataSampleFormat']
@@ -223,18 +232,18 @@ class SegYReader(object):
             self._fh, start_pos, ctype, num_samples_to_read, self._endian)
         return trace_values
 
-    def read_trace_header(self, trace_index):
-        """Read a specific trace.
+    def trace_header(self, trace_index):
+        """Read a specific trace_samples.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
 
         Returns:
-            A TraceHeader corresponding to the requested trace.
+            A TraceHeader corresponding to the requested trace_samples.
 
         Example:
 
-            first_trace_header, first_trace_samples = segy_reader.read_trace(0)
+            first_trace_header, first_trace_samples = segy_reader.trace_samples(0)
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
@@ -248,7 +257,7 @@ class SegYReader(object):
 
         Returns:
             3 for 3D seismic volumes, 2 for 2D seismic lines, 1 for a
-            single trace, otherwise 0.
+            single trace_samples, otherwise 0.
 
         """
         return self._dimensionality()
@@ -274,11 +283,12 @@ class SegYReader(object):
 
     @property
     def extended_textual_header(self):
-        """The concatenation of any extended textual headers as a Unicode string.
+        """A sequence of sequences of Unicode strings.
 
-        If there were no headers, the string may be empty.
+        If there were no headers, the sequence will be empty.
         """
-        return self._extended_textual_header
+        return self._extended_textual_headers
+
 
     @property
     def filename(self):
@@ -300,7 +310,7 @@ class SegYReader(object):
 
     @property
     def bytes_per_sample(self):
-        """The number of bytes per trace sample.
+        """The number of bytes per trace_samples sample.
         """
         return self._bytes_per_sample
 
@@ -332,7 +342,7 @@ class SegYReader3D(SegYReader):
                  fh,
                  textual_reel_header,
                  binary_reel_header,
-                 extended_textual_header,
+                 extended_textual_headers,
                  trace_offset_catalog,
                  trace_length_catalog,
                  line_catalog,
@@ -349,11 +359,11 @@ class SegYReader3D(SegYReader):
 
             binary_reel_header: A dictionary containing reel header data.
 
-            trace_offset_catalog: A mapping from zero-based trace indexes to
+            trace_offset_catalog: A mapping from zero-based trace_samples indexes to
                 the byte-offset to individual traces within the file.
 
-            trace_length_catalog: A mapping from zero-based trace indexes to
-                the number of samples in that trace.
+            trace_length_catalog: A mapping from zero-based trace_samples indexes to
+                the number of samples in that trace_samples.
 
             line_catalog: A mapping from (xline, inline) tuples to
                 trace_indexes.
@@ -361,30 +371,70 @@ class SegYReader3D(SegYReader):
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_header,
+        super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, endian)
         self._line_catalog = line_catalog
+        self._num_inlines = None
+        self._num_xlines = None
 
     def _dimensionality(self):
         return 3
 
-    def num_inlines(self):
-        """The number of distinct inlines in the survey
+    def inline_range(self):
+        """A range encompassing inline numbers.
+
+        The number of inlines within this range can be found with len(reader.inline_range()).
+
+        Returns:
+            A range() object with start set to the first inline number and stop set to
+            one beyond the last inline number. The range always has a step of one, although
+            this should not be taken as meaning that any intermediate inline number generated
+            by the range is valid.
         """
-        try:
-            return self._line_catalog.i_max - self._line_catalog.i_min + 1
-        except AttributeError:
-            # TODO: Memoize
-            return len(set(i for i, j in self._line_catalog))
+        start = self._line_catalog.key_min()[0]
+        stop = self._line_catalog.key_max()[0] + 1
+        return range(start, stop)
+
+    def num_inlines(self):
+        """The number of distinct inlines in the survey.
+
+        This number is not necessarily the same as the value returned by
+        len(reader.inline_range()) as there may be missing inlines within the range.
+        """
+        if self._num_inlines is None:
+            try:
+                self._num_inlines = self._line_catalog.i_max - self._line_catalog.i_min + 1
+            except AttributeError:
+                self._num_inlines = len(set(i for i, j in self._line_catalog))
+        return self._num_inlines
+
+    def xline_range(self):
+        """A range encompassing crossline numbers.
+
+        The number of crosslines within this range can be found with len(reader.crossline_range()).
+
+        Returns:
+            A range() object with start set to the first crossline number and stop set to
+            one beyond the last crossline number. The range always has a step of one, although
+            this should not be taken as meaning that any intermediate crossline number generated
+            by the range is valid.
+        """
+        start = self._line_catalog.key_min()[1]
+        stop = self._line_catalog.key_max()[1] + 1
+        return range(start, stop)
 
     def num_xlines(self):
-        """The number of distinct crosslines in the survey
+        """The number of distinct crosslines in the survey.
+
+        This number is not necessarily the same as the value returned by
+        len(reader.xline_range()) as there may be missing crosslines within the range.
         """
-        try:
-            return self._line_catalog.j_max - self._line_catalog.j_min + 1
-        except AttributeError:
-            # TODO: Memoize
-            return len(set(j for i, j in self._line_catalog))
+        if self._num_xlines is None:
+            try:
+                self._num_xlines = self._line_catalog.j_max - self._line_catalog.j_min + 1
+            except AttributeError:
+                self._num_xlines = len(set(j for i, j in self._line_catalog))
+        return self._num_xlines
 
     def inline_xline_numbers(self):
         """An iterator over all  (inline_number, xline_number) tuples
@@ -392,8 +442,19 @@ class SegYReader3D(SegYReader):
         """
         return iter(self._line_catalog)
 
+    def has_trace_index(self, inline_xline):
+        """Determine whether a specific trace_samples exists.
+
+        Args:
+            inline_xline: A 2-tuple of inline number, crossline number.
+
+        Returns:
+            True if the specified trace_samples exists, otherwise False.
+        """
+        return inline_xline in self._line_catalog
+
     def trace_index(self, inline_xline):
-        """Obtain the trace index given an xline and a inline.
+        """Obtain the trace_samples index given an xline and a inline.
 
         Note:
             Do not assume that all combinations of crossline and
@@ -409,24 +470,23 @@ class SegYReader3D(SegYReader):
             inline_xline: A 2-tuple of inline number, crossline number.
 
         Returns:
-            A trace index which can be used with read_trace().
+            A trace_samples index which can be used with trace_samples().
         """
         return self._line_catalog[inline_xline]
 
 
 class SegYReader2D(SegYReader):
-
     def __init__(self,
                  fh,
                  textual_reel_header,
                  binary_reel_header,
-                 extended_textual_header,
+                 extended_textual_headers,
                  trace_offset_catalog,
                  trace_length_catalog,
                  cdp_catalog, endian='>'):
         """Initialize a SegYReader2D around a file-like-object.
 
-                Note:
+        Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
@@ -436,18 +496,18 @@ class SegYReader2D(SegYReader):
 
             binary_reel_header: A dictionary containing reel header data.
 
-            trace_catalog_offset: A mapping from zero-based trace index to
+            trace_catalog_offset: A mapping from zero-based trace_samples index to
                 the byte-offset to individual traces within the file.
 
-            trace_length_catalog: A mapping from zero-based trace indexes to
-                the number of samples in that trace.
+            trace_length_catalog: A mapping from zero-based trace_samples indexes to
+                the number of samples in that trace_samples.
 
             cdp_catalog: A mapping from CDP numbers to trace_indexes.
 
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_header,
+        super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, endian)
         self._cdp_catalog = cdp_catalog
 
@@ -459,34 +519,55 @@ class SegYReader2D(SegYReader):
         """
         return iter(self._cdp_catalog)
 
-    def num_cdps(self):
-        return len(self._cdp_catalog)
+    def cdp_range(self):
+        """A range encompassing CDP numbers.
 
-    def trace_index(self, cdp_number):
-        """Obtain the trace index given an xline and a inline.
-
-        Note:
-            Do not assume that all combinations of crossline and
-            inline co-ordinates are valid.  The volume may not be
-            rectangular.  Valid values can be obtained from the
-            inline_xline_numbers() iterator.
-
-            Furthermore, inline and crossline numbers should not be
-            relied upon to be zero- or one-based indexes (although
-            they may be).
-
-        Args:
-            xline: A crossline number.
-            inline: An inline number.
+        The number of CDPs within this range can be found with len(reader.cdp_range()).
 
         Returns:
-            A trace index which can be used with read_trace().
+            A range() object with start set to the first CDP number and stop set to
+            one beyond the last CDP number. The range always has a step of one, although
+            this should not be taken as meaning that any intermediate CDP number generated
+            by the range is valid.
+        """
+        start = self._cdp_catalog.value_min()
+        stop = self._cdp_catalog.value_max() + 1
+        return range(start, stop)
+
+    def num_cdps(self):
+        """The number of distinct CDPs.
+
+        This number is not necessarily the same as the value returned by
+        len(reader.cdp_range()) as there may be missing CDPs.
+        """
+        return len(self._cdp_catalog)
+
+    def has_trace_index(self, cdp_number):
+        """Determine whether a specified trace_samples exists.
+
+        Args:
+            cdp_number: A CDP number.
+
+        Returns:
+            True if the trace_samples exists, otherwise False.
+        """
+        return self._cdp_catalog[cdp_number]
+
+    def trace_index(self, cdp_number):
+        """Obtain the trace_samples index given an xline and a inline.
+
+        Args:
+            cdp_number: A CDP number.
+
+        Returns:
+            A trace_samples index which can be used with trace_samples().
         """
         return self._cdp_catalog[cdp_number]
 
 
 def main(argv=None):
     import sys
+
     if argv is None:
         argv = sys.argv[1:]
 
@@ -539,8 +620,10 @@ def main(argv=None):
         print("=== END EXTENDED TEXTUAL_HEADER ===")
 
         for trace_index in segy_reader.trace_indexes():
-            trace_header = segy_reader.read_trace_header(trace_index)
-            print("Inline {}, Crossline {}, Shotpoint {}".format(trace_header.Inline3D, trace_header.Crossline3D, trace_header.ShotPoint))
+            trace_header = segy_reader.trace_header(trace_index)
+            print("Inline {}, Crossline {}, Shotpoint {}".format(trace_header.Inline3D, trace_header.Crossline3D,
+                                                                 trace_header.ShotPoint))
+
 
 if __name__ == '__main__':
     main()

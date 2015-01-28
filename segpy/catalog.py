@@ -1,7 +1,9 @@
+from abc import abstractmethod, ABCMeta
 from collections import Mapping, Sequence, OrderedDict
 from fractions import Fraction
-from portability import reprlib
-from util import contains_duplicates, measure_stride, minmax
+
+from segpy.portability import reprlib
+from segpy.util import contains_duplicates, measure_stride, minmax
 
 
 class CatalogBuilder:
@@ -155,7 +157,51 @@ class CatalogBuilder:
         return True, diff
 
 
-class RowMajorCatalog(Mapping):
+class Catalog(Mapping):
+    """An abstract base class for Catalogs which provides min and max keys and values."""
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, key_min=None, key_max=None, value_min=None, value_max=None):
+        """Must be overridden and called by subclasses.
+
+        Args:
+            key_min: Optional minimum key.
+            key_max: Optional maximum key.
+            value_min: Optional minimum value.
+            value_max: Optional maximum value.
+        """
+        self._min_key = key_min
+        self._max_key = key_max
+        self._min_value = value_min
+        self._max_value = value_max
+
+    def key_min(self):
+        """Minimum key"""
+        if self._min_key is None:
+            self._min_key = min(self.keys())
+        return self._min_key
+
+    def key_max(self):
+        """Maximum key"""
+        if self._max_key is None:
+            self._max_key = max(self.keys())
+        return self._max_key
+
+    def value_min(self):
+        """Minimum value"""
+        if self._min_value is None:
+            self._min_value = min(self.values())
+        return self._min_value
+
+    def value_max(self):
+        """Maximum value"""
+        if self._max_value is None:
+            self._max_value = max(self.values())
+        return self._max_value
+
+
+class RowMajorCatalog(Catalog):
     """A mapping which assumes a row-major ordering of a two-dimensional matrix.
 
     This is the ordering of items in a two-dimensional matrix where in
@@ -184,6 +230,7 @@ class RowMajorCatalog(Mapping):
             j_max (int): The maximum j value.
             c (int): The constant offset
         """
+        super().__init__()
         self._i_min = i_min
         self._i_max = i_max
         self._j_min = j_min
@@ -210,13 +257,21 @@ class RowMajorCatalog(Mapping):
         """Maximum j value"""
         return self._j_max
 
-    def min(self):
-        """Minimum (i, j) value"""
+    def key_min(self):
+        """Minimum (i, j) key"""
         return self._i_min, self._j_min
 
-    def max(self):
-        """Maximum (i, j) value"""
-        return self._j_min, self._j_max
+    def key_max(self):
+        """Maximum (i, j) key"""
+        return self._i_max, self._j_max
+
+    def value_min(self):
+        """Minimum value at key_min"""
+        return self[self.key_min()]
+
+    def value_max(self):
+        """Maximum value at key_max"""
+        return self[self.key_max()]
 
     def __getitem__(self, key):
         i, j = key
@@ -245,11 +300,12 @@ class RowMajorCatalog(Mapping):
             self._i_min, self._i_max, self._j_min, self._j_max, self._c)
 
 
-class DictionaryCatalog(Mapping):
+class DictionaryCatalog(Catalog):
     """An immutable, ordered, dictionary mapping.
     """
 
     def __init__(self, items):
+        super().__init__()
         self._items = OrderedDict(items)
 
     def __getitem__(self, key):
@@ -269,7 +325,7 @@ class DictionaryCatalog(Mapping):
             self.__class__.__name__, reprlib.repr(self._items.items()))
 
 
-class RegularConstantCatalog(Mapping):
+class RegularConstantCatalog(Catalog):
     """Mapping with keys ordered with regular spacing along the number line.
 
     The values associated with the keys are constant.
@@ -293,41 +349,40 @@ class RegularConstantCatalog(Mapping):
             raise ValueError("RegularIndex key range {!r} is not "
                              "a multiple of stride {!r}".format(
                                  key_stride, key_range))
-        self._key_min = key_min
-        self._key_max = key_max
+        super().__init__(key_min=key_min,
+                         key_max=key_max,
+                         value_min=value,
+                         value_max=value)
         self._key_stride = key_stride
-        self._value = value
 
     def __getitem__(self, key):
         if key not in self:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
-        return self._value
+        return self.value_min()
 
     def __len__(self):
-        return 1 + (self._key_max - self._key_min) / self._key_stride
+        return 1 + (self.key_max() - self.key_min()) / self._key_stride
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self.key_min() <= key <= self.key_max()) and \
+               ((key - self.key_min()) % self._key_stride == 0)
 
     def __iter__(self):
-        return iter(range(self._key_min,
-                          self._key_max + 1,
+        return iter(range(self.key_min(),
+                          self.key_max() + 1,
                           self._key_stride))
 
     def __repr__(self):
         return '{}({}, {}, {}, {})'.format(
             self.__class__.__name__,
-            self._key_min,
-            self._key_max,
+            self.key_min(),
+            self.key_max(),
             self._key_stride,
-            self._value)
+            self.value_min())
 
 
-class ConstantCatalog(Mapping):
-    """Mapping with keys ordered with regular spacing along the number line.
-
-    The values associated with the keys are constant.
+class ConstantCatalog(Catalog):
+    """Mapping with arbitrary keys and a single constant value.
     """
 
     def __init__(self, keys, value):
@@ -342,13 +397,13 @@ class ConstantCatalog(Mapping):
             key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
+        super().__init__(value_min=value, value_max=value)
         self._items = frozenset(keys)
-        self._value = value
 
     def __getitem__(self, key):
         if key not in self:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
-        return self._value
+        return self.value_min()
 
     def __len__(self):
         return len(self._items)
@@ -363,10 +418,10 @@ class ConstantCatalog(Mapping):
         return '{}({}, {})'.format(
             self.__class__.__name__,
             reprlib.repr(self._items),
-            self._value)
+            self.value_min())
 
 
-class RegularCatalog(Mapping):
+class RegularCatalog(Catalog):
     """Mapping with keys ordered with regular spacing along the number line.
 
     The values associated with the keys are arbitrary.
@@ -391,21 +446,20 @@ class RegularCatalog(Mapping):
         """
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ValueError("RegularIndex key range {!r} is not "
-                             "a multiple of stride {!r}".format(
-                                 key_stride, key_range))
-        self._key_min = key_min
-        self._key_max = key_max
+            raise ValueError("{} key range {!r} is not "
+                             "a multiple of stride {!r}".format(self.__class__.__name__,
+                                                                key_stride, key_range))
+        super().__init__(key_min=key_min, key_max=key_max)
         self._key_stride = key_stride
         self._values = list(values)
         num_keys = key_range // key_stride
         if num_keys != len(self._values):
-            raise ValueError("RegularIndex key range and values inconsistent")
+            raise ValueError("{} key range and values inconsistent".format(self.__class__.__name__))
 
     def __getitem__(self, key):
-        if not (self._key_min <= key <= self._key_max):
+        if not (self.key_min() <= key <= self.key_max()):
             raise KeyError("{!r} key {!r} out of range".format(self, key))
-        offset = key - self._key_min
+        offset = key - self.key_min()
         if offset % self._key_stride != 0:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
         index = offset // self._key_stride
@@ -415,24 +469,24 @@ class RegularCatalog(Mapping):
         return len(self._values)
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self.key_min() <= key <= self.key_max()) and \
+               ((key - self.key_min()) % self._key_stride == 0)
 
     def __iter__(self):
-        return iter(range(self._key_min,
-                          self._key_max + 1,
+        return iter(range(self.key_min(),
+                          self.key_max() + 1,
                           self._key_stride))
 
     def __repr__(self):
         return '{}({}, {}, {}, {})'.format(
             self.__class__.__name__,
-            self._key_min,
-            self._key_max,
+            self.key_min(),
+            self.key_max(),
             self._key_stride,
             reprlib.repr(self._values))
 
 
-class LinearRegularCatalog(Mapping):
+class LinearRegularCatalog(Catalog):
     """A mapping which assumes a linear relationship between keys and values.
 
     This is the ordering of items in a two-dimensional matrix where in
@@ -472,8 +526,6 @@ class LinearRegularCatalog(Mapping):
                                  self.__class__.__name__,
                                  key_stride,
                                  key_range))
-        self._key_min = key_min
-        self._key_max = key_max
         self._key_stride = key_stride
 
         value_range = value_max - value_min
@@ -483,12 +535,16 @@ class LinearRegularCatalog(Mapping):
                                  self.__class__.__name__,
                                  value_stride,
                                  value_range))
-        self._value_min = value_min
-        self._value_max = value_max
         self._value_stride = value_stride
 
-        num_keys = (self._key_max - self._key_min) // self._key_stride
-        num_values = (self._value_max - self._value_min) // self._value_stride
+        super().__init__(key_min=key_min,
+                         key_max=key_max,
+                         value_min=value_min,
+                         value_max=value_max)
+
+
+        num_keys = (self.key_max() - self.key_min()) // self._key_stride
+        num_values = (self.value_max() - self.value_min()) // self._value_stride
         if num_keys != num_values:
             raise ValueError("{} inconsistent number of "
                              "keys {} and values {}".format(
@@ -496,36 +552,36 @@ class LinearRegularCatalog(Mapping):
                                  num_keys,
                                  num_values))
 
-        self._m = Fraction(self._value_max - self._value_min,
-                           self._key_max - self._key_min)
+        self._m = Fraction(self.value_max() - self.value_min(),
+                           self.key_max() - self.key_min())
 
     def __getitem__(self, key):
-        if not (self._key_min <= key <= self._key_max):
+        if not (self.key_min() <= key <= self.key_max()):
             raise KeyError("{!r} key {!r} out of range".format(self, key))
-        offset = key - self._key_min
+        offset = key - self.key_min()
         if offset % self._key_stride != 0:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
 
-        v = self._m * (key - self._key_min) + self._value_min
+        v = self._m * (key - self.key_min()) + self.value_min()
         assert v.denominator == 1
         return v.numerator
 
     def __len__(self):
-        return 1 + (self._key_max - self._key_min) // self._key_stride
+        return 1 + (self.key_max() - self.key_min()) // self._key_stride
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self.key_min() <= key <= self.key_max()) and \
+               ((key - self.key_min()) % self._key_stride == 0)
 
     def __iter__(self):
-        return iter(range(self._key_min, self._key_max + 1, self._key_stride))
+        return iter(range(self.key_min(), self.key_max() + 1, self._key_stride))
 
     def __repr__(self):
         return '{}({}, {}, {}, {}, {}, {})'.format(
             self.__class__.__name__,
-            self._key_min,
-            self._key_max,
+            self.key_min(),
+            self.key_max(),
             self._key_stride,
-            self._value_min,
-            self._value_max,
+            self.value_min(),
+            self.value_max(),
             self._value_stride)

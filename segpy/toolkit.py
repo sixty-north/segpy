@@ -6,18 +6,19 @@ import os
 import struct
 import re
 
-from catalog import CatalogBuilder
-from datatypes import CTYPES, size_in_bytes
-from encoding import guess_encoding
-from binary_reel_header_definition import HEADER_DEF
-from ibm_float import ibm2ieee, ieee2ibm
-from revisions import canonicalize_revision
-import textual_reel_header_definition
-from trace_header_definition import TRACE_HEADER_DEF
-from util import file_length, batched, pad, round_up, complementary_slices
-from portability import EMPTY_BYTE_STRING
+from segpy import textual_reel_header_definition
 
+from segpy.catalog import CatalogBuilder
+from segpy.datatypes import CTYPES, size_in_bytes
+from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
+from segpy.binary_reel_header_definition import HEADER_DEF
+from segpy.ibm_float import ibm2ieee, ieee2ibm
+from segpy.revisions import canonicalize_revision
+from segpy.trace_header_definition import TRACE_HEADER_DEF
+from segpy.util import file_length, batched, pad, round_up, complementary_slices
+from segpy.portability import EMPTY_BYTE_STRING
 
+HEADER_NEWLINE = '\r\n'
 
 CARD_LENGTH = 80
 CARDS_PER_HEADER = 40
@@ -28,6 +29,7 @@ REEL_HEADER_NUM_BYTES = TEXTUAL_HEADER_NUM_BYTES + BINARY_HEADER_NUM_BYTES
 TRACE_HEADER_NUM_BYTES = 240
 
 END_TEXT_STANZA = "((SEG: EndText))"
+
 
 def extract_revision(binary_reel_header):
     """Obtain the SEG Y revision from the reel header.
@@ -77,32 +79,32 @@ def bytes_per_sample(binary_reel_header, revision):
 
 
 def samples_per_trace(binary_reel_header):
-    """Determine the number of samples per trace from the reel header.
+    """Determine the number of samples per trace_samples from the reel header.
 
     Note: There is no requirement for all traces to be of the same length,
         so this value should be considered indicative only, and as such is
         mostly useful in the absence of other information. The actual number
-        of samples for a specific trace should be retrieved from individual
-        trace headers.
+        of samples for a specific trace_samples should be retrieved from individual
+        trace_samples headers.
 
     Args:
         binary_reel_header: A dictionary containing a reel header, such as obtained
             from read_binary_reel_header()
 
     Returns:
-        An integer number of samples per trace
+        An integer number of samples per trace_samples
     """
     return binary_reel_header['ns']
 
 
 def trace_length_bytes(binary_reel_header, bps):
-    """Determine the trace length in bytes from the reel header.
+    """Determine the trace_samples length in bytes from the reel header.
 
     Note: There is no requirement for all traces to be of the same length,
         so this value should be considered indicative only, and as such is
         mostly useful in the absence of other information. The actual number
-        of samples for a specific trace should be retrieved from individual
-        trace headers.
+        of samples for a specific trace_samples should be retrieved from individual
+        trace_samples headers.
 
     Args:
         binary_reel_header:  A dictionary containing a reel header, such as obtained
@@ -163,7 +165,6 @@ def read_binary_reel_header(fh, endian='>'):
     return reel_header
 
 
-
 def has_end_text_stanza(ext_header):
     """Determine whether the header is the end text stanza.
 
@@ -190,14 +191,15 @@ def read_extended_headers_until_end(fh, encoding):
             Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Returns:
-        A list of tuples each containing forty CARD_LENGTH character Unicode strings.
+        A list of tuples each containing forty CARD_LENGTH character Unicode strings. If present, the end_text
+        stanza is excluded.
     """
     extended_headers = []
     while True:
         ext_header = read_textual_reel_header(fh, encoding)
+        extended_headers.append(ext_header)
         if has_end_text_stanza(ext_header):
             break
-        extended_headers.append(ext_header)
     return extended_headers
 
 
@@ -250,24 +252,46 @@ def read_extended_textual_headers(fh, binary_reel_header, encoding):
             Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Returns:
-        A Unicode string containing the concatenated contents of any extended headers. If there
-        were no extended headers, the string will be empty.
+        A sequence of sequences of Unicode strings representing headers of lines of characters. The length of the
+        outer sequence will be equal to the number of extended headers read. Each item in the outer sequence will be
+        a sequence of exactly forty Unicode strings.  To combine the headers into a single string, consider using
+        concatenate_extended_textual_headers().
 
     Postcondition:
         As a post-condition to this function, the file-pointer of fh will be
         positioned immediately after the last extended textual header, which
-        should be the start of the first trace header.
+        should be the start of the first trace_samples header.
     """
     fh.seek(REEL_HEADER_NUM_BYTES)
     declared_num_ext_headers = num_extended_textual_headers(binary_reel_header)
+
     extended_headers = []
-    if declared_num_ext_headers == -1:
-        extended_headers.extend(read_extended_headers_until_end(fh, encoding))
-    elif declared_num_ext_headers > 0:
-        extended_headers.extend(read_extended_headers_counted(fh, declared_num_ext_headers, encoding))
+    if declared_num_ext_headers < 0:
+        return read_extended_headers_until_end(fh, encoding)
+
+    return read_extended_headers_counted(fh, declared_num_ext_headers, encoding)
+
+
+def concatenate_extended_textual_headers(extended_textual_headers):
+    """Combine extended textual headers.
+
+    Args:
+        extended_textual_headers: A sequence of sequences of Unicode strings, such as that returned
+            by read_extended_textual_headers().
+
+    Returns:
+        A Unicode string containing the concatenated contents of any extended headers. If there
+        were no extended headers, the string will be empty.
+    """
+    if len(extended_textual_headers) == 0:
+        return ""
+
+    # Remove the end text header if it is present
+    if has_end_text_stanza(extended_textual_headers[-1]):
+        del extended_textual_headers[-1]
 
     # Concatenate the extended headers
-    extended_textual_header = ''.join(line for header in extended_headers for line in header).strip(' ')
+    extended_textual_header = ''.join(line for header in extended_textual_headers for line in header).strip(' ')
     return extended_textual_header
 
 
@@ -276,7 +300,7 @@ _READ_PROPORTION = 0.75  # The proportion of time spent in catalog_traces
 
 
 def catalog_traces(fh, bps, endian='>', progress=None):
-    """Build catalogs to facilitate random access to trace data.
+    """Build catalogs to facilitate random access to trace_samples data.
 
     Note:
         This function can take significant time to run, proportional
@@ -284,20 +308,20 @@ def catalog_traces(fh, bps, endian='>', progress=None):
 
     Four catalogs will be build:
 
-     1. A catalog mapping trace index (0-based) to the position of that
-        trace header in the file.
+     1. A catalog mapping trace_samples index (0-based) to the position of that
+        trace_samples header in the file.
 
-     2. A catalog mapping trace index (0-based) to the number of
-        samples in that trace.
+     2. A catalog mapping trace_samples index (0-based) to the number of
+        samples in that trace_samples.
 
-     3. A catalog mapping CDP number to the trace index.
+     3. A catalog mapping CDP number to the trace_samples index.
 
      4. A catalog mapping an (inline, crossline) number 2-tuple to
-        trace index.
+        trace_samples index.
 
     Args:
         fh: A file-like-object open in binary mode, positioned at the
-            start of the first trace header.
+            start of the first trace_samples header.
 
         bps: The number of bytes per sample, such as obtained by a call
             to bytes_per_sample()
@@ -311,8 +335,8 @@ def catalog_traces(fh, bps, endian='>', progress=None):
             an argument equal to 1
 
     Returns:
-        A 4-tuple of the form (trace-offset-catalog,
-                               trace-length-catalog,
+        A 4-tuple of the form (trace_samples-offset-catalog,
+                               trace_samples-length-catalog,
                                cdp-catalog,
                                line-catalog)` where
         each catalog is an instance of ``collections.Mapping`` or None
@@ -374,7 +398,6 @@ def catalog_traces(fh, bps, endian='>', progress=None):
         # Some 3D files put Inline and Crossline numbers in (TraceSequenceFile, cdp) pair
         line_catalog = alt_line_catalog_builder.create()
 
-
     progress_callback(1)
 
     return (trace_offset_catalog,
@@ -384,7 +407,7 @@ def catalog_traces(fh, bps, endian='>', progress=None):
 
 
 def read_trace_header(fh, trace_header_format, pos=None):
-    """Read a trace header.
+    """Read a trace_samples header.
 
     Args:
         fh: A file-like-object open in binary mode.
@@ -583,7 +606,7 @@ def write_textual_reel_header(fh, lines, encoding):
             standard) although this is not enforced by this function, since
             many widespread SEG Y readers and writers do not adhere to this
             constraint.  To produce a SEG Y compliant series of header lines
-            consider using the standard_textual_header() function.
+            consider using the format_standard_textual_header() function.
 
             Any lines longer than CARD_LENGTH characters will be truncated without
             warning.  Any excess lines over CARDS_PER_HEADER will be discarded.  Short
@@ -591,6 +614,7 @@ def write_textual_reel_header(fh, lines, encoding):
 
         encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
     """
+    # TODO: Seek
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
     header = ''.join(padded_lines)
@@ -608,6 +632,7 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
             in binary_reel_header_definition.HEADER_DEF associated with
             compatible values.
     """
+    # TODO: Seek
     for key in HEADER_DEF:
         pos = HEADER_DEF[key]['pos']
         ctype = HEADER_DEF[key]['type']
@@ -615,64 +640,89 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         write_binary_values(fh, [value], ctype, pos)
 
 
-def page_buffer(padded_buffer, page_size):
-    return [padded_buffer[i:i + page_size] for i in
-            range(0, len(padded_buffer), page_size)]
-
-
 def format_extended_textual_header(text, encoding, include_text_stop=False):
-    """Format an extended textual header into 3200 byte pages.
+    """Format a string into pages and line suitable for an extended textual header.
 
-    Args:
-        text: A Unicode string to be written to the extended headers.
+    Args
+        text: An arbitrary text string.  Any universal newlines will be preserved.
 
-        encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+        encoding: Either ASCII ('ascii') or EBCDIC ('cp037')
 
-        include_text_stop: If True, a text-stop header will be written.
-
-    Returns:
-        A sequence of byte strings, each of which will be exactly 3200 bytes in length.
+        include_text_stop: If True, a text stop stanza header will be appended, otherwise not.
     """
-    buffer = text.encode(encoding)
-    padded_buffer = buffer.ljust(round_up(len(buffer), TEXTUAL_HEADER_NUM_BYTES), ' '.encode(encoding))
-    pages = page_buffer(padded_buffer, TEXTUAL_HEADER_NUM_BYTES)
+
+    if not is_supported_encoding(encoding):
+        raise UnsupportedEncodingError("Extended textual header", encoding)
+
+     # According to the standard: "The Extended Textual File Header consists of one or more 3200-byte records, each
+     # record containing 40 lines of textual card-image text." It goes on "... Each line in an Extented Textual File
+     # Header ends in carriage return and linefeed (EBCDIX 0D25 or ASCII 0D0A)."  Given that we're dealing with fixed-
+     # length (80 byte) lines, this implies that we have 78 bytes of space into which we can encode the content of each
+     # line, which must be left-justified and padded with spaces.
+
+    width = CARD_LENGTH - len(HEADER_NEWLINE)
+    original_lines = text.splitlines()
+
+    # Split overly long lines (i.e. > 78) and pad too-short lines with spaces
+    lines = []
+    for original_line in original_lines:
+        padded_lines = (pad_and_terminate_header_line(original_line[i:i+width], width)
+                        for i in range(0, len(original_line), width))
+        lines.extend(padded_lines)
+
+    pages = list(batched(lines, 40, pad_and_terminate_header_line('', width)))
 
     if include_text_stop:
-        pages.append(text_stop_page(encoding))
+        stop_page = format_extended_textual_header(END_TEXT_STANZA, encoding)[0]
+        pages.append(stop_page)
+
     return pages
 
 
-def write_extended_textual_headers(fh, pages):
+def pad_and_terminate_header_line(line, width):
+    return line.ljust(width, ' ') + HEADER_NEWLINE
+
+
+def write_extended_textual_headers(fh, pages, encoding):
     """Write extended textual headers.
 
     Args:
         fh: fh: A file-like object open in binary mode for writing.
 
-        pages: A sequence of byte strings each of which is exactly
-            TEXTUAL_HEADER_NUM_BYTES in length.  To produce such a
-            sequence of pages, consider calling the
-            format_extended_textual_header() function.
-    """
-    if any(len(page) != TEXTUAL_HEADER_NUM_BYTES for page in pages):
-        raise ValueError("Page length must be {} bytes".format(TEXTUAL_HEADER_NUM_BYTES))
-    for page in pages:
-        fh.write(page)
+        pages: An iterables series of sequences of Unicode strings, where the outer iterable
+            represents 3200 byte pages, each comprised of a sequence of exactly 40 strings of nominally 80 characters
+            each.  Although Unicode strings are accepted, and when encoded they should result in exact 80 bytes
+            sequences.  To produce a valid data structure for pages, consider using format_extended_textual_header()
 
-
-_text_stop_pages = {}
-
-
-def text_stop_page(encoding):
-    """Produce a text-stop extended textual header page.
-
-    Args:
         encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+
+    Raises:
+        ValueError:
+
     """
-    if encoding not in _text_stop_pages:
-        _text_stop_pages[encoding] = (END_TEXT_STANZA + '\r\n')  \
-                                      .encode(encoding)          \
-                                      .ljust(TEXTUAL_HEADER_NUM_BYTES, ' '.encode(encoding))
-    return _text_stop_pages[encoding]
+    # TODO: Seek
+
+    encoded_pages = []
+    for page_index, page in enumerate(pages):
+        encoded_page = []
+        # TODO: Share some of this code with writing the textual reel header.
+        for line_index, line in enumerate(page):
+            encoded_line = line.encode(encoding)
+            num_encoded_bytes = len(encoded_line)
+            if num_encoded_bytes != CARD_LENGTH:
+                raise ValueError("Extended textual header line {} of page {} at {} bytes is not "
+                                 "{} bytes".format(line_index, page_index, num_encoded_bytes, CARD_LENGTH))
+            encoded_page.append(encoded_line)
+        num_encoded_lines = len(encoded_page)
+        if num_encoded_lines != CARDS_PER_HEADER:
+            raise ValueError("Extended textual header page {} number of "
+                             "lines {} is not {}".format(num_encoded_lines, CARDS_PER_HEADER))
+        encoded_pages.append(encoded_page)
+
+    for encoded_page in encoded_pages:
+        concatenated_page = b''.join(encoded_page)
+        assert(len(concatenated_page) == TEXTUAL_HEADER_NUM_BYTES)
+        fh.write(concatenated_page)
 
 
 def write_trace_header(fh, trace_header, trace_header_format, pos=None):
@@ -695,7 +745,7 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
     fh.write(buf)
 
 
-def write_trace_values(fh, values, ctype='l', pos=None):
+def write_trace_samples(fh, values, ctype='l', pos=None):
     write_binary_values(fh, values, ctype, pos)
 
 
@@ -763,7 +813,7 @@ _TraceAttributeSpec = namedtuple('Record', ['name', 'pos', 'type'])
 
 def compile_trace_header_format(endian='>'):
     """Compile a format string for use with the struct module from the
-    trace header definition.
+    trace_samples header definition.
 
     Args:
         endian: '>' for big-endian data (the standard and default), '<' for
@@ -771,7 +821,7 @@ def compile_trace_header_format(endian='>'):
 
     Returns:
         A string which can be used with the struct module for parsing
-        trace headers.
+        trace_samples headers.
 
     """
 
@@ -801,7 +851,7 @@ def compile_trace_header_format(endian='>'):
 
 
 def _compile_trace_header_record():
-    """Build a TraceHeader namedtuple from the trace header definition"""
+    """Build a TraceHeader namedtuple from the trace_samples header definition"""
     record_specs = sorted(
         [_TraceAttributeSpec(name,
                              TRACE_HEADER_DEF[name]['pos'],

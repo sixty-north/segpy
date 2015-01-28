@@ -2,8 +2,9 @@ import itertools
 import time
 import os
 
-from portability import izip
+from segpy.portability import izip
 
+UNSET = object()
 
 def pairwise(iterable):
     """Pairwise iteration.
@@ -19,11 +20,27 @@ def pairwise(iterable):
     return izip(a, b)
 
 
-def batched(iterable, batch_size):
+def batched(iterable, batch_size, padding=UNSET):
+    """Batch an iterable series into equal sized batches.
+
+    Args:
+        iterable: The series to be batched.
+
+        batch_size: The size of the batch. Must be at least one.
+
+        padding: Optional value used to pad the final batch to batch_size. If
+            omitted, the final batch may be smaller than batch_size.
+
+    Yields:
+        A series of lists, each containing batch_size items from iterable.
+
+    Raises:
+        ValueError: If batch_size is less than one.
     """
-    """
+    if batch_size < 1:
+        raise ValueError("Batch size {} is not at least one.".format(batch_size))
+
     pending = []
-    batch = pending
 
     for item in iterable:
         pending.append(item)
@@ -32,8 +49,11 @@ def batched(iterable, batch_size):
             pending = []
             yield batch
 
-    if len(pending) > 0:
-        yield batch
+    num_left_over = len(pending)
+    if num_left_over > 0:
+        if padding is not UNSET:
+            pending.extend([padding] * (batch_size - num_left_over))
+        yield pending
 
 
 def pad(iterable, padding=None, size=None):

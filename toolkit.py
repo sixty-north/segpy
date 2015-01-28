@@ -593,7 +593,7 @@ def write_textual_reel_header(fh, lines, encoding):
     """
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
-    header = ''.join(padded_lines)
+    header = b''.join(padded_lines)
     assert len(header) == 3200
     fh.write(header)
 

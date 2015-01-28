@@ -691,7 +691,7 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
     """
     if pos is not None:
         fh.seek(pos, os.SEEK_SET)
-    buf = trace_header_format.pack(trace_header)
+    buf = trace_header_format.pack(*trace_header)
     fh.write(buf)
 
 

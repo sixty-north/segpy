@@ -433,7 +433,7 @@ c
 
     values = (unpack_ibm_floats(buf, count)
               if fmt == 'ibm'
-              else unpack_values(buf, count, item_size, fmt))
+              else unpack_values(buf, count, item_size, fmt, endian))
     assert len(values) == count
     return values
 

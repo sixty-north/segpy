@@ -50,9 +50,9 @@ def write_segy(fh,
 
     trace_header_format = compile_trace_header_format(endian)
 
-    for trace_index in seg_y_data.trace_indexes:
+    for trace_index in seg_y_data.trace_indexes():
         write_trace_header(fh, seg_y_data.trace_header(trace_index), trace_header_format)
-        write_trace_samples(fh, seg_y_data.trace_samples(trace_index), seg_y_data.data_sample_format)
+        write_trace_samples(fh, seg_y_data.trace_samples(trace_index), seg_y_data.data_sample_format, endian=endian)
 
 
 

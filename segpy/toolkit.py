@@ -117,30 +117,33 @@ def trace_length_bytes(binary_reel_header, bps):
     return samples_per_trace(binary_reel_header) * bps + TRACE_HEADER_NUM_BYTES
 
 
-def read_textual_reel_header(fh, encoding=None):
+def guess_textual_header_encoding(fh):
+    fh.seek(0)
+    raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)
+    encoding = guess_encoding(raw_header)
+    return encoding
+
+
+def read_textual_reel_header(fh, encoding):
     """Read the SEG Y card image header, also known as the textual header
 
     Args:
         fh: A file-like object open in binary mode positioned such that the
             beginning of the textual header will be the next byte to read.
 
-        encoding: Optional encoding of the header in the file. If None (the
-            default) a reliable heuristic will be used to guess the encoding.
-            Either 'cp037' for EBCDIC or 'ascii' for ASCII.
+        encoding: Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Returns:
         A tuple of forty Unicode strings (Python 2: unicode, Python 3: str)
         containing the transcoded header data.
     """
+    fh.seek(0)
     raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)
 
     num_bytes_read = len(raw_header)
     if num_bytes_read < TEXTUAL_HEADER_NUM_BYTES:
         raise EOFError("Only {} bytes of {} byte textual reel header could be read"
                        .format(num_bytes_read, TEXTUAL_HEADER_NUM_BYTES))
-
-    if encoding is None:
-        encoding = guess_encoding(raw_header)
 
     lines = tuple(bytes(raw_line).decode(encoding) for raw_line in batched(raw_header, CARD_LENGTH))
     return lines
@@ -156,6 +159,7 @@ def read_binary_reel_header(fh, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<' for
             little-endian (non-standard)
     """
+    fh.seek(TEXTUAL_HEADER_NUM_BYTES)
     reel_header = {}
     for key in HEADER_DEF:
         pos = HEADER_DEF[key]['pos']
@@ -590,13 +594,27 @@ def write_textual_reel_header(fh, lines, encoding):
             or omitted lines will be padded with spaces.
 
         encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+
+    Post-condition:
+        The file pointer in fh will be positioned at the first byte following the textual
+        header.
+
+    Raises:
+        UnsupportedEncodingError: If encoding is neither EBCDIC nor ASCII.
+        UnicodeError: If the data provided in lines cannot be encoded with the encoding.
     """
-    # TODO: Seek
+    if not is_supported_encoding(encoding):
+        raise UnsupportedEncodingError("Writing textual reel header", encoding)
+
+    fh.seek(0)
+
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
-    header = ''.join(padded_lines)
+    header = b''.join(padded_lines)
     assert len(header) == 3200
     fh.write(header)
+
+    fh.seek(TEXTUAL_HEADER_NUM_BYTES)
 
 
 def write_binary_reel_header(fh, binary_reel_header, endian='>'):
@@ -608,13 +626,20 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         binary_reel_header: A dictionary of values using a subset of the keys
             in binary_reel_header_definition.HEADER_DEF associated with
             compatible values.
+
+    Post-condition:
+        The file pointer for fh will be positioned at the first byte following
+        the binary reel header.
     """
-    # TODO: Seek
+
+
     for key in HEADER_DEF:
         pos = HEADER_DEF[key]['pos']
         ctype = HEADER_DEF[key]['type']
         value = binary_reel_header[key] if key in binary_reel_header else HEADER_DEF[key]['def']
         write_binary_values(fh, [value], ctype, pos)
+
+    fh.seek(REEL_HEADER_NUM_BYTES)
 
 
 def format_extended_textual_header(text, encoding, include_text_stop=False):
@@ -673,15 +698,20 @@ def write_extended_textual_headers(fh, pages, encoding):
 
         encoding: Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
+    Post-condition:
+        The file pointer in fh will be position at the first byte after the extended textual headers, which is
+        also the first byte of the first trace-header.
+
     Raises:
         ValueError: If the provided header data has the wrong shape.
         UnicodeError: If the textual data could not be encoded into the specified encoding.
 
     """
-    # TODO: Seek
 
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing extended textual header", encoding)
+
+    fh.seek(REEL_HEADER_NUM_BYTES)
 
     encoded_pages = []
     for page_index, page in enumerate(pages):
@@ -726,12 +756,8 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
     fh.write(buf)
 
 
-def write_trace_samples(fh, values, ctype='l', pos=None):
-    write_binary_values(fh, values, ctype, pos)
-
-
-def write_binary_values(fh, values, ctype='l', pos=None):
-    """Write a series on values to a file.
+def write_trace_samples(fh, samples, ctype='l', pos=None, endian='>'):
+    """Write a trace samples to a file
 
     Args:
         fh: A file-like-object open for writing in binary mode.
@@ -742,6 +768,28 @@ def write_binary_values(fh, values, ctype='l', pos=None):
 
         pos: An optional offset from the beginning of the file. If omitted,
             any writing is done at the current file position.
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
+    """
+    write_binary_values(fh, samples, ctype, pos, endian)
+
+
+def write_binary_values(fh, values, ctype='l', pos=None, endian='>'):
+    """Write a series of values to a file.
+
+    Args:
+        fh: A file-like-object open for writing in binary mode.
+
+        values: An iterable series of values.
+
+        ctype: The SEG Y data type.
+
+        pos: An optional offset from the beginning of the file. If omitted,
+            any writing is done at the current file position.
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
     """
     fmt = CTYPES[ctype]
 
@@ -750,7 +798,7 @@ def write_binary_values(fh, values, ctype='l', pos=None):
 
     buf = (pack_ibm_floats(values)
            if fmt == 'ibm'
-           else pack_values(values, fmt))
+           else pack_values(values, fmt, endian))
 
     fh.write(buf)
 

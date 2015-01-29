@@ -13,7 +13,8 @@ from segpy.toolkit import (extract_revision,
                            REEL_HEADER_NUM_BYTES,
                            TRACE_HEADER_NUM_BYTES,
                            read_textual_reel_header,
-                           read_extended_textual_headers)
+                           read_extended_textual_headers,
+                           guess_textual_header_encoding)
 
 
 def create_reader(fh, encoding=None, endian='>', progress=None):
@@ -84,8 +85,12 @@ def create_reader(fh, encoding=None, endian='>', progress=None):
             "SEG Y file {!r} of {} bytes is too short".format(
                 filename_from_handle(fh),
                 num_file_bytes))
+
     if endian not in ('<', '>'):
         raise ValueError("Unrecognised endian value {!r}".format(endian))
+
+    if encoding is None:
+        encoding = guess_textual_header_encoding(fh)
 
     textual_reel_header = read_textual_reel_header(fh, encoding)
     binary_reel_header = read_binary_reel_header(fh, endian)
@@ -97,14 +102,14 @@ def create_reader(fh, encoding=None, endian='>', progress=None):
 
     if cdp_catalog is not None and line_catalog is None:
         return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, cdp_catalog)
+                            trace_length_catalog, cdp_catalog, encoding, endian)
 
     if cdp_catalog is None and line_catalog is not None:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, line_catalog)
+                            trace_length_catalog, line_catalog, encoding, endian)
 
-    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog, trace_length_catalog,
-                      endian)
+    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                      trace_length_catalog, encoding, endian)
 
 
 class SegYReader(object):
@@ -121,6 +126,7 @@ class SegYReader(object):
                  extended_textual_headers,
                  trace_offset_catalog,
                  trace_length_catalog,
+                 encoding,
                  endian='>'):
         """Initialize a SegYReader around a file-like-object.
 
@@ -145,12 +151,15 @@ class SegYReader(object):
             trace_length_catalog: A mapping from zero-based trace_samples index to the
                 number of samples in that trace_samples.
 
+            encoding: Either ASCII or EBCDIC.
+
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
 
         """
         self._fh = fh
         self._endian = endian
+        self._encoding = encoding
         self._trace_header_format = compile_trace_header_format(self._endian)
 
         self._textual_reel_header = textual_reel_header
@@ -329,6 +338,18 @@ class SegYReader(object):
         """
         return CTYPE_DESCRIPTION[CTYPES[self.data_sample_format]]
 
+    @property
+    def encoding(self):
+        """The encoding, of the data in the underlying file. Either ASCII ('ascii'),
+           EBCDIC ('cp037') or None."""
+        return self._encoding
+
+    @property
+    def endian(self):
+        """The endianness of the data in the underlying file. Either '>' for big-endian or '<' for
+           little endian or None."""
+        return self._endian
+
 
 class SegYReader3D(SegYReader):
     """A reader for 3D seismic data.
@@ -346,6 +367,7 @@ class SegYReader3D(SegYReader):
                  trace_offset_catalog,
                  trace_length_catalog,
                  line_catalog,
+                 encoding,
                  endian='>'):
         """Initialize a SegYReader3D around a file-like-object.
 
@@ -368,11 +390,13 @@ class SegYReader3D(SegYReader):
             line_catalog: A mapping from (xline, inline) tuples to
                 trace_indexes.
 
+            encoding: Either ASCII or EBCDIC.
+
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
         super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
-                                           trace_offset_catalog, trace_length_catalog, endian)
+                                           trace_offset_catalog, trace_length_catalog, encoding, endian)
         self._line_catalog = line_catalog
         self._num_inlines = None
         self._num_xlines = None
@@ -483,7 +507,9 @@ class SegYReader2D(SegYReader):
                  extended_textual_headers,
                  trace_offset_catalog,
                  trace_length_catalog,
-                 cdp_catalog, endian='>'):
+                 cdp_catalog,
+                 encoding,
+                 endian='>'):
         """Initialize a SegYReader2D around a file-like-object.
 
         Note:
@@ -504,11 +530,13 @@ class SegYReader2D(SegYReader):
 
             cdp_catalog: A mapping from CDP numbers to trace_indexes.
 
+            encoding: Either ASCII or EBCDIC.
+
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
         super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
-                                           trace_offset_catalog, trace_length_catalog, endian)
+                                           trace_offset_catalog, trace_length_catalog, encoding, endian)
         self._cdp_catalog = cdp_catalog
 
     def _dimensionality(self):

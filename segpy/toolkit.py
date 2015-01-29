@@ -126,7 +126,7 @@ def read_textual_reel_header(fh, encoding=None):
 
         encoding: Optional encoding of the header in the file. If None (the
             default) a reliable heuristic will be used to guess the encoding.
-            Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+            Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Returns:
         A tuple of forty Unicode strings (Python 2: unicode, Python 3: str)
@@ -270,29 +270,6 @@ def read_extended_textual_headers(fh, binary_reel_header, encoding):
         return read_extended_headers_until_end(fh, encoding)
 
     return read_extended_headers_counted(fh, declared_num_ext_headers, encoding)
-
-
-def concatenate_extended_textual_headers(extended_textual_headers):
-    """Combine extended textual headers.
-
-    Args:
-        extended_textual_headers: A sequence of sequences of Unicode strings, such as that returned
-            by read_extended_textual_headers().
-
-    Returns:
-        A Unicode string containing the concatenated contents of any extended headers. If there
-        were no extended headers, the string will be empty.
-    """
-    if len(extended_textual_headers) == 0:
-        return ""
-
-    # Remove the end text header if it is present
-    if has_end_text_stanza(extended_textual_headers[-1]):
-        del extended_textual_headers[-1]
-
-    # Concatenate the extended headers
-    extended_textual_header = ''.join(line for header in extended_textual_headers for line in header).strip(' ')
-    return extended_textual_header
 
 
 _READ_PROPORTION = 0.75  # The proportion of time spent in catalog_traces
@@ -687,20 +664,24 @@ def write_extended_textual_headers(fh, pages, encoding):
     """Write extended textual headers.
 
     Args:
-        fh: fh: A file-like object open in binary mode for writing.
+        fh: A file-like object open in binary mode for writing.
 
         pages: An iterables series of sequences of Unicode strings, where the outer iterable
             represents 3200 byte pages, each comprised of a sequence of exactly 40 strings of nominally 80 characters
             each.  Although Unicode strings are accepted, and when encoded they should result in exact 80 bytes
             sequences.  To produce a valid data structure for pages, consider using format_extended_textual_header()
 
-        encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+        encoding: Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Raises:
-        ValueError:
+        ValueError: If the provided header data has the wrong shape.
+        UnicodeError: If the textual data could not be encoded into the specified encoding.
 
     """
     # TODO: Seek
+
+    if not is_supported_encoding(encoding):
+        raise UnsupportedEncodingError("Writing extended textual header", encoding)
 
     encoded_pages = []
     for page_index, page in enumerate(pages):

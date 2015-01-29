@@ -27,12 +27,16 @@ def write_segy(fh,
 
               One such legitimate object would be a SegYReader instance.
 
-        encoding: Optional encoding for text data. Typically 'cp037' for EBCDIC or 'ascii' for ASCII. If ommited, the
+        encoding: Optional encoding for text data. Typically 'cp037' for EBCDIC or 'ascii' for ASCII. If omitted, the
             seg_y_data object will be queries for an encoding property.
 
         endian: Big endian by default. If omitted, the seg_y_data object will be queried for an encoding property.
 
         progress: An optional progress bar object.
+
+    Raises:
+        UnsupportedEncodingError: If the specified encoding is neither ASCII nor EBCDIC
+        UnicodeError: If textual data provided cannot be encoded into the required encoding.
     """
 
     encoding = encoding or (hasattr(seg_y_data, 'encoding') and seg_y_data.encoding) or ASCII
@@ -40,11 +44,9 @@ def write_segy(fh,
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing SEG Y", encoding)
 
-    extended_header_pages = format_extended_textual_header(seg_y_data.extended_textual_header, encoding, include_text_stop=True)
-
     write_textual_reel_header(fh, seg_y_data.textual_reel_header, encoding)
     write_binary_reel_header(fh, seg_y_data.binary_reel_header, endian)
-    write_extended_textual_headers(fh, extended_header_pages, encoding)
+    write_extended_textual_headers(fh, seg_y_data.extended_textual_header, encoding)
 
     trace_header_format = compile_trace_header_format(endian)
 

@@ -14,7 +14,6 @@ import sys
 import traceback
 
 from segpy.reader import create_reader
-from segpy.writer import write_segy
 
 
 def read_traces(in_filename):
@@ -39,6 +38,7 @@ def read_traces(in_filename):
     print("Time to read traces  : {} seconds", time_to_read_traces)
     print("Total time           : {} seconds", time_to_read_both)
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -61,6 +61,7 @@ def main(argv=None):
         traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
         return os.EX_SOFTWARE
     return os.EX_OK
+
 
 if __name__ == '__main__':
     sys.exit(main())

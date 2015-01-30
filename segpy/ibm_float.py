@@ -1,9 +1,11 @@
-from __future__ import print_function
-
 from math import frexp, isnan, isinf
 
 from segpy.portability import long_int, byte_string, four_bytes
 
+MIN_IBM_FLOAT = -7.2370051459731155e+75
+LARGEST_NEGATIVE_NORMAL_IBM_FLOAT = -5.397605346934028e-79
+SMALLEST_POSITIVE_NORMAL_IBM_FLOAT = 5.397605346934028e-79
+MAX_IBM_FLOAT = 7.2370051459731155e+75
 
 _IBM_FLOAT32_BITS_PRECISION = 24
 _L24 = long_int(2) ** _IBM_FLOAT32_BITS_PRECISION
@@ -21,12 +23,13 @@ def ibm2ieee(big_endian_bytes):
     """
     a, b, c, d = four_bytes(big_endian_bytes)
 
-    if a == b == c == c == 0:
+    if a == b == c == d == 0:
         return 0.0
 
     sign = -1 if (a & 0x80) else 1
     exponent = a & 0x7f
     mantissa = ((b << 16) | (c << 8) | d) / _F24
+
     value = sign * mantissa * pow(16, exponent - 64)
     return value
 
@@ -40,6 +43,11 @@ def ieee2ibm(f):
     Returns:
         A bytes object (Python 3) or a string (Python 2) containing four
         bytes representing a big-endian IBM float.
+
+    Raises:
+        OverflowError: If f is outside the representable range.
+        ValueError: If f is NaN or infinite.
+        FloatingPointError: If f cannot be represented without total loss of precision.
     """
     if f == 0:
         # There are many potential representations of zero - this is the standard one
@@ -50,6 +58,14 @@ def ieee2ibm(f):
 
     if isinf(f):
         raise ValueError("Infinities cannot be represented in IBM floating point")
+
+    if f < MIN_IBM_FLOAT:
+        raise OverflowError("IEEE Floating point value {} is less than the "
+                            "representable minimum for IBM floats.".format(f))
+
+    if f > MAX_IBM_FLOAT:
+        raise OverflowError("IEEE Floating point value {} is greater than the "
+                            "representable maximum for IBM floats".format(f))
 
     # Now compute m and e to satisfy:
     #
@@ -81,7 +97,14 @@ def ieee2ibm(f):
     exponent_16 = exponent >> 2            # Divide by four to convert to base 16
     exponent_16_biased = exponent_16 + 64  # Add the exponent bias of 64
 
-    # TODO: I'm not entirely sure we're producing properly normalised representations.
+    # If the biased exponent is negative, we try to use a subnormal representation
+    if exponent_16_biased < 0:
+        shift_16 = 0 - exponent_16_biased
+        exponent_16_biased += shift_16  # An increment of the base-16 exponent must be balanced by
+        mantissa >>= 4 * shift_16       # A division by 16 (four binary places) in the mantissa
+        if mantissa == 0:
+            raise FloatingPointError("IEEE Floating point value {} is smaller than the "
+                                     "smallest subnormal number for IBM floats.".format(f))
 
     a = sign | exponent_16_biased
     b = (mantissa >> 16) & 0xff

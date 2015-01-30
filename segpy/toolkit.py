@@ -454,7 +454,7 @@ def unpack_ibm_floats(data, count):
     Returns:
         A sequence of floats.
     """
-    return array('f', (ibm2ieee(data[i: i+4]) for i in range(0, count * 4, 4)))
+    return array('d', (ibm2ieee(data[i: i+4]) for i in range(0, count * 4, 4)))
 
 
 def unpack_values(buf, count, item_size, fmt, endian='>'):

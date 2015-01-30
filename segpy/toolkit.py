@@ -608,7 +608,7 @@ def write_textual_reel_header(fh, lines, encoding):
 
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
-    joined_header = b''.join(padded_lines)
+    joined_header = EMPTY_BYTE_STRING.join(padded_lines)
     assert len(joined_header) == 3200
     fh.write(joined_header)
 
@@ -728,7 +728,7 @@ def write_extended_textual_headers(fh, pages, encoding):
         encoded_pages.append(encoded_page)
 
     for encoded_page in encoded_pages:
-        concatenated_page = b''.join(encoded_page)
+        concatenated_page = EMPTY_BYTE_STRING.join(encoded_page)
         assert(len(concatenated_page) == TEXTUAL_HEADER_NUM_BYTES)
         fh.write(concatenated_page)
 

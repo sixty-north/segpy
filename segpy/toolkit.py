@@ -16,7 +16,7 @@ from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import ibm2ieee, ieee2ibm
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header_definition import TRACE_HEADER_DEF
-from segpy.util import file_length, batched, pad, complementary_slices
+from segpy.util import file_length, batched, pad, complementary_slices, NATIVE_ENDIANNESS
 from segpy.portability import EMPTY_BYTE_STRING
 
 HEADER_NEWLINE = '\r\n'
@@ -410,7 +410,7 @@ def read_trace_header(fh, trace_header_format, pos=None):
     return trace_header
 
 
-def read_binary_values(fh, pos=None, ctype='l', count=1, endian='>'):
+def read_binary_values(fh, pos=None, ctype='int32', count=1, endian='>'):
     """Read a series of values from a binary file.
 
     Args:
@@ -475,14 +475,10 @@ def unpack_values(buf, count, fmt, endian='>'):
     Returns:
         A sequence of objects with type corresponding to the format code.
     """
-    c_format = '{}{}{}'.format(endian, count, fmt)
-    return struct.unpack(c_format, buf)
-    # We could use array.fromfile() here. On the one hand it's likely
-    # to be faster and more compact,
-    #
-    # On the other, it only works on "real" files, not arbitrary
-    # file-like-objects and it would require us to handle endian byte
-    # swapping ourselves.
+    a = array(fmt, buf)
+    if endian != NATIVE_ENDIANNESS:
+        a.byteswap()
+    return a
 
 
 def format_standard_textual_header(revision, **kwargs):
@@ -776,7 +772,7 @@ def write_trace_samples(fh, samples, ctype='l', pos=None, endian='>'):
     write_binary_values(fh, samples, ctype, pos, endian)
 
 
-def write_binary_values(fh, values, ctype='l', pos=None, endian='>'):
+def write_binary_values(fh, values, ctype, pos=None, endian='>'):
     """Write a series of values to a file.
 
     Args:

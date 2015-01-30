@@ -42,6 +42,7 @@ def guess_encoding(bs, threshold=0.5):
 
     ebcdic_count = 0
     ascii_count = 0
+    null_count = 0
 
     count = 0
     for b in bs:
@@ -49,6 +50,8 @@ def guess_encoding(bs, threshold=0.5):
             ebcdic_count +=1
         if b in COMMON_ASCII_CHARS:
             ascii_count +=1
+        if b == 0:
+            null_count += 1
         count += 1
 
     if count == 0:
@@ -56,14 +59,20 @@ def guess_encoding(bs, threshold=0.5):
 
     ebcdic_freq = ebcdic_count / count
     ascii_freq = ascii_count / count
+    null_freq = null_count / count
 
-    if ebcdic_freq < threshold and ascii_freq < threshold:
-        return None
+    if null_freq == 1.0:
+        return ASCII  # Doesn't matter
 
     if ebcdic_freq < threshold and ascii_freq >= threshold:
         return ASCII
 
     if ebcdic_freq >= threshold and ascii_freq < threshold:
         return EBCDIC
+
+    if ebcdic_freq < threshold and ascii_freq < threshold:
+        return None
+
+
 
     return None

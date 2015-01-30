@@ -1,4 +1,5 @@
 from __future__ import print_function
+from segpy.encoding import ASCII
 
 from segpy.portability import seekable
 from segpy.util import file_length, filename_from_handle
@@ -91,6 +92,9 @@ def create_reader(fh, encoding=None, endian='>', progress=None):
 
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
+
+    if encoding is None:
+        encoding = ASCII
 
     textual_reel_header = read_textual_reel_header(fh, encoding)
     binary_reel_header = read_binary_reel_header(fh, endian)
@@ -336,7 +340,7 @@ class SegYReader(object):
     def data_sample_format_description(self):
         """A descriptive human-readable description of the data sample format
         """
-        return CTYPE_DESCRIPTION[CTYPES[self.data_sample_format]]
+        return CTYPE_DESCRIPTION[self.data_sample_format]
 
     @property
     def encoding(self):

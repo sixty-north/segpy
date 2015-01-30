@@ -1,53 +1,32 @@
 DATA_SAMPLE_FORMAT = {1: 'ibm',
-                      2: 'l',
-                      3: 'h',
-                      5: 'f',
-                      8: 'b'}
+                      2: 'int32',
+                      3: 'int16',
+                      5: 'float32',
+                      8: 'int8'}
 
-# A mapping from SEG Y data types to format characters used by the struct module,
-# known a 'ctypes'
-CTYPES = {'l': 'l',
-          'long':   'l',
-          'int32':  'l',
-
-          'L': 'L',
-          'ulong':  'L',
-          'uint32': 'L',
-
-          'h': 'h',
-          'short':  'h',
+# A mapping from SEG Y data types to format characters used by the struct module
+CTYPES = {'int32':  'i',
+          'uint32': 'I',
           'int16':  'h',
-
-          'H': 'H',
-          'ushort': 'H',
           'uint16': 'H',
-
-          'c': 'b',
-          'char': 'b',
-          'b': 'b',
-
-          'B': 'B',
-          'uchar':  'B',
-
-          'f': 'f',
-          'float':  'f',
-
+          'int8': 'b',
+          'uint8': 'B',
+          'float32':  'f',
           'ibm': 'ibm'}
 
 
-# TODO This is redundant with data in the SH_def below
 CTYPE_DESCRIPTION = {'ibm': 'IBM float',
-                     'l':   '32 bit signed integer',
-                     'L':   '32 bit unsigned integer',
-                     'h':   '16 bit signed integer',
-                     'H':   '16 bit unsigned integer',
-                     'f':   'IEEE float32',
-                     'b':   '8 bit signed char',
-                     'B':   '8 bit unsigned char'}
+                     'int32': '32 bit signed integer',
+                     'uint32': '32 bit unsigned integer',
+                     'int16': '16 bit signed integer',
+                     'uint16': '16 bit unsigned integer',
+                     'float32': 'IEEE float32',
+                     'int8': '8 bit signed integer (byte)',
+                     'uint8': '8 bit unsigned integer (byte)'}
 
 
-SIZES = dict(l=4,
-             L=4,
+SIZES = dict(i=4,
+             I=4,
              h=2,
              H=2,
              b=1,

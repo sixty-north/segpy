@@ -1,8 +1,11 @@
 import itertools
 import time
 import os
+import sys
 
 from segpy.portability import izip
+
+NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
 
 UNSET = object()
 

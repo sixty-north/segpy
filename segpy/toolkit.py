@@ -437,7 +437,7 @@ c
 
     values = (unpack_ibm_floats(buf, count)
               if fmt == 'ibm'
-              else unpack_values(buf, count, item_size, fmt, endian))
+              else unpack_values(buf, count, fmt, endian))
     assert len(values) == count
     return values
 
@@ -457,7 +457,7 @@ def unpack_ibm_floats(data, count):
     return array('d', (ibm2ieee(data[i: i+4]) for i in range(0, count * 4, 4)))
 
 
-def unpack_values(buf, count, item_size, fmt, endian='>'):
+def unpack_values(buf, count, fmt, endian='>'):
     """Unpack a series items from a byte string.
 
     Args:

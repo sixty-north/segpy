@@ -5,6 +5,7 @@ from itertools import zip_longest
 import os
 import struct
 import re
+import sys
 
 from segpy import textual_reel_header_definition
 
@@ -15,7 +16,7 @@ from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import ibm2ieee, ieee2ibm
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header_definition import TRACE_HEADER_DEF
-from segpy.util import file_length, batched, pad, round_up, complementary_slices
+from segpy.util import file_length, batched, pad, complementary_slices
 from segpy.portability import EMPTY_BYTE_STRING
 
 HEADER_NEWLINE = '\r\n'
@@ -233,7 +234,7 @@ def read_extended_headers_counted(fh, num_expected, encoding):
         ext_header = read_textual_reel_header(fh, encoding)
         if has_end_text_stanza(ext_header):
             if i != num_expected - 1:
-                print("Unexpected end-text extended header") # TODO: Log this
+                print("Unexpected end-text extended header", file=sys.stderr)  # TODO: Log this
             break
         extended_headers.append(ext_header)
 
@@ -261,7 +262,7 @@ def read_extended_textual_headers(fh, binary_reel_header, encoding):
         a sequence of exactly forty Unicode strings.  To combine the headers into a single string, consider using
         concatenate_extended_textual_headers().
 
-    Postcondition:
+    Post-condition:
         As a post-condition to this function, the file-pointer of fh will be
         positioned immediately after the last extended textual header, which
         should be the start of the first trace_samples header.
@@ -269,7 +270,6 @@ def read_extended_textual_headers(fh, binary_reel_header, encoding):
     fh.seek(REEL_HEADER_NUM_BYTES)
     declared_num_ext_headers = num_extended_textual_headers(binary_reel_header)
 
-    extended_headers = []
     if declared_num_ext_headers < 0:
         return read_extended_headers_until_end(fh, encoding)
 
@@ -546,7 +546,11 @@ def format_standard_textual_header(revision, **kwargs):
     concatenation = ''.join(chunks)
     lines = concatenation.splitlines(keepends=False)
 
-    return lines[1:]  # Omit the first and last lines, which are artifacts of the multiline string template
+    return lines[1:]  # Omit the first and last lines, which are artifacts of the multi-line string template
+
+
+_TEMPLATE_PATTERN = r'\{\s*(\w*)\s*\}'
+_TEMPLATE_REGEX = re.compile(_TEMPLATE_PATTERN)
 
 
 def parse_template(template):
@@ -560,9 +564,7 @@ def parse_template(template):
         into the template string. The order of the entries is the same as the order within
         which they occur in the template.
     """
-    PATTERN = r'\{\s*(\w*)\s*\}'
-    regex = re.compile(PATTERN)
-    matches = regex.finditer(template)
+    matches = _TEMPLATE_REGEX.finditer(template)
 
     fields = OrderedDict()
     for match in matches:
@@ -610,9 +612,9 @@ def write_textual_reel_header(fh, lines, encoding):
 
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
-    header = b''.join(padded_lines)
-    assert len(header) == 3200
-    fh.write(header)
+    joined_header = b''.join(padded_lines)
+    assert len(joined_header) == 3200
+    fh.write(joined_header)
 
     fh.seek(TEXTUAL_HEADER_NUM_BYTES)
 
@@ -631,7 +633,6 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         The file pointer for fh will be positioned at the first byte following
         the binary reel header.
     """
-
 
     for key in HEADER_DEF:
         pos = HEADER_DEF[key]['pos']
@@ -656,11 +657,11 @@ def format_extended_textual_header(text, encoding, include_text_stop=False):
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Extended textual header", encoding)
 
-     # According to the standard: "The Extended Textual File Header consists of one or more 3200-byte records, each
-     # record containing 40 lines of textual card-image text." It goes on "... Each line in an Extented Textual File
-     # Header ends in carriage return and linefeed (EBCDIX 0D25 or ASCII 0D0A)."  Given that we're dealing with fixed-
-     # length (80 byte) lines, this implies that we have 78 bytes of space into which we can encode the content of each
-     # line, which must be left-justified and padded with spaces.
+    # According to the standard: "The Extended Textual File Header consists of one or more 3200-byte records, each
+    # record containing 40 lines of textual card-image text." It goes on "... Each line in an Extended Textual File
+    # Header ends in carriage return and linefeed (EBCDIC 0D25 or ASCII 0D0A)."  Given that we're dealing with fixed-
+    # length (80 byte) lines, this implies that we have 78 bytes of space into which we can encode the content of each
+    # line, which must be left-justified and padded with spaces.
 
     width = CARD_LENGTH - len(HEADER_NEWLINE)
     original_lines = text.splitlines()

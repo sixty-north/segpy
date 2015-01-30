@@ -638,7 +638,7 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         pos = HEADER_DEF[key]['pos']
         ctype = HEADER_DEF[key]['type']
         value = binary_reel_header[key] if key in binary_reel_header else HEADER_DEF[key]['def']
-        write_binary_values(fh, [value], ctype, pos)
+        write_binary_values(fh, [value], ctype, pos, endian)
 
     fh.seek(REEL_HEADER_NUM_BYTES)
 

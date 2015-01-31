@@ -1,31 +1,38 @@
 import unittest
 
 from hypothesis import given, assume
+from hypothesis.descriptors import integers_in_range
 from segpy.util import batched
 
 
 class TestBatched(unittest.TestCase):
 
-    @given([int], int)
+    @given([int],
+           integers_in_range(1, 1000))
     def test_batch_sizes_unpadded(self, items, batch_size):
         assume(batch_size > 0)
         batches = list(batched(items, batch_size))
         self.assertTrue(all(len(batch) == batch_size for batch in batches[:-1]))
 
-    @given([int], int)
+    @given([int],
+            integers_in_range(1, 1000))
     def test_final_batch_sizes(self, items, batch_size):
         assume(len(items) > 0)
         assume(batch_size > 0)
         batches = list(batched(items, batch_size))
         self.assertTrue(len(batches[-1]) <= batch_size)
 
-    @given([int], int, int)
+    @given([int],
+           integers_in_range(1, 1000),
+           int)
     def test_batch_sizes_padded(self, items, batch_size, pad):
         assume(batch_size > 0)
         batches = list(batched(items, batch_size, padding=pad))
         self.assertTrue(all(len(batch) == batch_size for batch in batches))
 
-    @given([int], int, int)
+    @given([int],
+           integers_in_range(1, 1000),
+           int)
     def test_pad_contents(self, items, batch_size, pad):
         assume(len(items) > 0)
         assume(0 < batch_size < 1000)

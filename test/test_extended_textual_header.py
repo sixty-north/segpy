@@ -24,7 +24,7 @@ class MultiLineStringStrategy(MappedSearchStrategy):
 StrategyTable.default().define_specification_for(
     MultiLineString,
     lambda s, d: MultiLineStringStrategy(
-        strategy=s.strategy([str]),
+        strategy=s.strategy([unicode]),
         descriptor=MultiLineString))
 
 

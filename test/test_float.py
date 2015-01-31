@@ -1,8 +1,8 @@
 import unittest
 
+from segpy.portability import byte_string
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT)
-from segpy.portability import byte_string
 
 
 class Ibm2Ieee(unittest.TestCase):

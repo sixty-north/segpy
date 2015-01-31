@@ -1,5 +1,3 @@
-from collections import namedtuple, Counter
-import random
 import unittest
 from hypothesis import given
 from hypothesis.descriptors import one_of, SampledFrom, Just, sampled_from, just

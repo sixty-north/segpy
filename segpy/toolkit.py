@@ -3,7 +3,6 @@ from __future__ import print_function
 from array import array
 from collections import namedtuple, OrderedDict
 import itertools
-from portability import izip_longest
 import os
 import struct
 import re
@@ -21,7 +20,7 @@ from segpy.ibm_float import ibm2ieee, ieee2ibm
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header_definition import TRACE_HEADER_DEF
 from segpy.util import file_length, batched, pad, complementary_slices, NATIVE_ENDIANNESS
-from segpy.portability import EMPTY_BYTE_STRING
+from segpy.portability import EMPTY_BYTE_STRING, izip_longest
 
 HEADER_NEWLINE = '\r\n'
 

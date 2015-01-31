@@ -6,7 +6,7 @@ from segpy.portability import reprlib
 from segpy.util import contains_duplicates, measure_stride, minmax
 
 
-class CatalogBuilder:
+class CatalogBuilder(object):
     """Use a catalog builder to construct optimised, immutable mappings.
 
     A CatalogBuilder is useful when, depending on the particular keys and
@@ -230,7 +230,7 @@ class RowMajorCatalog(Catalog):
             j_max (int): The maximum j value.
             c (int): The constant offset
         """
-        super().__init__()
+        super(RowMajorCatalog, self).__init__()
         self._i_min = i_min
         self._i_max = i_max
         self._j_min = j_min
@@ -305,7 +305,7 @@ class DictionaryCatalog(Catalog):
     """
 
     def __init__(self, items):
-        super().__init__()
+        super(DictionaryCatalog, self).__init__()
         self._items = OrderedDict(items)
 
     def __getitem__(self, key):
@@ -349,10 +349,11 @@ class RegularConstantCatalog(Catalog):
             raise ValueError("RegularIndex key range {!r} is not "
                              "a multiple of stride {!r}".format(
                                  key_stride, key_range))
-        super().__init__(key_min=key_min,
-                         key_max=key_max,
-                         value_min=value,
-                         value_max=value)
+        super(RegularConstantCatalog, self).__init__(
+            key_min=key_min,
+            key_max=key_max,
+            value_min=value,
+            value_max=value)
         self._key_stride = key_stride
 
     def __getitem__(self, key):
@@ -397,7 +398,7 @@ class ConstantCatalog(Catalog):
             key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
-        super().__init__(value_min=value, value_max=value)
+        super(ConstantCatalog, self).__init__(value_min=value, value_max=value)
         self._items = frozenset(keys)
 
     def __getitem__(self, key):
@@ -449,7 +450,7 @@ class RegularCatalog(Catalog):
             raise ValueError("{} key range {!r} is not "
                              "a multiple of stride {!r}".format(self.__class__.__name__,
                                                                 key_stride, key_range))
-        super().__init__(key_min=key_min, key_max=key_max)
+        super(RegularCatalog, self).__init__(key_min=key_min, key_max=key_max)
         self._key_stride = key_stride
         self._values = list(values)
         num_keys = key_range // key_stride
@@ -537,11 +538,11 @@ class LinearRegularCatalog(Catalog):
                                  value_range))
         self._value_stride = value_stride
 
-        super().__init__(key_min=key_min,
-                         key_max=key_max,
-                         value_min=value_min,
-                         value_max=value_max)
-
+        super(LinearRegularCatalog, self).__init__(
+            key_min=key_min,
+            key_max=key_max,
+            value_min=value_min,
+            value_max=value_max)
 
         num_keys = (self.key_max() - self.key_min()) // self._key_stride
         num_values = (self.value_max() - self.value_min()) // self._value_stride

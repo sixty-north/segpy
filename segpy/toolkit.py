@@ -1,13 +1,17 @@
+from __future__ import print_function
+
 from array import array
 from collections import namedtuple, OrderedDict
 import itertools
-from itertools import zip_longest
+from portability import izip_longest
 import os
 import struct
 import re
 import sys
+import logging
 
 from segpy import textual_reel_header_definition
+
 
 from segpy.catalog import CatalogBuilder
 from segpy.datatypes import CTYPES, size_in_bytes
@@ -30,6 +34,11 @@ REEL_HEADER_NUM_BYTES = TEXTUAL_HEADER_NUM_BYTES + BINARY_HEADER_NUM_BYTES
 TRACE_HEADER_NUM_BYTES = 240
 
 END_TEXT_STANZA = "((SEG: EndText))"
+
+
+def logger():
+    # Defer logger creation until the module is *used* rather than imported.
+    return logging.getLogger(__name__)
 
 
 def extract_revision(binary_reel_header):
@@ -234,7 +243,7 @@ def read_extended_headers_counted(fh, num_expected, encoding):
         ext_header = read_textual_reel_header(fh, encoding)
         if has_end_text_stanza(ext_header):
             if i != num_expected - 1:
-                print("Unexpected end-text extended header", file=sys.stderr)  # TODO: Log this
+                logger().warning("Unexpected end-text extended header.")
             break
         extended_headers.append(ext_header)
 
@@ -522,7 +531,7 @@ def format_standard_textual_header(revision, **kwargs):
     background_slices = complementary_slices(placeholder_slices.values(), 0, len(template))
 
     chunks = []
-    for bg_slice, placeholder in zip_longest(background_slices, placeholder_slices.items()):
+    for bg_slice, placeholder in izip_longest(background_slices, placeholder_slices.items()):
 
         if bg_slice is not None:
             chunks.append(template[bg_slice])
@@ -890,17 +899,3 @@ def _compile_trace_header_record():
 
 TraceHeader = _compile_trace_header_record()
 
-
-if __name__ == '__main__':
-    from pprint import pprint as pp
-    header = format_standard_textual_header(1,
-                                            client="Lundin",
-                                            company="Western Geco",
-                                            crew_number=123,
-                                            processing1="Sixty North AS",
-                                            sweep_start_hz=10,
-                                            sweep_end_hz=1000,
-                                            sweep_length_ms=10000,
-                                            sweep_channel_number=3,
-                                            sweep_type='spread')
-    pp(header, width=200)

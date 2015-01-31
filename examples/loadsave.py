@@ -5,6 +5,8 @@ Usage:
     loadsave.py <in.segy> <out.segy>
 
 """
+from __future__ import print_function
+
 import os
 
 import sys

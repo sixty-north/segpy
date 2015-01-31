@@ -6,7 +6,6 @@ import itertools
 import os
 import struct
 import re
-import sys
 import logging
 
 from segpy import textual_reel_header_definition

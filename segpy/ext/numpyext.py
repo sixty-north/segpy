@@ -2,11 +2,11 @@
 
 import numpy
 
-NUMPY_DTYPES = {'ibm': numpy.dtype('f4'),
-                'l':   numpy.dtype('i4'),
-                'h':   numpy.dtype('i2'),
-                'f':   numpy.dtype('f4'),
-                'b':   numpy.dtype('i1')}
+NUMPY_DTYPES = {'ibm':     numpy.dtype('f4'),
+                'int32':   numpy.dtype('i4'),
+                'int16':   numpy.dtype('i2'),
+                'float32': numpy.dtype('f4'),
+                'int8':    numpy.dtype('i1')}
 
 
 def make_dtype(data_sample_format):

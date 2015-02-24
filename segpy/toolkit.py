@@ -18,7 +18,7 @@ from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import ibm2ieee, ieee2ibm
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header_definition import TRACE_HEADER_DEF
-from segpy.util import file_length, batched, pad, complementary_slices, NATIVE_ENDIANNESS
+from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
 from segpy.portability import EMPTY_BYTE_STRING, izip_longest
 
 HEADER_NEWLINE = '\r\n'
@@ -526,7 +526,7 @@ def format_standard_textual_header(revision, **kwargs):
     template = textual_reel_header_definition.TEMPLATE
 
     placeholder_slices = parse_template(template)
-    background_slices = complementary_slices(placeholder_slices.values(), 0, len(template))
+    background_slices = complementary_intervals(placeholder_slices.values(), 0, len(template))
 
     chunks = []
     for bg_slice, placeholder in izip_longest(background_slices, placeholder_slices.items()):

@@ -65,8 +65,8 @@ def pad(iterable, padding=None, size=None):
     return itertools.islice(pad(iterable, padding), size)
 
 
-def complementary_slices(slices, start=None, stop=None):
-    """Compute a complementary set of slices which alternate with given slices to form a contiguous range.
+def complementary_intervals(intervals, start=None, stop=None):
+    """Compute a complementary set of intervals which alternate with given intervals to form a contiguous range.
 
     Given,
 
@@ -78,7 +78,8 @@ def complementary_slices(slices, start=None, stop=None):
         [--)     [----)     [-)    [---)
 
     Args:
-        slices: An sequence of existing slices
+        intervals: An sequence of at least one existing slices or ranges. The type of the first interval (slice or
+            range) is used as the result type.
         start: An optional start index, defaults to the start of the first slice.
         stop: An optional one-beyond-the-end index, defaults to the stop attribute of the last slice.
 
@@ -87,18 +88,23 @@ def complementary_slices(slices, start=None, stop=None):
         slices will always be len(slices) + 1 since both leading and trailing slices will always be returned.
         Note the some of the returned slices may be 'empty' (having zero length).
     """
+    if len(intervals) < 1:
+        raise ValueError("intervals must contain at least one interval (slice or range) object")
+
+    interval_type = type(intervals[0])
+
     if start is None:
-        start = slices[0].start
+        start = intervals[0].start
 
     if stop is None:
-        stop = slices[-1].stop
+        stop = intervals[-1].stop
 
     index = start
-    for s in slices:
-        yield slice(index, s.start)
+    for s in intervals:
+        yield interval_type(index, s.start)
         index = s.stop
 
-    yield slice(index, stop)
+    yield interval_type(index, stop)
 
 
 def roundrobin(*iterables):
@@ -112,12 +118,10 @@ def roundrobin(*iterables):
     while pending:
         try:
             for n in nexts:
-                print
                 yield n()
         except StopIteration:
             pending -= 1
             nexts = itertools.cycle(itertools.islice(nexts, pending))
-
 
 
 def contains_duplicates(sorted_iterable):
@@ -222,3 +226,8 @@ def now_millis():
 def round_up(integer, multiple):
     """Round up to the nearest multiple"""
     return integer if integer % multiple == 0 else integer + multiple - integer % multiple
+
+
+def underscores_to_camelcase(s):
+    """Convert text_in_this_style to TextInThisStyle."""
+    return ''.join(w.capitalize() for w in s.split('_'))

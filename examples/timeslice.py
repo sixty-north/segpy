@@ -21,16 +21,14 @@ Example:
 from __future__ import print_function
 
 import argparse
-
 import os
-
 import sys
 import traceback
 
-from segpy.reader import create_reader
-from segpy.ext.numpyext import make_dtype
-
 import numpy as np
+
+from segpy.reader import create_reader
+from segpy_numpy.numpy.dtypes import make_dtype
 
 
 class DimensionalityError(Exception):

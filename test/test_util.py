@@ -15,7 +15,7 @@ class TestBatched(unittest.TestCase):
         self.assertTrue(all(len(batch) == batch_size for batch in batches[:-1]))
 
     @given([int],
-            integers_in_range(1, 1000))
+           integers_in_range(1, 1000))
     def test_final_batch_sizes(self, items, batch_size):
         assume(len(items) > 0)
         assume(batch_size > 0)

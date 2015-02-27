@@ -231,3 +231,13 @@ def round_up(integer, multiple):
 def underscores_to_camelcase(s):
     """Convert text_in_this_style to TextInThisStyle."""
     return ''.join(w.capitalize() for w in s.split('_'))
+
+
+def first_sentence(s):
+    sentence, stop, _ = s.partition('.')
+    return sentence + stop
+
+
+def lower_first(s):
+    """Lower case the first character of a string."""
+    return s[:1].lower() + s[1:]

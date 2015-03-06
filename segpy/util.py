@@ -231,3 +231,10 @@ def round_up(integer, multiple):
 def underscores_to_camelcase(s):
     """Convert text_in_this_style to TextInThisStyle."""
     return ''.join(w.capitalize() for w in s.split('_'))
+
+
+def almost_equal(x, y, epsilon):
+    max_xy_one = max(1.0, abs(x), abs(y))
+    e = epsilon * max_xy_one
+    delta = abs(x - y)
+    return delta <= e

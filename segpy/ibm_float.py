@@ -7,9 +7,11 @@ LARGEST_NEGATIVE_NORMAL_IBM_FLOAT = -5.397605346934028e-79
 SMALLEST_POSITIVE_NORMAL_IBM_FLOAT = 5.397605346934028e-79
 MAX_IBM_FLOAT = 7.2370051459731155e+75
 
-_IBM_FLOAT32_BITS_PRECISION = 24
-_L24 = long_int(2) ** _IBM_FLOAT32_BITS_PRECISION
-_F24 = float(pow(2, _IBM_FLOAT32_BITS_PRECISION))
+IBM_FLOAT32_MAX_BITS_PRECISION = 24
+IBM_FLOAT32_MIN_BITS_PRECISION = 21  # The first 3 bits of the mantissa may be zero
+IBM_FLOAT32_EPSILON = pow(2.0, -(IBM_FLOAT32_MIN_BITS_PRECISION - 1))
+_L24 = long_int(2) ** IBM_FLOAT32_MAX_BITS_PRECISION
+_F24 = float(pow(2, IBM_FLOAT32_MAX_BITS_PRECISION))
 
 
 def ibm2ieee(big_endian_bytes):
@@ -35,7 +37,7 @@ def ibm2ieee(big_endian_bytes):
 
 
 def ieee2ibm(f):
-    """Covert a float to four big-endian bytes representing an IBM float.
+    """Convert a float to four big-endian bytes representing an IBM float.
 
     Args:
         f (float): The value to be converted.
@@ -112,3 +114,65 @@ def ieee2ibm(f):
     d = mantissa & 0xff
 
     return byte_string((a, b, c, d))
+
+
+class IBMFloat(object):
+    __slots__ = ['_data']
+
+    def __init__(self, b):
+        """Initialise IBMFloat from an IEEE float.
+
+        Args:
+            b: A byte sequence containing exactly four bytes
+
+        Raises:
+            ValueError: If b does not contain exactly four values in the range 0-255.
+        """
+        data = bytes(b)
+        num_bytes = len(data)
+        if num_bytes != 4:
+            raise ValueError("{} cannot be constructed from {} values".format(self.__class__.__name__, num_bytes))
+        self._data = data
+
+    @classmethod
+    def from_float(cls, f):
+        """Construct an IBMFloat from an IEEE float.
+
+        Args:
+            f (float): The value to be converted.
+
+        Returns:
+            An IBMFloat.
+
+        Raises:
+            OverflowError: If f is outside the representable range.
+            ValueError: If f is NaN or infinite.
+            FloatingPointError: If f cannot be represented without total loss of precision.
+        """
+        return cls(ieee2ibm(f))
+
+    @classmethod
+    def from_bytes(cls, b):
+        return cls(b)
+
+    def __float__(self):
+        return ibm2ieee(self._data)
+
+    def __bytes__(self):
+        return self._data
+
+    def __repr__(self):
+        return "{}({!r})".format(self.__class__.__name__, self._data)
+
+    def __bool__(self):
+        return not self.is_zero()
+
+    def is_zero(self):
+        return all(b == 0 for b in self._data)
+
+    def __nonzero__(self):
+        return not self.is_zero()
+
+    def is_subnormal(self):
+        return (not self.is_zero()) and (self._data[1] < 32)
+

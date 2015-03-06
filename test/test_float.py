@@ -1,8 +1,12 @@
 import unittest
 
+from hypothesis import given
+from hypothesis.descriptors import integers_in_range, floats_in_range
+
 from segpy.portability import byte_string
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
-                             LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT)
+                             LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, IBM_FLOAT32_EPSILON)
+from segpy.util import almost_equal
 
 
 class Ibm2Ieee(unittest.TestCase):
@@ -132,6 +136,63 @@ class Ibm2IeeeRoundtrip(unittest.TestCase):
         f = ibm2ieee(ibm_start)
         ibm_result = ieee2ibm(f)
         self.assertEqual(ibm_start, ibm_result)
+
+
+class TestIBMFloat(unittest.TestCase):
+
+    def test_zero_from_float(self):
+        zero = IBMFloat.from_float(0.0)
+        self.assertTrue(zero.is_zero())
+
+    def test_zero_from_bytes(self):
+        zero = IBMFloat.from_bytes(b'\x00\x00\x00\x00')
+        self.assertTrue(zero.is_zero())
+
+    def test_subnormal(self):
+        ibm = IBMFloat.from_float(1.6472184286297693e-83)
+        self.assertTrue(ibm.is_subnormal())
+
+    def test_smallest_subnormal(self):
+        ibm = IBMFloat.from_float(5.147557589468029e-85)
+        self.assertEqual(bytes(ibm), byte_string((0x00, 0x00, 0x00, 0x01)))
+
+    def test_too_small_subnormal(self):
+        with self.assertRaises(FloatingPointError):
+            IBMFloat.from_float(1e-86)
+
+    def test_nan(self):
+        with self.assertRaises(ValueError):
+            IBMFloat.from_float(float('nan'))
+
+    def test_inf(self):
+        with self.assertRaises(ValueError):
+            IBMFloat.from_float(float('inf'))
+
+    def test_too_large(self):
+        with self.assertRaises(OverflowError):
+            IBMFloat.from_float(MAX_IBM_FLOAT * 10)
+
+    def test_too_small(self):
+        with self.assertRaises(OverflowError):
+            IBMFloat.from_float(MIN_IBM_FLOAT * 10)
+
+    @given(float)
+    def test_bool(self, f):
+        self.assertEqual(bool(IBMFloat.from_float(f)), bool(f))
+
+    @given(integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255))
+    def test_bytes_roundtrip(self, a, b, c, d):
+        b = byte_string((a, b, c, d))
+        ibm = IBMFloat.from_bytes(b)
+        self.assertEqual(bytes(ibm), b)
+
+    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    def test_floats_roundtrip(self, f):
+        ibm = IBMFloat.from_float(f)
+        self.assertTrue(almost_equal(f, float(ibm), epsilon=IBM_FLOAT32_EPSILON))
 
 
 if __name__ == '__main__':

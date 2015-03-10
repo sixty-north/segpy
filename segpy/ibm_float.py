@@ -1,17 +1,31 @@
-from math import frexp, isnan, isinf
+from math import frexp, isnan, isinf, ceil, floor, trunc
+from numbers import Real
 
 from segpy.portability import long_int, byte_string, four_bytes
+
+
+
+IBM_ZERO_BYTES = b'\x00\x00\x00\x00'
+IBM_NEGATIVE_ONE_BYTES = b'\xc1\x10\x00\x00'
+IBM_POSITIVE_ONE_BYTES = b'A\x10\x00\x00'
 
 MIN_IBM_FLOAT = -7.2370051459731155e+75
 LARGEST_NEGATIVE_NORMAL_IBM_FLOAT = -5.397605346934028e-79
 SMALLEST_POSITIVE_NORMAL_IBM_FLOAT = 5.397605346934028e-79
 MAX_IBM_FLOAT = 7.2370051459731155e+75
 
-IBM_FLOAT32_MAX_BITS_PRECISION = 24
-IBM_FLOAT32_MIN_BITS_PRECISION = 21  # The first 3 bits of the mantissa may be zero
-IBM_FLOAT32_EPSILON = pow(2.0, -(IBM_FLOAT32_MIN_BITS_PRECISION - 1))
-_L24 = long_int(2) ** IBM_FLOAT32_MAX_BITS_PRECISION
-_F24 = float(pow(2, IBM_FLOAT32_MAX_BITS_PRECISION))
+MAX_BITS_PRECISION_IBM_FLOAT = 24
+MIN_BITS_PRECISION_IBM_FLOAT = 21  # The first 3 bits of the mantissa may be zero
+EPSILON_IBM_FLOAT = pow(2.0, -(MIN_BITS_PRECISION_IBM_FLOAT - 1))
+_L24 = long_int(2) ** MAX_BITS_PRECISION_IBM_FLOAT
+_F24 = float(pow(2, MAX_BITS_PRECISION_IBM_FLOAT))
+
+_L21 = long_int(2) ** MIN_BITS_PRECISION_IBM_FLOAT
+
+EXPONENT_BIAS = 64
+
+MIN_EXACT_INTEGER_IBM_FLOAT = -2**MAX_BITS_PRECISION_IBM_FLOAT
+MAX_EXACT_INTEGER_IBM_FLOAT = 2**MIN_BITS_PRECISION_IBM_FLOAT
 
 
 def ibm2ieee(big_endian_bytes):
@@ -29,11 +43,51 @@ def ibm2ieee(big_endian_bytes):
         return 0.0
 
     sign = -1 if (a & 0x80) else 1
-    exponent = a & 0x7f
+    exponent_16_biased = a & 0x7f
     mantissa = ((b << 16) | (c << 8) | d) / _F24
 
-    value = sign * mantissa * pow(16, exponent - 64)
+    value = sign * mantissa * pow(16, exponent_16_biased - EXPONENT_BIAS)
     return value
+
+BITS_PER_NYBBLE = 4
+
+
+def truncate(big_endian_bytes):
+    a, b, c, d = four_bytes(big_endian_bytes)
+
+    sign = -1 if (a & 0x80) else 1
+    exponent_16_biased = a & 0x7f
+    exponent_16 = exponent_16_biased - EXPONENT_BIAS
+    mantissa = ((b << 16) | (c << 8) | d)
+
+    print("sign =", sign)
+    print("exponent_16", exponent_16, hex(exponent_16), bin(exponent_16))
+    print("mantissa", mantissa, hex(mantissa), bin(mantissa))
+
+    num_nybbles_to_preserve = min(exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE)
+    num_bits_to_clear = MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
+    clear_mask = 2**num_bits_to_clear - 1
+    preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
+
+    print("num_nybbles_to_preserve", num_nybbles_to_preserve)
+    print("num_bits_to_clear", num_bits_to_clear)
+    print("clear_mask   ", bin(clear_mask))
+    print("preserve_mask", bin(preserve_mask))
+
+    truncated_mantissa = mantissa & preserve_mask
+
+    value = truncated_mantissa * pow(16, exponent_16)
+
+    scaled_value = value >> MAX_BITS_PRECISION_IBM_FLOAT
+
+    return scaled_value
+
+    #
+    # tb = (preserve_mask >> 16) & b
+    # tc = (preserve_mask >> 8) & c
+    # td = preserve_mask & d
+    #
+    # return byte_string((a, tb, tc, td))
 
 
 def ieee2ibm(f):
@@ -116,23 +170,32 @@ def ieee2ibm(f):
     return byte_string((a, b, c, d))
 
 
-class IBMFloat(object):
+class IBMFloat(Real):
+
     __slots__ = ['_data']
 
-    def __init__(self, b):
-        """Initialise IBMFloat from an IEEE float.
+    _INTERNED = {IBM_ZERO_BYTES: None,
+                 IBM_NEGATIVE_ONE_BYTES: None,
+                 IBM_POSITIVE_ONE_BYTES: None}
 
-        Args:
-            b: A byte sequence containing exactly four bytes
+    # noinspection PyUnresolvedReferences
+    def __new__(cls, b):
+        obj = object.__new__(cls)
 
-        Raises:
-            ValueError: If b does not contain exactly four values in the range 0-255.
-        """
         data = bytes(b)
         num_bytes = len(data)
         if num_bytes != 4:
-            raise ValueError("{} cannot be constructed from {} values".format(self.__class__.__name__, num_bytes))
-        self._data = data
+            raise ValueError("{} cannot be constructed from {} values".format(cls.__name__, num_bytes))
+        obj._data = data
+
+        # Intern common values
+        if data in cls._INTERNED:
+            if cls._INTERNED[data] is None:
+                cls._INTERNED[data] = obj
+            return cls._INTERNED[data]
+
+        return obj
+
 
     @classmethod
     def from_float(cls, f):
@@ -152,8 +215,18 @@ class IBMFloat(object):
         return cls(ieee2ibm(f))
 
     @classmethod
+    def from_real(cls, f):
+        if isinstance(f, IBMFloat):
+            return f
+        return cls.from_float(f)
+
+    @classmethod
     def from_bytes(cls, b):
         return cls(b)
+
+    @property
+    def signbit(self):
+        return self._data[0] & 0x80
 
     def __float__(self):
         return ibm2ieee(self._data)
@@ -162,7 +235,10 @@ class IBMFloat(object):
         return self._data
 
     def __repr__(self):
-        return "{}({!r})".format(self.__class__.__name__, self._data)
+        return "{}.from_float({!r}) ~{!r}".format(self.__class__.__name__, self._data, float(self))
+
+    def __str__(self):
+        return str(float(self))
 
     def __bool__(self):
         return not self.is_zero()
@@ -174,5 +250,172 @@ class IBMFloat(object):
         return not self.is_zero()
 
     def is_subnormal(self):
-        return (not self.is_zero()) and (self._data[1] < 32)
+        return (not self.is_zero()) and (self._data[1] < 16)
+
+    def zero_subnormal(self):
+        return IBM_FLOAT_ZERO if self.is_subnormal() else self
+
+    def frexp(self):
+        raise NotImplemented
+        # return the mantissa and exponent
+
+    def __pos__(self):
+        return self
+
+    def __neg__(self):
+        data = self._data
+        return IBMFloat((data[0] ^ 0b10000000,
+                         data[1],
+                         data[2],
+                         data[3]))
+
+    def __abs__(self):
+        data = self._data
+        return IBMFloat((data[0] & 0b01111111,
+                         data[1],
+                         data[2],
+                         data[3]))
+
+    def __eq__(self, rhs):
+        if not isinstance(rhs, IBMFloat):
+            return NotImplemented
+        # TODO: Consider forcing normalisation
+        return self._data == rhs._data
+
+    def __floordiv__(self, rhs):
+        return float(self) // float(rhs)
+
+    def __rfloordiv__(self, lhs):
+        return float(lhs) // float(self)
+
+    def __rtruediv__(self, lhs):
+        q = float(lhs) / float(self)
+        return IBMFloat.from_float(q) if isinstance(lhs, float) else q
+
+    def __pow__(self, exponent):
+        p = pow(float(self), float(exponent))
+        return IBMFloat.from_float(p) if isinstance(exponent, IBMFloat) else p
+
+    def __rpow__(self, base):
+        return IBMFloat.from_float(pow(float(base), float(self)))
+
+    def __mod__(self, rhs):
+        m = float(self) % float(rhs)
+        return IBMFloat.from_float(m) if isinstance(rhs, IBMFloat) else m
+
+    def __rmod__(self, lhs):
+        m = float(lhs) % float(self)
+        return IBMFloat.from_float(m) if isinstance(lhs, IBMFloat) else m
+
+    def __rmul__(self, lhs):
+        p = float(lhs) * float(self)
+        return IBMFloat.from_float(p) if isinstance(lhs, IBMFloat) else p
+
+    def __radd__(self, lhs):
+        s = float(lhs) + float(self)
+        return IBMFloat.from_float(s) if isinstance(lhs, IBMFloat) else s
+
+    def __lt__(self, rhs):
+        return float(self) < float(rhs)
+
+    def __le__(self, rhs):
+        return float(self) <= float(rhs)
+
+    def __ceil__(self):
+        return ceil(float(self))
+
+    def __floor__(self):
+        return floor(float(self))
+
+    @property
+    def exp16(self):
+        """The base 16 exponent."""
+        exponent_16_biased = self._data[0] & 0x7f
+        exponent_16 = exponent_16_biased - EXPONENT_BIAS
+        return exponent_16
+
+    @property
+    def int_mantissa(self):
+        data = self._data
+        return (data[1] << 16) | (data[2] << 8) | data[3]
+
+    def __trunc__(self):
+        sign = -1 if self.signbit else 1
+        exponent_16 = self.exp16
+        mantissa = self.int_mantissa
+
+        # print("sign =", sign)
+        # print("exponent_16", exponent_16, hex(exponent_16), bin(exponent_16))
+        # print("mantissa", mantissa, hex(mantissa), bin(mantissa))
+
+        num_nybbles_to_preserve = min(exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE)
+        num_bits_to_clear = MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
+        clear_mask = 2**num_bits_to_clear - 1
+        preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
+
+        # print("num_nybbles_to_preserve", num_nybbles_to_preserve)
+        # print("num_bits_to_clear", num_bits_to_clear)
+        # print("clear_mask   ", bin(clear_mask))
+        # print("preserve_mask", bin(preserve_mask))
+
+        truncated_mantissa = mantissa & preserve_mask
+        magnitude = truncated_mantissa * pow(16, exponent_16) >> MAX_BITS_PRECISION_IBM_FLOAT
+        return sign * magnitude
+
+    def normalize(self):
+        """Attempt to normalize the floating point value.
+
+        Returns:
+            A normalized IBMFloat equal in value to this object.
+
+        Raises:
+            FloatingPointError: If the number could not be normalized.
+        """
+        exponent_16 = self.exp16
+        mantissa = self.int_mantissa
+
+        if mantissa == 0:
+            return IBM_FLOAT_ZERO
+
+        while mantissa < (1 << 20):
+            new_exponent_16 = exponent_16 - 1
+            if not (-64 <= new_exponent_16 < 64):
+                raise FloatingPointError("Could not normalize {!r} without causing exponent overflow.".format(self))
+
+            mantissa <<= 4
+            exponent_16 = new_exponent_16
+
+        exponent_16_biased = exponent_16 + EXPONENT_BIAS
+
+        sign = self.signbit << 7
+
+        a = sign | exponent_16_biased
+        b = (mantissa >> 16) & 0xff
+        c = (mantissa >> 8) & 0xff
+        d = mantissa & 0xff
+
+        return IBMFloat.from_bytes((a, b, c, d))
+
+    def __round__(self, ndigits=None):
+        return IBMFloat.from_float(round(float(self), ndigits))
+
+    def __truediv__(self, rhs):
+        q = float(self) / float(rhs)
+        return IBMFloat.from_float(q) if isinstance(rhs, IBMFloat) else q
+
+    def __mul__(self, rhs):
+        p = float(self) * float(rhs)
+        return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
+
+    def __add__(self, rhs):
+        p = float(self) + float(rhs)
+        return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
+
+    def __int__(self):
+        raise trunc(self)
+
+
+IBM_FLOAT_ZERO = IBMFloat.from_bytes(IBM_ZERO_BYTES)
+
+
 

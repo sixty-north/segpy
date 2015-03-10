@@ -15,7 +15,7 @@ from segpy.catalog import CatalogBuilder
 from segpy.datatypes import CTYPES, size_in_bytes
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.binary_reel_header_definition import HEADER_DEF
-from segpy.ibm_float import ibm2ieee, ieee2ibm
+from segpy.ibm_float import ibm2ieee, ieee2ibm, IBMFloat
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header_definition import TRACE_HEADER_DEF
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
@@ -461,7 +461,7 @@ def unpack_ibm_floats(data, count):
     Returns:
         A sequence of floats.
     """
-    return array('d', (ibm2ieee(data[i: i+4]) for i in range(0, count * 4, 4)))
+    return array('d', (IBMFloat.from_bytes(data[i: i+4]) for i in range(0, count * 4, 4)))
 
 
 def unpack_values(buf, count, fmt, endian='>'):

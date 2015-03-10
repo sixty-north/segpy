@@ -1,11 +1,13 @@
+from math import trunc, floor
 import unittest
 
-from hypothesis import given
+from hypothesis import given, assume
 from hypothesis.descriptors import integers_in_range, floats_in_range
 
 from segpy.portability import byte_string
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
-                             LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, IBM_FLOAT32_EPSILON)
+                             LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT, truncate,
+                             MAX_EXACT_INTEGER_IBM_FLOAT, MIN_EXACT_INTEGER_IBM_FLOAT, EXPONENT_BIAS)
 from segpy.util import almost_equal
 
 
@@ -192,7 +194,74 @@ class TestIBMFloat(unittest.TestCase):
     @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
     def test_floats_roundtrip(self, f):
         ibm = IBMFloat.from_float(f)
-        self.assertTrue(almost_equal(f, float(ibm), epsilon=IBM_FLOAT32_EPSILON))
+        self.assertTrue(almost_equal(f, float(ibm), epsilon=EPSILON_IBM_FLOAT))
+
+    @given(integers_in_range(0, MAX_EXACT_INTEGER_IBM_FLOAT - 1))
+    @given(floats_in_range(0.0, 1.0))
+    def test_trunc_above_zero(self, i, f):
+        assume(f != 1.0)
+        ieee = i + f
+        ibm = IBMFloat.from_float(ieee)
+        self.assertEqual(trunc(ibm), i)
+
+    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT + 1, 0))
+    @given(floats_in_range(0.0, 1.0))
+    def test_trunc_below_zero(self, i, f):
+        assume(f != 1.0)
+        ieee = i - f
+        ibm = IBMFloat.from_float(ieee)
+        self.assertEqual(trunc(ibm), i)
+
+    def test_normalise_subnormal_expect_failure(self):
+        # This float has an base-16 exponent of -64 (the minimum) and cannot be normalised
+        ibm = IBMFloat.from_float(1.6472184286297693e-83)
+        assert ibm.is_subnormal()
+        with self.assertRaises(FloatingPointError):
+            ibm.normalize()
+
+    def test_normalise_subnormal(self):
+        ibm = IBMFloat.from_bytes((0b01000000, 0b00000000, 0b11111111, 0b00000000))
+        assert ibm.is_subnormal()
+        normalized = ibm.normalize()
+        self.assertFalse(normalized.is_subnormal())
+
+    def test_normalise_subnormal2(self):
+        ibm = IBMFloat.from_bytes((64, 1, 0, 0))
+        assert ibm.is_subnormal()
+        normalized = ibm.normalize()
+        self.assertFalse(normalized.is_subnormal())
+
+    @given(integers_in_range(128, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(4, 23))
+    def test_normalise_subnormal(self, b, c, d, shift):
+        mantissa = (b << 16) | (c << 8) | d
+        assume(mantissa != 0)
+        mantissa >>= shift
+        assert mantissa != 0
+
+        sa = EXPONENT_BIAS
+        sb = (mantissa >> 16) & 0xff
+        sc = (mantissa >> 8) & 0xff
+        sd = mantissa & 0xff
+
+        ibm = IBMFloat.from_bytes((sa, sb, sc, sd))
+        assert ibm.is_subnormal()
+        normalized = ibm.normalize()
+        self.assertFalse(normalized.is_subnormal())
+
+
+    @given(integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255))
+    def test_abs(self, a, b, c, d):
+        b = byte_string((a, b, c, d))
+        ibm = IBMFloat.from_bytes(b)
+        abs_ibm = abs(ibm)
+        self.assertGreaterEqual(abs_ibm.signbit, 0)
+
 
 
 if __name__ == '__main__':

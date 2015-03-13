@@ -316,10 +316,11 @@ class IBMFloat(Real):
 
     def __eq__(self, rhs):
         if not isinstance(rhs, IBMFloat):
-            nlhs = self.normalize() if self.is_subnormal() else self
-            nrhs = rhs.normalize()
-            if
-        # TODO: Consider forcing normalisation
+            pass
+        #     nlhs = self.normalize() if self.is_subnormal() else self
+        #     nrhs = rhs.normalize()
+        #     if
+        # # TODO: Consider forcing normalisation
         return self._data == rhs._data
 
     def __floordiv__(self, rhs):

@@ -224,9 +224,29 @@ class IBMFloat(Real):
     def from_bytes(cls, b):
         return cls(b)
 
+    @classmethod
+    def ldexp(cls, fraction, exponent):
+        """Make an IBMFloat from fraction and exponent.
+
+        The is the inverse function of IBMFloat.frexp()
+
+        Args:
+            fraction: A Real in the range -1.0 to 1.0.
+            exponent: An integer in the range -256 to 255 inclusive.
+        """
+        if not (-1.0 <= fraction <= 1.0):
+            raise ValueError("ldexp fraction {!r} out of range -1.0 to +1.0")
+
+        if not (-256 <= exponent < 256):
+            raise ValueError("ldexp exponent {!r} out of range -256 to 256")
+
+        ieee = fraction * 2**exponent
+        return IBMFloat.from_float(ieee)
+
     @property
     def signbit(self):
-        return self._data[0] & 0x80
+        """True if the value is negative, otherwise False."""
+        return bool(self._data[0] & 0x80)
 
     def __float__(self):
         return ibm2ieee(self._data)
@@ -244,25 +264,40 @@ class IBMFloat(Real):
         return not self.is_zero()
 
     def is_zero(self):
-        return all(b == 0 for b in self._data)
+        return self.int_mantissa == 0
 
     def __nonzero__(self):
         return not self.is_zero()
 
     def is_subnormal(self):
-        return (not self.is_zero()) and (self._data[1] < 16)
+        if self.is_zero():
+            # Only one of the many possible representations of zero is considered 'normal' - all the zeros
+            return not all(b == 0 for b in self._data)
+
+        return self._data[1] < 16  # TODO: Replace magic number with constant
 
     def zero_subnormal(self):
         return IBM_FLOAT_ZERO if self.is_subnormal() else self
 
     def frexp(self):
-        raise NotImplemented
-        # return the mantissa and exponent
+        """Obtain the fraction and exponent.
+
+        Returns:
+            A pair where the first item is the fraction in the range -1.0 and +1.0 and the
+            exponent is an integer such that f = fraction * 2**exponent
+        """
+        sign = -1 if self.signbit else 1
+        mantissa = sign * self.int_mantissa / _F24
+        exp_2 = self.exp16 * 4
+        return mantissa, exp_2
 
     def __pos__(self):
         return self
 
     def __neg__(self):
+        if self.is_zero():
+            return IBM_FLOAT_ZERO
+
         data = self._data
         return IBMFloat((data[0] ^ 0b10000000,
                          data[1],
@@ -270,6 +305,9 @@ class IBMFloat(Real):
                          data[3]))
 
     def __abs__(self):
+        if self.is_zero():
+            return IBM_FLOAT_ZERO
+
         data = self._data
         return IBMFloat((data[0] & 0b01111111,
                          data[1],
@@ -278,7 +316,9 @@ class IBMFloat(Real):
 
     def __eq__(self, rhs):
         if not isinstance(rhs, IBMFloat):
-            return NotImplemented
+            nlhs = self.normalize() if self.is_subnormal() else self
+            nrhs = rhs.normalize()
+            if
         # TODO: Consider forcing normalisation
         return self._data == rhs._data
 
@@ -322,10 +362,12 @@ class IBMFloat(Real):
         return float(self) <= float(rhs)
 
     def __ceil__(self):
-        return ceil(float(self))
+        t = trunc(self)
+        return t if self.signbit else t + 1
 
     def __floor__(self):
-        return floor(float(self))
+        t = trunc(self)
+        return t - 1 if self.signbit else t
 
     @property
     def exp16(self):
@@ -344,26 +386,17 @@ class IBMFloat(Real):
         exponent_16 = self.exp16
         mantissa = self.int_mantissa
 
-        # print("sign =", sign)
-        # print("exponent_16", exponent_16, hex(exponent_16), bin(exponent_16))
-        # print("mantissa", mantissa, hex(mantissa), bin(mantissa))
-
         num_nybbles_to_preserve = min(exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE)
         num_bits_to_clear = MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
         clear_mask = 2**num_bits_to_clear - 1
         preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
-
-        # print("num_nybbles_to_preserve", num_nybbles_to_preserve)
-        # print("num_bits_to_clear", num_bits_to_clear)
-        # print("clear_mask   ", bin(clear_mask))
-        # print("preserve_mask", bin(preserve_mask))
 
         truncated_mantissa = mantissa & preserve_mask
         magnitude = truncated_mantissa * pow(16, exponent_16) >> MAX_BITS_PRECISION_IBM_FLOAT
         return sign * magnitude
 
     def normalize(self):
-        """Attempt to normalize the floating point value.
+        """Normalize the floating point value.
 
         Returns:
             A normalized IBMFloat equal in value to this object.
@@ -371,11 +404,11 @@ class IBMFloat(Real):
         Raises:
             FloatingPointError: If the number could not be normalized.
         """
+        if self.is_zero():
+            return IBM_FLOAT_ZERO
+
         exponent_16 = self.exp16
         mantissa = self.int_mantissa
-
-        if mantissa == 0:
-            return IBM_FLOAT_ZERO
 
         while mantissa < (1 << 20):
             new_exponent_16 = exponent_16 - 1
@@ -387,7 +420,7 @@ class IBMFloat(Real):
 
         exponent_16_biased = exponent_16 + EXPONENT_BIAS
 
-        sign = self.signbit << 7
+        sign = int(self.signbit) << 7
 
         a = sign | exponent_16_biased
         b = (mantissa >> 16) & 0xff
@@ -412,7 +445,7 @@ class IBMFloat(Real):
         return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
 
     def __int__(self):
-        raise trunc(self)
+        return trunc(self)
 
 
 IBM_FLOAT_ZERO = IBMFloat.from_bytes(IBM_ZERO_BYTES)

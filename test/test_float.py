@@ -2,7 +2,8 @@ from math import trunc, floor
 import unittest
 
 from hypothesis import given, assume
-from hypothesis.descriptors import integers_in_range, floats_in_range
+from hypothesis.descriptors import integers_in_range, floats_in_range, just
+import math
 
 from segpy.portability import byte_string
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
@@ -212,6 +213,22 @@ class TestIBMFloat(unittest.TestCase):
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(trunc(ibm), i)
 
+    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1))
+    @given(floats_in_range(0.0, 1.0))
+    def test_ceil(self, i, f):
+        assume(f != 1.0)
+        ieee = i + f
+        ibm = IBMFloat.from_float(ieee)
+        self.assertEqual(math.ceil(ibm), i + 1)
+
+    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1))
+    @given(floats_in_range(0.0, 1.0))
+    def test_floor(self, i, f):
+        assume(f != 1.0)
+        ieee = i + f
+        ibm = IBMFloat.from_float(ieee)
+        self.assertEqual(math.floor(ibm), i)
+
     def test_normalise_subnormal_expect_failure(self):
         # This float has an base-16 exponent of -64 (the minimum) and cannot be normalised
         ibm = IBMFloat.from_float(1.6472184286297693e-83)
@@ -251,16 +268,69 @@ class TestIBMFloat(unittest.TestCase):
         normalized = ibm.normalize()
         self.assertFalse(normalized.is_subnormal())
 
+    @given(integers_in_range(128, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(4, 23))
+    def test_zero_subnormal(self, b, c, d, shift):
+        mantissa = (b << 16) | (c << 8) | d
+        assume(mantissa != 0)
+        mantissa >>= shift
+        assert mantissa != 0
+
+        sa = EXPONENT_BIAS
+        sb = (mantissa >> 16) & 0xff
+        sc = (mantissa >> 8) & 0xff
+        sd = mantissa & 0xff
+
+        ibm = IBMFloat.from_bytes((sa, sb, sc, sd))
+        assert ibm.is_subnormal()
+        z = ibm.zero_subnormal()
+        self.assertTrue(z.is_zero())
 
     @given(integers_in_range(0, 255),
            integers_in_range(0, 255),
            integers_in_range(0, 255),
            integers_in_range(0, 255))
     def test_abs(self, a, b, c, d):
-        b = byte_string((a, b, c, d))
-        ibm = IBMFloat.from_bytes(b)
+        ibm = IBMFloat.from_bytes((a, b, c, d))
         abs_ibm = abs(ibm)
         self.assertGreaterEqual(abs_ibm.signbit, 0)
+
+    @given(integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255),
+           integers_in_range(0, 255))
+    def test_negate_non_zero(self, a, b, c, d):
+        ibm = IBMFloat.from_bytes((a, b, c, d))
+        assume(not ibm.is_zero())
+        negated = -ibm
+        self.assertNotEqual(ibm.signbit, negated.signbit)
+
+    def test_negate_zero(self):
+        zero = IBMFloat.from_float(0.0)
+        negated = -zero
+        self.assertTrue(negated.is_zero())
+
+    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    def test_signbit(self, f):
+        ltz = f < 0
+        ibm = IBMFloat.from_float(f)
+        self.assertEqual(ltz, ibm.signbit)
+
+    @given(floats_in_range(-1.0, +1.0),
+           integers_in_range(-256, 255))
+    def test_ldexp_frexp(self, fraction, exponent):
+        try:
+            ibm = IBMFloat.ldexp(fraction, exponent)
+        except OverflowError:
+            assume(False)
+        else:
+            f, e = ibm.frexp()
+            self.assertTrue(almost_equal(fraction * 2**exponent, f * 2**e, epsilon=EPSILON_IBM_FLOAT))
+
+
+
 
 
 

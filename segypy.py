@@ -46,7 +46,6 @@ version = '0.3.1'
 
 REEL_HEADER_NUM_BYTES = 3600
 TRACE_HEADER_NUM_BYTES = 240
-PARTIAL_READ_SCALE_VAL = 8
 
 l_char = struct.calcsize('c')
 l_uchar = struct.calcsize('B')
@@ -168,20 +167,21 @@ def _filename(f):
     return f.name if hasattr(f, 'name') else '<unknown>'
 
 
-def read_segy(f, endian='>', partial=False):
+def read_segy(f, endian='>', partial=False, scale_val=1):
     """
     data, header, trace_headers = read_reel_header(f)
     """
 
     file_size = file_length(f)
     if partial == True:
+        new_size = file_size / scale_val
         logger.warning('Partial read mode. Reading %d bytes out of %d',
-                       file_size / PARTIAL_READ_SCALE_VAL, file_size)
-        file_size /= PARTIAL_READ_SCALE_VAL
+                       new_size, file_size)
+        file_size = new_size
 
     logger.debug("read_segy : Length of data : {0}".format(file_size))
 
-    reel_header = read_reel_header(f, endian, partial)  # modified by A Squelch
+    reel_header = read_reel_header(f, file_size, endian)
 
     # GET TRACE
     index = REEL_HEADER_NUM_BYTES
@@ -253,7 +253,7 @@ def read_traces(f,
     return values, reel_header, trace_headers
 
 
-def read_reel_header(f, endian='>', partial=False):
+def read_reel_header(f, file_size, endian='>'):
     """
     reel_header = read_reel_header(file_handle)
     """
@@ -272,10 +272,6 @@ def read_reel_header(f, endian='>', partial=False):
 
     # SET NUMBER OF BYTES PER DATA SAMPLE
     bps = get_byte_per_sample(reel_header)
-
-    file_size = file_length(f)
-    if partial == True:
-        file_size /= PARTIAL_READ_SCALE_VAL
 
     ntraces = (file_size - REEL_HEADER_NUM_BYTES) / \
               (reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES)

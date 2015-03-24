@@ -31,7 +31,7 @@ import sys
 import struct
 import logging
 
-from numpy import (transpose, reshape, zeros, arange)
+from numpy import (transpose, reshape, zeros, arange, prod)
 
 from revisions import canonicalize_revision
 from header_definition import HEADER_DEF
@@ -232,9 +232,9 @@ def read_traces(f,
     values, _ = read_binary_value(f, index, ctype, endian, num_data)
 
     logger.debug("read_traces : - reshaping")
-    values = reshape(values,
-                     (reel_header['ntraces'],
-                      reel_header['ns'] + num_dummy_samples))
+    vshape = (reel_header['ntraces'], reel_header['ns'] + num_dummy_samples)
+    values = values[:prod(vshape)]
+    values = reshape(values, vshape)
     logger.debug("read_traces : - stripping header dummy data")
     values = values[:, num_dummy_samples:
                     (reel_header['ns'] + num_dummy_samples)]

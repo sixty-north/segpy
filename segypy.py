@@ -30,8 +30,7 @@ import os
 import sys
 import struct
 import logging
-
-from numpy import (transpose, reshape, zeros, arange, prod)
+import numpy as np
 
 from revisions import canonicalize_revision
 from header_definition import HEADER_DEF
@@ -105,7 +104,7 @@ def get_default_segy_trace_headers(ntraces=100, ns=100, dt=1000):
     trace_header = {'TraceSequenceLine': {'pos': 0, 'type': 'int32'}}
 
     for key in TRACE_HEADER_DEF:
-        trace_header[key] = zeros(ntraces)
+        trace_header[key] = np.zeros(ntraces)
 
     for a in range(ntraces):
         trace_header['TraceSequenceLine'][a] = a + 1
@@ -130,7 +129,7 @@ def read_trace_header(f, reel_header, trace_header_name='cdp', endian='>'):
     # TODO: Be consistent between 'type' and 'format' here.
     trace_header_format = TRACE_HEADER_DEF[trace_header_name]['type']
     ntraces = reel_header['ntraces']
-    trace_header_values = zeros(ntraces)
+    trace_header_values = np.zeros(ntraces)
     binary_reader = create_binary_reader(f, trace_header_format, endian)
     start_pos = trace_header_pos + REEL_HEADER_NUM_BYTES
     stride = reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES
@@ -195,7 +194,7 @@ def read_segy(f, endian='>', partial=False, scale_val=1):
                                                    index,
                                                    endian)
 
-    logger.debug("read_segy :  Read segy data")  # modified by A Squelch
+    logger.info("read_segy :  Done reading segy data")
 
     return data, reel_header, trace_headers
 
@@ -233,18 +232,18 @@ def read_traces(f,
 
     logger.debug("read_traces : - reshaping")
     vshape = (reel_header['ntraces'], reel_header['ns'] + num_dummy_samples)
-    values = values[:prod(vshape)]
-    values = reshape(values, vshape)
+    values = values[:np.prod(vshape)]
+    values = np.reshape(values, vshape)
     logger.debug("read_traces : - stripping header dummy data")
     values = values[:, num_dummy_samples:
                     (reel_header['ns'] + num_dummy_samples)]
     logger.debug("read_traces : - transposing")
-    values = transpose(values)
+    values = np.transpose(values)
 
     # SOMEONE NEEDS TO IMPLEMENT A NICER WAY DO DEAL WITH DSF = 8
     if reel_header['DataSampleFormat'] == 8:
-        for i in arange(reel_header['ntraces']):
-            for j in arange(reel_header['ns']):
+        for i in np.arange(reel_header['ntraces']):
+            for j in np.arange(reel_header['ns']):
                 if values[i][j] > 128:
                     values[i][j] = values[i][j] - 256
 
@@ -448,10 +447,6 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
 
     size = size_in_bytes(ctype)
 
-    cformat = endian + ctype * number
-
-    logger.debug('read_binary_value : cformat :  ' + cformat)
-
     index_end = index + size * number
 
     f.seek(index, os.SEEK_SET)
@@ -459,11 +454,14 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
     if ctype == 'ibm':
         # ASSUME IBM FLOAT DATA
         value = range(number)
-        for i in arange(number):
+        for i in np.arange(number):
             index_ibm = i * 4
-            value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
+            value[i] = np.float32(ibm2ieee2(data[index_ibm: index_ibm + 4]))
         # this returns an array as opposed to a tuple
     else:
+        cformat = endian + ctype * number
+        logger.debug('read_binary_value : cformat :  ' + cformat)
+
         # TODO: Check the content of data before proceeding
         value = struct.unpack(cformat, data)
 
@@ -475,8 +473,7 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
                  'start = ' + str(index) +
                  ' size = ' + str(size) +
                  ' number = ' + str(number) +
-                 ' value = ' + str(value) +
-                 ' cformat = ' + str(cformat))
+                 ' value = ' + str(value))
 
     if number == 1:
         return value[0], index_end

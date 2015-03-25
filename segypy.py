@@ -166,21 +166,15 @@ def _filename(f):
     return f.name if hasattr(f, 'name') else '<unknown>'
 
 
-def read_segy(f, endian='>', partial=False, scale_val=1):
+def read_segy(f, endian='>'):
     """
     data, header, trace_headers = read_reel_header(f)
     """
 
     file_size = file_length(f)
-    if partial == True:
-        new_size = file_size / scale_val
-        logger.warning('Partial read mode. Reading %d bytes out of %d',
-                       new_size, file_size)
-        file_size = new_size
-
     logger.debug("read_segy : Length of data : {0}".format(file_size))
 
-    reel_header = read_reel_header(f, file_size, endian)
+    reel_header = read_reel_header(f, endian)
 
     # GET TRACE
     index = REEL_HEADER_NUM_BYTES
@@ -232,7 +226,6 @@ def read_traces(f,
 
     logger.debug("read_traces : - reshaping")
     vshape = (reel_header['ntraces'], reel_header['ns'] + num_dummy_samples)
-    values = values[:np.prod(vshape)]
     values = np.reshape(values, vshape)
     logger.debug("read_traces : - stripping header dummy data")
     values = values[:, num_dummy_samples:
@@ -252,7 +245,7 @@ def read_traces(f,
     return values, reel_header, trace_headers
 
 
-def read_reel_header(f, file_size, endian='>'):
+def read_reel_header(f, endian='>'):
     """
     reel_header = read_reel_header(file_handle)
     """
@@ -272,6 +265,7 @@ def read_reel_header(f, file_size, endian='>'):
     # SET NUMBER OF BYTES PER DATA SAMPLE
     bps = get_byte_per_sample(reel_header)
 
+    file_size = file_length(f)
     ntraces = (file_size - REEL_HEADER_NUM_BYTES) / \
               (reel_header['ns'] * bps + TRACE_HEADER_NUM_BYTES)
     reel_header['ntraces'] = ntraces
@@ -453,7 +447,7 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
     data = f.read(size * number)
     if ctype == 'ibm':
         # ASSUME IBM FLOAT DATA
-        value = range(number)
+        value = np.empty(number, dtype=np.float32)
         for i in np.arange(number):
             index_ibm = i * 4
             value[i] = np.float32(ibm2ieee2(data[index_ibm: index_ibm + 4]))

@@ -447,10 +447,10 @@ def read_binary_value(f, index, ctype='l', endian='>', number=1):
     data = f.read(size * number)
     if ctype == 'ibm':
         # ASSUME IBM FLOAT DATA
-        value = np.empty(number, dtype=np.float32)
+        value = np.empty(number)
         for i in np.arange(number):
             index_ibm = i * 4
-            value[i] = np.float32(ibm2ieee2(data[index_ibm: index_ibm + 4]))
+            value[i] = ibm2ieee2(data[index_ibm: index_ibm + 4])
         # this returns an array as opposed to a tuple
     else:
         cformat = endian + ctype * number

@@ -315,13 +315,43 @@ class IBMFloat(Real):
                          data[3]))
 
     def __eq__(self, rhs):
+        lhs = self
+
         if not isinstance(rhs, IBMFloat):
-            pass
-        #     nlhs = self.normalize() if self.is_subnormal() else self
-        #     nrhs = rhs.normalize()
-        #     if
-        # # TODO: Consider forcing normalisation
-        return self._data == rhs._data
+            return float(lhs) == float(rhs)
+
+        lhs_sign = lhs.signbit
+        rhs_sign = rhs.signbit
+
+        if lhs_sign != rhs_sign:
+            return False
+
+        nlhs = lhs.normalize()
+        nrhs = rhs.normalize()
+
+        if not (nlhs.is_subnormal() or nrhs.is_subnormal()):
+            # Both of the numbers are normalised
+            return nlhs._data == nrhs._data
+
+        # Either or both of the numbers are subnormal
+        lhs_exp16 = nlhs.exp16
+        rhs_exp16 = nrhs.exp16
+
+        lhs_mantissa = nlhs.int_mantissa
+        rhs_mantissa = nrhs.int_mantissa
+
+        if lhs_exp16 < rhs_exp16:
+            delta_exp16 = rhs_exp16 - lhs_exp16
+            lhs_mantissa >>= 4 * delta_exp16
+            lhs_exp16 += delta_exp16
+
+        if lhs_exp16 > rhs_exp16:
+            delta_exp16 = lhs_exp16 - rhs_exp16
+            rhs_mantissa >>= 4 * delta_exp16
+            rhs_exp16 += delta_exp16
+
+        assert lhs_exp16 == rhs_exp16
+        return lhs_mantissa == rhs_mantissa
 
     def __floordiv__(self, rhs):
         return float(self) // float(rhs)
@@ -361,6 +391,12 @@ class IBMFloat(Real):
 
     def __le__(self, rhs):
         return float(self) <= float(rhs)
+
+    def __gt__(self, rhs):
+        return float(self) > float(rhs)
+
+    def __ge__(self, rhs):
+        return float(self) >= float(rhs)
 
     def __ceil__(self):
         t = trunc(self)

@@ -1,9 +1,9 @@
 from math import trunc, floor
 import unittest
 
-from hypothesis import given, assume, example
+from hypothesis import given, assume
 import math
-from hypothesis.specifiers import integers_in_range, floats_in_range, just
+from hypothesis.specifiers import integers_in_range, floats_in_range
 
 from segpy.portability import byte_string
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
@@ -198,7 +198,7 @@ class TestIBMFloat(unittest.TestCase):
         self.assertTrue(almost_equal(f, float(ibm), epsilon=EPSILON_IBM_FLOAT))
 
     @given(integers_in_range(0, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 0.9))
+           floats_in_range(0.0, 1.0))
     def test_trunc_above_zero(self, i, f):
         assume(f != 1.0)
         ieee = i + f
@@ -206,7 +206,7 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(trunc(ibm), i)
 
     @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT + 1, 0),
-           floats_in_range(0.0, 0.9))
+           floats_in_range(0.0, 1.0))
     def test_trunc_below_zero(self, i, f):
         assume(f != 1.0)
         ieee = i - f
@@ -214,7 +214,7 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(trunc(ibm), i)
 
     @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 0.9))
+           floats_in_range(0.0, 1.0))
     def test_ceil(self, i, f):
         assume(f != 1.0)
         ieee = i + f
@@ -222,7 +222,7 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(math.ceil(ibm), i + 1)
 
     @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 0.9))
+           floats_in_range(0.0, 1.0))
     def test_floor(self, i, f):
         assume(f != 1.0)
         ieee = i + f
@@ -357,6 +357,7 @@ class TestIBMFloat(unittest.TestCase):
         ieee_c = ieee_a - ieee_b
 
         self.assertTrue(almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT))
+
 
 
 if __name__ == '__main__':

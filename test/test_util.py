@@ -1,7 +1,7 @@
 import unittest
 
 from hypothesis import given, assume
-from hypothesis.descriptors import integers_in_range
+from hypothesis.specifiers import integers_in_range
 from segpy.util import batched
 
 

@@ -1,1 +1,1 @@
-hypothesis==0.4.0
+hypothesis>=1.2

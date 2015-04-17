@@ -241,3 +241,10 @@ def first_sentence(s):
 def lower_first(s):
     """Lower case the first character of a string."""
     return s[:1].lower() + s[1:]
+
+
+def almost_equal(x, y, epsilon):
+    max_xy_one = max(1.0, abs(x), abs(y))
+    e = epsilon * max_xy_one
+    delta = abs(x - y)
+    return delta <= e

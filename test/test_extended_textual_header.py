@@ -1,6 +1,8 @@
 import unittest
+
 from hypothesis import given
 from hypothesis.specifiers import sampled_from, just
+
 from segpy.encoding import EBCDIC, ASCII
 from segpy.toolkit import format_extended_textual_header, CARDS_PER_HEADER, END_TEXT_STANZA, CARD_LENGTH
 from test.strategies import multiline_ascii_encodable_text

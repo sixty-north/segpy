@@ -1,0 +1,1 @@
+hypothesis>=1.2

@@ -1,14 +1,17 @@
-
-SEGY_REVISION_0 = 0x0000
-SEGY_REVISION_1 = 0x0100
+SEGY_REVISION_0 = 0
+SEGY_REVISION_1 = 1
 
 VARIANTS = {SEGY_REVISION_0: SEGY_REVISION_0,
             SEGY_REVISION_1: SEGY_REVISION_1,
+            0: SEGY_REVISION_0,
+            1: SEGY_REVISION_1,
             100: SEGY_REVISION_1,
             256: SEGY_REVISION_1}
 
+
 class SegYRevisionError(Exception):
     pass
+
 
 def canonicalize_revision(revision):
     """Canonicalize a SEG Y revision.

@@ -2,7 +2,7 @@
 SEG Y Header Definition
 """
 
-from revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
 HEADER_DEF = {"Job": {"pos": 3200, "type": "int32", "def": 0}}
 HEADER_DEF["Line"] = {"pos": 3204, "type": "int32", "def": 0}
@@ -47,13 +47,13 @@ HEADER_DEF["DataSampleFormat"]["datatype"][SEGY_REVISION_1] = {
     1: 'ibm',
     2: 'l',
     3: 'h',
-    #    5: 'float',
     5: 'f',
     8: 'B'}
 
 HEADER_DEF["EnsembleFold"] = {"pos": 3226, "type": "int16", "def": 0}
 HEADER_DEF["TraceSorting"] = {"pos": 3228, "type": "int16", "def": 0}
 HEADER_DEF["VerticalSumCode"] = {"pos": 3230, "type": "int16", "def": 0}
+HEADER_DEF["SweepFrequencyStart"] = {"pos": 3232, "type": "int16", "def": 0}
 HEADER_DEF["SweepFrequencyEnd"] = {"pos": 3234, "type": "int16", "def": 0}
 HEADER_DEF["SweepLength"] = {"pos": 3236, "type": "int16", "def": 0}
 HEADER_DEF["SweepType"] = {"pos": 3238, "type": "int16", "def": 0}

@@ -1,4 +1,4 @@
-from revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
 TRACE_HEADER_DEF = {"TraceSequenceLine": {"pos": 0, "type": "int32"}}
 TRACE_HEADER_DEF["TraceSequenceFile"] = {"pos": 4, "type": "int32"}

@@ -5,11 +5,12 @@ class Int16(int):
     SIZE = 2
 
     def __new__(cls, *args, **kwargs):
-        instance = super(cls).__new__(cls, *args, **kwargs)
+        instance = super().__new__(cls, *args, **kwargs)
         if not (Int16.MINIMUM <= instance <= Int16.MAXIMUM):
-            raise ValueError("{} value {!r} outside range {}–{}".format(cls.__name__, instance,
+            raise ValueError("{} value {!r} outside range {} to {}".format(cls.__name__, instance,
                                                                         cls.MINIMUM, cls.MAXIMUM))
         return instance
+
 
 class Int32(int):
 
@@ -18,9 +19,9 @@ class Int32(int):
     SIZE = 4
 
     def __new__(cls, *args, **kwargs):
-        instance = super(Int32, cls).__new__(cls, *args, **kwargs)
-        if not (Int16.MINIMUM <= instance <= Int16.MAXIMUM):
-            raise ValueError("{} value {!r} outside range {}–{}".format(cls.__name__, instance,
+        instance = super().__new__(cls, *args, **kwargs)
+        if not (Int32.MINIMUM <= instance <= Int32.MAXIMUM):
+            raise ValueError("{} value {!r} outside range {} to {}".format(cls.__name__, instance,
                                                                         cls.MINIMUM, cls.MAXIMUM))
         return instance
 

@@ -3,7 +3,7 @@ from segpy.encoding import ASCII
 
 from segpy.portability import seekable
 from segpy.util import file_length, filename_from_handle
-from segpy.datatypes import DATA_SAMPLE_FORMAT, CTYPE_DESCRIPTION, CTYPES, size_in_bytes
+from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
                            bytes_per_sample,
                            read_binary_reel_header,
@@ -235,10 +235,10 @@ class SegYReader(object):
                              .format(start, stop_sample))
 
         dsf = self._binary_reel_header['DataSampleFormat']
-        ctype = DATA_SAMPLE_FORMAT[dsf]
+        ctype = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
         start_pos = (self._trace_offset_catalog[trace_index]
                      + TRACE_HEADER_NUM_BYTES
-                     + start_sample * size_in_bytes(CTYPES[ctype]))
+                     + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[ctype]))
         num_samples_to_read = stop_sample - start_sample
 
         trace_values = read_binary_values(
@@ -334,13 +334,13 @@ class SegYReader(object):
         Returns:
             One of the values from datatypes.DATA_SAMPLE_FORMAT
         """
-        return DATA_SAMPLE_FORMAT[self._binary_reel_header['DataSampleFormat']]
+        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self._binary_reel_header['DataSampleFormat']]
 
     @property
     def data_sample_format_description(self):
         """A descriptive human-readable description of the data sample format
         """
-        return CTYPE_DESCRIPTION[self.data_sample_format]
+        return SEG_Y_TYPE_DESCRIPTION[self.data_sample_format]
 
     @property
     def encoding(self):

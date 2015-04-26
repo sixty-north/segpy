@@ -1,11 +1,12 @@
-DATA_SAMPLE_FORMAT = {1: 'ibm',
+# A mapping from data sampel format codes to SEG Y types.
+DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {1: 'ibm',
                       2: 'int32',
                       3: 'int16',
                       5: 'float32',
                       8: 'int8'}
 
 # A mapping from SEG Y data types to format characters used by the struct module
-CTYPES = {'int32':  'i',
+SEG_Y_TYPE_TO_CTYPE = {'int32':  'i',
           'uint32': 'I',
           'int16':  'h',
           'uint16': 'H',
@@ -15,7 +16,7 @@ CTYPES = {'int32':  'i',
           'ibm': 'ibm'}
 
 
-CTYPE_DESCRIPTION = {'ibm': 'IBM float',
+SEG_Y_TYPE_DESCRIPTION = {'ibm': 'IBM float',
                      'int32': '32 bit signed integer',
                      'uint32': '32 bit unsigned integer',
                      'int16': '16 bit signed integer',
@@ -25,7 +26,7 @@ CTYPE_DESCRIPTION = {'ibm': 'IBM float',
                      'uint8': '8 bit unsigned integer (byte)'}
 
 
-SIZES = dict(i=4,
+CTYPE_TO_SIZE = dict(i=4,
              I=4,
              h=2,
              H=2,
@@ -36,4 +37,4 @@ SIZES = dict(i=4,
 
 
 def size_in_bytes(ctype):
-    return SIZES[ctype]
+    return CTYPE_TO_SIZE[ctype]

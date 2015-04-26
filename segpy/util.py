@@ -106,6 +106,30 @@ def complementary_intervals(intervals, start=None, stop=None):
 
     yield interval_type(index, stop)
 
+def intervals_partially_overlap(interval_a, interval_b):
+    """Determine whether two intervals partially overlap.
+
+    Args:
+        interval_a: A range or slice object.
+        interval_b: A range or slice object.
+
+    Returns:
+        True if interval_a partially overlaps interval_b, otherwise False if the intervals
+        are either disjoint or exactly coincident.
+    """
+    if interval_a == interval_b:
+        return False
+
+    if interval_a.start <= interval_b.start:
+        first_interval = interval_a
+        second_interval = interval_b
+    else:
+        first_interval = interval_b
+        second_interval = interval_a
+
+    return second_interval.start < first_interval.stop
+
+
 
 def roundrobin(*iterables):
     """Take items from each iterable in turn until all iterables are exhausted.
@@ -248,3 +272,15 @@ def almost_equal(x, y, epsilon):
     e = epsilon * max_xy_one
     delta = abs(x - y)
     return delta <= e
+
+
+def ensure_contains(collection, item):
+    return collection if item in collection else conjoin(collection, item)
+
+
+def conjoin(collection, item):
+    return collection + type(collection)((item,))
+
+
+def is_magic_name(name):
+    return len(name) > 4 and name.startswith('__') and name.endswith('__')

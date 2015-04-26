@@ -12,7 +12,7 @@ from segpy import textual_reel_header_definition
 
 
 from segpy.catalog import CatalogBuilder
-from segpy.datatypes import CTYPES, size_in_bytes
+from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import IBMFloat
@@ -431,7 +431,7 @@ c
     Returns:
         A sequence containing count items.
     """
-    fmt = CTYPES[ctype]
+    fmt = SEG_Y_TYPE_TO_CTYPE[ctype]
     item_size = size_in_bytes(fmt)
     block_size = item_size * count
 
@@ -795,7 +795,7 @@ def write_binary_values(fh, values, ctype, pos=None, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    fmt = CTYPES[ctype]
+    fmt = SEG_Y_TYPE_TO_CTYPE[ctype]
 
     if pos is not None:
         fh.seek(pos, os.SEEK_SET)
@@ -874,7 +874,7 @@ def compile_trace_header_format(endian='>'):
             fmt.append(str(shortfall) + 'x')  # Ignore bytes
             length += shortfall
 
-        ctype = CTYPES[record_spec.type]
+        ctype = SEG_Y_TYPE_TO_CTYPE[record_spec.type]
         fmt.append(ctype)
         length += size_in_bytes(ctype)
 

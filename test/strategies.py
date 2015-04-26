@@ -16,6 +16,6 @@ def multiline_ascii_encodable_text(min_num_lines, max_num_lines):
         and characters which are encodable as printable 7-bit ASCII characters.
     """
 
-    return strategy(integers_in_range(0, 10))                                      \
+    return strategy(integers_in_range(min_num_lines, max_num_lines))                                      \
            .flatmap(lambda n: ([integers_in_range(*PRINTABLE_ASCII_RANGE)],) * n)  \
            .map(lambda xs: '\n'.join(bytes(x).decode('ascii') for x in xs))

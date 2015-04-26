@@ -171,6 +171,388 @@ class TraceHeaderFormat(metaclass=FormatMeta):
         "Group static correction in milliseconds. The time_scalar applies to this value."
     )
 
+    total_static = field(
+        Int16, offset=103, default=0, documentation=
+        "Total static applied in milliseconds. (Zero if no static has been applied). "
+        "The time_scalar applies to this value."
+    )
+
+    lag_time_a = field(
+        Int16, offset=105, default=0, documentation=
+        "Lag time A. Time in milliseconds between end of 240-byte trace identification header and time break. "
+        "The value is positive if time break occurs after the end of header; negative if time break occurs before the "
+        "end of header. Time break is defined as the initiation pulse that may be recorded on an auxiliary trace or as "
+        "otherwise specified by the recording system. The time_scalar applies to this value."
+    )
+
+    lag_time_b = field(
+        Int16, offset=107, default=0, documentation=
+        "Lag Time B. Time in milliseconds between time break and the initiation time of the energy source. May be "
+        "positive or negative. The time_scalar applies to this value."
+    )
+
+    delay_recording_time = field(
+        Int16, offset=109, default=0, documentation=
+        "Delay recording time — Time in milliseconds between initiation time of energy source and the time when "
+        "recording of data samples begins. In SEG Y rev 0 this entry was intended for deep-water work if data "
+        "recording does not start at zero time. The entry can be negative to accommodate negative start times (i.e. "
+        "data recorded before time zero, presumably as a result of static application to the data trace). If a "
+        "non-zero value (negative or positive) is recorded in this entry, a comment to that effect should appear in "
+        "the Textual File Header. The time_scalar applies to this value."
+    )
+
+    mute_start_time = field(
+        Int16, offset=111, default=0, documentation=
+        "Mute time — Start time in milliseconds. The time_scalar applies to this value."
+    )
+
+    mute_end_time = field(
+        Int16, offset=113, default=0, documentation=
+        "Mute time — End time in milliseconds.  The time_scalar applies to this value."
+    )
+
+    num_samples = field(
+        Int16, offset=115, default=0, documentation=
+        "Number of samples in this trace. Highly recommended for all types of data."
+    )
+
+    sample_interval = field(
+        Int16, offset=117, default=0, documentation=
+        "Sample interval in microseconds (μs) for this trace. The number of bytes in a trace record must be consistent "
+        "with the number of samples written in the trace header. This is important for all recording media; but it is "
+        "particularly crucial for the correct processing of SEG Y data in disk files (see Appendix C). "
+        "If the fixed length trace flag in bytes 3503-3504 of the Binary File Header is set, the sample interval and "   #TODO: field names instead of byte offsets
+        "number of samples in every trace in the SEG Y file must be the same as the values recorded in the Binary File "
+        "Header. If the fixed length trace flag is not set, the sample interval and number of samples may vary from "
+        "trace to trace. Highly recommended for all types of data."
+    )
+
+    gain_type_of_field_instruments = field(
+        Int16, offset=119, default=0, documentation=
+        "Gain type of field instruments. 1 = fixed, 2 = binary, 3 = floating point, 4 ... N = optional use."
+    )
+
+    instrument_gain_constant = field(
+        Int16, offset=121, default=0, documentation=
+        "Instrument gain constant (dB)."
+    )
+
+    instrument_initial_gain = field(
+        Int16, offset=123, default=0, documentation=
+        "Instrument early or initial gain (dB)."
+    )
+
+    correlated = field(
+        Int16, offset=125, default=1, documentation=
+        "Correlated: 1 = no, 2 = yes."
+    )
+
+    sweep_frequency_at_start = field(
+        Int16, offset=127, default=0, documentation=
+        "Sweep frequency at start (Hz)."
+    )
+
+    sweep_frequency_at_end = field(
+        Int16, offset=129, default=0, documentation=
+        "Sweep frequency at end (Hz)."
+    )
+
+    sweep_length = field(
+        Int16, offset=131, default=0, documentation=
+        "Sweep length in milliseconds."
+    )
+
+    sweep_type = field(
+        Int16, offset=133, default=0, documentation=
+        "Sweep type: 1 = linear, 2 = parabolic, 3 = exponential 4 = other."
+    )
+    sweep_trace_taper_length_at_start = field(
+        Int16, offset=135, default=0, documentation=
+        "Sweep trace taper length at start in milliseconds."
+    )
+
+    sweep_trace_taper_length_at_end = field(
+        Int16, offset=137, default=0, documentation=
+        "Sweep trace taper length at end in milliseconds."
+    )
+
+    taper_type = field(
+        Int16, offset=139, default=0, documentation=
+        "Taper type: 1 = linear, 2 = cos2, 3 = other"
+    )
+
+    alias_filter_frequency = field(
+        Int16, offset=141, default=0, documentation=
+        "Alias filter frequency (Hz), if used."
+    )
+
+    alias_filter_slope = field(
+        Int16, offset=143, default=0, documentation=
+        "Alias filter slope (dB/octave)."
+    )
+
+    notch_filter_frequency = field(
+        Int16, offset=145, default=0, documentation=
+        "Notch filter frequency (Hz), if used."
+    )
+
+    notch_filter_slope = field(
+        Int16, offset=147, default=0, documentation=
+        "Notch filter slope (dB/octave)."
+    )
+
+    low_cut_frequency = field(
+        Int16, offset=149, default=0, documentation=
+        "Low-cut frequency (Hz), if used."
+    )
+
+    high_cut_frequency = field(
+        Int16, offset=151, default=0, documentation=
+        "High-cut frequency (Hz), if used."
+    )
+
+    low_cut_slope = field(
+        Int16, offset=153, default=0, documentation=
+        "Low-cut slope (dB/octave)."
+    )
+
+    high_cut_slope = field(
+        Int16, offset=155, default=0, documentation=
+        "High-cut slope (dB/octave)."
+    )
+
+    year_recorded = field(
+        Int16, offset=155, default=0, documentation=
+        "Year data recorded. The 1975 standard is unclear as to whether this should be recorded as a 2-digit or a "
+        "4-digit year and both have been used. For SEG Y revisions beyond rev 0, the year should be recorded as the "
+        "complete 4-digit Gregorian calendar year (i.e. the year 2001 should be recorded as 2001 in base 10 "
+        "(7D1 in base16))."
+    )
+
+    day_of_year = field(
+        Int16, offset=159, default=0, documentation=
+        "Day of year. (Julian day for GMT and UTC time basis)."
+    )
+
+    hour_of_day = field(
+        Int16, offset=161, default=0, documentation=
+        "Hour of day. (24 hour clock)."
+    )
+
+    minute_of_hour = field(
+        Int16, offset=163, default=0, documentation=
+        "Minute of hour."
+    )
+
+    second_of_minute = field(
+        Int16, offset=165, default=0, documentation=
+        "Second of minute."
+    )
+
+    time_basis_code = field(
+        Int16, offset=167, default=0, documentation=
+        "Time basis code. 1 = Local, 2 = GMT (Greenwich Mean Time), 3 = Other, should be explained in a user defined "
+        "stanza in the Extended Textual File Header, 4 = UTC (Coordinated Universal Time)."
+    )
+
+    trace_weighting_factor = field(
+        Int16, offset=169, default=0, documentation=
+        "Trace weighting factor. Defined as 2**-N volts for the least significant bit. (N = 0, 1, ..., 32767)."
+    )
+
+    geophone_group_num_roll_switch_position_one = field(
+        Int16, offset=171, default=0, documentation=
+        "Geophone group number of roll switch position one."
+    )
+
+    geophone_group_num_first_trace_original_field = field(
+        Int16, offset=173, default=0, documentation=
+        "Geophone group number of trace number one within original field record."
+    )
+
+    geophone_group_num_last_trace_original_field = field(
+        Int16, offset=175, default=0, documentation=
+        "Geophone group number of last trace within original field record."
+    )
+
+    gap_size = field(
+        Int16, offset=177, default=0, documentation=
+        "Gap size. (Total number of groups dropped)."
+    )
+
+    over_travel = field(
+        Int16, offset=179, default=0, documentation=
+        "Over travel associated with taper at beginning or end of line. 1 = down (or behind) 2 = up (or ahead)"
+    )
+
+    cdp_x = field(
+        Int32, offset=181, default=0, documentation=
+        "X coordinate of ensemble (CDP) position of this trace. "
+        "The coordinate reference system should be identified through an extended header Location Data stanza. "
+        "The xy_scalar field applies to this value."
+    )
+
+    cdp_y = field(
+        Int32, offset=185, default=0, documentation=
+        "Y coordinate of ensemble (CDP) position of this trace. "
+        "The coordinate reference system should be identified through an extended header Location Data stanza. "
+        "The xy_scalar field applies to this value."
+    )
+
+    inline_number = field(
+        Int32, offset=189, default=0, documentation=
+        "In-line number for 3-D poststack data. If one in-line per SEG Y file is "
+        "being recorded, this value should be the same for all traces in the file and the same value will be recorded "
+        "in bytes 3205-3208 of the Binary File Header."  # TODO: replace bytes with field name
+    )
+
+    crossline_number = field(
+        Int32, offset=193, default=0, documentation=
+        "Cross-line number for 3-D poststack data. This will typically be the same "
+        "value as the ensemble (CDP) number in Trace Header ensemble_num field, but this does not have to be the case."
+    )
+
+    shotpoint_number = field(
+        Int32, offset=197, default=0, documentation=
+        "Shotpoint number. This is probably only applicable to 2-D poststack data. Note that it is assumed that the "
+        "shotpoint number refers to the source location nearest to the ensemble (CDP) location for a particular trace. "
+        "If this is not the case, there should be a comment in the Textual File Header explaining what the shotpoint "
+        "number actually refers to."
+    )
+
+    shotpoint_scalar = field(
+        Int16, offset=201, default=0, documentation=
+        "Scalar to be applied to the shotpoint number in trace header field shotpoint_number to give the real value. "
+        "If positive, scalar is used as a multiplier; if negative as a divisor; if zero the shotpoint number is not "
+        "scaled (i.e. it is an integer. A typical value will be -10, allowing shotpoint numbers with one decimal digit "
+        "to the right of the decimal point)."
+    )
+
+    trace_unit = field(
+        Int16, offset=203, default=0, documentation=
+        "Trace value measurement unit: "
+        "-1 = Other (should be described in Data Sample Measurement Units Stanza)"
+        "0 = Unknown, "
+        "1 = Pascal (Pa), "
+        "2 = Volts (v), "
+        "3 = Millivolts (mV), "
+        "4 = Amperes (A), "
+        "5 = Meters (m), "
+        "6 = Meters per second (m/s), "
+        "7 = Meters per second squared (m/s^2), "
+        "8 = Newton (N), "
+        "9 = Watt (W)"
+    )
+
+    transduction_constant_mantissa = field(
+        Int32, offset=205, default=0, documentation=
+        "Transduction Constant mantissa. The mantissa of the multiplicative constant used to convert the Data Trace "
+        "samples to the Transduction Units (specified in Trace Header transduction_units field)."
+        "The mantissa of the constant is encoded as a four-byte, two's complement integer. The constant value is given"
+        "by transduction_constant_mantissa * 10**transduction_constant_exponent."
+    )
+
+    transduction_constant_exponent = field(
+        Int16, offset=209, default=0, documentation=
+        "Transduction Constant exponent. The base 10 exponent of the multiplicative constant used to convert the Data "
+        "Trace samples to the Transduction Units (specified in Trace Header transduction_units field). The constant "
+        "value is given by transduction_constant_mantissa * 10**transduction_constant_exponent."
+    )
+
+    transduction_units = field(
+        Int16, offset=211, default=0, documentation=
+        "Transduction Units. The unit of measurement of the Data Trace samples after they have been multiplied by the "
+        "Transduction Constant specified in Trace Header fields transduction_constant_mantissa and "
+        "transduction_constant_exponent. "
+        "-1 = Other (should be described in Data Sample Measurement Unit stanza), "
+        "0 = Unknown, "
+        "1 = Pascal (Pa) ,"
+        "2 = Volts (v), "
+        "3 = Millivolts (mV), "
+        "4 = Amperes (A), "
+        "5 = Meters (m), "
+        "6 = Meters per second (m/s), "
+        "7 = Meters per second squared (m/s2), "
+        "8 = Newton (N), "
+        "9 = Watt (W)"
+    )
+
+    device_trace_identifier = field(
+        Int16, offset=213, default=0, documentation=
+        "Device/Trace Identifier — The unit number or id number of the device associated with the Data Trace "
+        "(i.e. 4368 for vibrator serial number 4368 or 20316 for gun 16 on string 3 on vessel 2). This field allows "
+        "traces to be associated across trace ensembles independently of the trace number (ensemble_trace_num field)."
+    )
+
+    time_scalar = field(
+        Int16, offset=215, default=0, documentation=
+        "Scalar to be applied to times specified in Trace Header fields uphole_time_at_source, uphole_time_at_group,"
+        "source_static_correction, group_static_correction, total_static, lag_time_a, lag_time_b, "
+        "delay_recording_time, mute_start_time, mute_end_time to give the true time value in milliseconds. "
+        "Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a multiplier; "
+        "if negative, scalar is used as divisor. A value of zero is assumed to be a scalar value of 1."
+    )
+
+    source_type = field(
+        Int16, offset=217, default=0, documentation=
+        "Source Type/Orientation — Defines the type and the orientation of the energy source. The terms vertical, "
+        "cross-line and in-line refer to the three axes of an orthogonal coordinate system. The absolute azimuthal "
+        "orientation of the coordinate system axes can be defined in the Bin Grid Definition Stanza."
+        "-1 to -n = Other (should be described in Source Type/Orientation stanza), "
+        "0 = Unknown, "
+        "1 = Vibratory - Vertical orientation, "
+        "2 = Vibratory - Cross-line orientation, "
+        "3 = Vibratory - In-line orientation, "
+        "4 = Impulsive - Vertical orientation, "
+        "5 = Impulsive - Cross-line orientation, "
+        "6 = Impulsive - In-line orientation, "
+        "7 = Distributed Impulsive - Vertical orientation, "
+        "8 = Distributed Impulsive - Cross-line orientation, "
+        "9 = Distributed Impulsive - In-line orientation, "
+    )
+
+    source_energy_direction = field(
+        Int32, offset=219, default=0, documentation=  # TODO: This is six bytes. What is the format?
+        "Source Energy Direction with respect to the source orientation. The positive orientation direction is "
+        "defined in Bytes 217-218 of the Trace Header. The energy direction is encoded in tenths of degrees "
+        "(i.e. 347.8° is encoded as 3478)."
+    )
+
+    source_measurement_mantissa = field(
+        Int32, offset=225, default=0, documentation=
+        "Source Measurement mantissa. Describes the source effort used to generate the trace. The measurement can be "
+        "simple, qualitative measurements such as the total weight of explosive used or the peak air gun pressure or "
+        "the number of vibrators times the sweep duration. Although these simple measurements are acceptable, it is "
+        "preferable to use true measurement units of energy or work. The constant is encoded as a four-byte, two's "
+        "complement integer (source_measurement_mantissa) and a two-byte, two's complement integer "
+        "source_measurement_exponent) which is the power of ten exponent "
+        "(i.e. source_measurement_mantissa * 10**source_measurement_exponent)."
+    )
+
+    source_measurement_exponent = field(
+        Int16, offset=229, default=0, documentation=
+        "Source Measurement exponent. Describes the source effort used to generate the trace. The measurement can be "
+        "simple, qualitative measurements such as the total weight of explosive used or the peak air gun pressure or "
+        "the number of vibrators times the sweep duration. Although these simple measurements are acceptable, it is "
+        "preferable to use true measurement units of energy or work. The constant is encoded as a four-byte, two's "
+        "complement integer (source_measurement_mantissa) and a two-byte, two's complement integer "
+        "source_measurement_exponent) which is the power of ten exponent "
+        "(i.e. source_measurement_mantissa * 10**source_measurement_exponent)."
+    )
+
+    source_measurement_unit = field(
+        Int16, offset=231, default=0, documentation=
+        "Source Measurement Unit. The unit used for the source measurement."
+        "-1 = Other (should be described in Source Measurement Unit stanza), "
+        "0 = Unknown, "
+        "1 = Joule (J), "
+        "2 = Kilowatt (kW), "
+        "3 = Pascal (Pa), "
+        "4 = Bar (Bar), "
+        "4 = Bar-meter (Bar-m), "
+        "5 = Newton (N), "
+        "6 = Kilograms (kg)"
+    )
 
 class TraceHeader(metaclass=BuildFromFormat, format_class=TraceHeaderFormat):
     pass

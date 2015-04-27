@@ -2,7 +2,7 @@ from segpy.header import FormatMeta, field, BuildFromFormat
 from segpy.types import Int32, Int16
 
 
-class TraceHeaderFormat(metaclass=FormatMeta):
+class TraceHeaderFormatRev0(metaclass=FormatMeta):
 
     line_sequence_num = field(
         Int32, offset=1, default=0, documentation=
@@ -385,6 +385,9 @@ class TraceHeaderFormat(metaclass=FormatMeta):
         "Over travel associated with taper at beginning or end of line. 1 = down (or behind) 2 = up (or ahead)"
     )
 
+
+class TraceHeaderFormatRev1(TraceHeaderFormatRev0):
+
     cdp_x = field(
         Int32, offset=181, default=0, documentation=
         "X coordinate of ensemble (CDP) position of this trace. "
@@ -554,7 +557,13 @@ class TraceHeaderFormat(metaclass=FormatMeta):
         "6 = Kilograms (kg)"
     )
 
-class TraceHeader(metaclass=BuildFromFormat, format_class=TraceHeaderFormat):
+
+class TraceHeaderRev0(metaclass=BuildFromFormat, format_class=TraceHeaderFormatRev0):
     pass
+
+
+class TraceHeaderRev1(metaclass=BuildFromFormat, format_class=TraceHeaderFormatRev1):
+    pass
+
 
 

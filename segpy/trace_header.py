@@ -386,7 +386,7 @@ class TraceHeaderFormatRev0(metaclass=FormatMeta):
     )
 
 
-class TraceHeaderFormatRev1(TraceHeaderFormatRev0):
+class TraceHeaderFormatRev1(TraceHeaderFormatRev0, metaclass=FormatMeta):
 
     cdp_x = field(
         Int32, offset=181, default=0, documentation=

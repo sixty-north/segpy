@@ -16,8 +16,9 @@ from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import IBMFloat
+from segpy.packer import HeaderPacker
 from segpy.revisions import canonicalize_revision
-from segpy.trace_header_definition import TRACE_HEADER_DEF
+from segpy.trace_header import TraceHeaderFormatRev1, TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
 from segpy.portability import EMPTY_BYTE_STRING, izip_longest
 
@@ -335,7 +336,8 @@ def catalog_traces(fh, bps, endian='>', progress=None):
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
-    trace_header_format = compile_trace_header_format(endian)
+    #trace_header_format = compile_trace_header_format(endian)
+    trace_header_packer = HeaderPacker(TraceHeaderFormatRev1)
 
     length = file_length(fh)
 
@@ -353,19 +355,21 @@ def catalog_traces(fh, bps, endian='>', progress=None):
         data = fh.read(TRACE_HEADER_NUM_BYTES)
         if len(data) < TRACE_HEADER_NUM_BYTES:
             break
-        trace_header = TraceHeader._make(trace_header_format.unpack(data))
-        num_samples = trace_header.ns
+        #trace_header = TraceHeader._make(trace_header_format.unpack(data))
+        trace_header = trace_header_packer.unpack(data, TraceHeaderRev1)
+
+        num_samples = trace_header.num_samples
         trace_length_catalog_builder.add(trace_number, num_samples)
         samples_bytes = num_samples * bps
         trace_offset_catalog_builder.add(trace_number, pos_begin)
         # Should we check the data actually exists?
-        line_catalog_builder.add((trace_header.Inline3D,
-                                  trace_header.Crossline3D),
+        line_catalog_builder.add((trace_header.inline_number,
+                                  trace_header.crossline_number),
                                  trace_number)
-        alt_line_catalog_builder.add((trace_header.TraceSequenceFile,
-                                     trace_header.cdp),
+        alt_line_catalog_builder.add((trace_header.file_sequence_num,
+                                     trace_header.ensemble_num),
                                      trace_number)
-        cdp_catalog_builder.add(trace_header.cdp, trace_number)
+        cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
 
@@ -394,7 +398,7 @@ def catalog_traces(fh, bps, endian='>', progress=None):
             line_catalog)
 
 
-def read_trace_header(fh, trace_header_format, pos=None):
+def read_trace_header(fh, trace_header_packer, pos=None):
     """Read a trace_samples header.
 
     Args:
@@ -412,8 +416,9 @@ def read_trace_header(fh, trace_header_format, pos=None):
     if pos is not None:
         fh.seek(pos)
     data = fh.read(TRACE_HEADER_NUM_BYTES)
-    trace_header = TraceHeader._make(
-        trace_header_format.unpack(data))
+    # trace_header = TraceHeader._make(
+    #     trace_header_format.unpack(data))
+    trace_header = trace_header_packer.unpack(data, TraceHeaderRev1)  # TODO: Remove hardwired TraceHeaderRev1
     return trace_header
 
 
@@ -756,7 +761,8 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
     """
     if pos is not None:
         fh.seek(pos, os.SEEK_SET)
-    buf = trace_header_format.pack(*trace_header)
+
+    buf = trace_header_format.pack(trace_header)
     fh.write(buf)
 
 
@@ -834,66 +840,3 @@ def pack_values(values, fmt, endian='>'):
     """
     c_format = '{}{}{}'.format(endian, len(values), fmt)
     return struct.pack(c_format, *values)
-
-
-# TODO: Consider generalising the below to also produce a ReelHeader record. Then modify
-#       read_binary_reel_header() to return such a record, and write_binary_reel_header() to accept such
-#       a record.
-
-
-_TraceAttributeSpec = namedtuple('Record', ['name', 'pos', 'type'])
-
-
-def compile_trace_header_format(endian='>'):
-    """Compile a format string for use with the struct module from the
-    trace_samples header definition.
-
-    Args:
-        endian: '>' for big-endian data (the standard and default), '<' for
-            little-endian (non-standard)
-
-    Returns:
-        A string which can be used with the struct module for parsing
-        trace_samples headers.
-
-    """
-
-    record_specs = sorted(
-        [_TraceAttributeSpec(name,
-                             TRACE_HEADER_DEF[name]['pos'],
-                             TRACE_HEADER_DEF[name]['type'])
-         for name in TRACE_HEADER_DEF],
-        key=lambda r: r.pos)
-
-    fmt = [endian]
-    length = 0
-    for record_spec in record_specs:
-
-        shortfall = length - record_spec.pos
-        if shortfall:
-            fmt.append(str(shortfall) + 'x')  # Ignore bytes
-            length += shortfall
-
-        ctype = SEG_Y_TYPE_TO_CTYPE[record_spec.type]
-        fmt.append(ctype)
-        length += size_in_bytes(ctype)
-
-    assert length == TRACE_HEADER_NUM_BYTES
-
-    return struct.Struct(''.join(fmt))
-
-
-def _compile_trace_header_record():
-    """Build a TraceHeader namedtuple from the trace_samples header definition"""
-    record_specs = sorted(
-        [_TraceAttributeSpec(name,
-                             TRACE_HEADER_DEF[name]['pos'],
-                             TRACE_HEADER_DEF[name]['type'])
-         for name in TRACE_HEADER_DEF],
-        key=lambda r: r.pos)
-    return namedtuple('TraceHeader',
-                      (record_spec.name for record_spec in record_specs))
-
-
-TraceHeader = _compile_trace_header_record()
-

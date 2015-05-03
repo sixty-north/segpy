@@ -1,7 +1,9 @@
 from __future__ import print_function
 from segpy.encoding import ASCII
+from segpy.packer import HeaderPacker
 
 from segpy.portability import seekable
+from segpy.trace_header import TraceHeaderFormatRev1
 from segpy.util import file_length, filename_from_handle
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
@@ -10,7 +12,6 @@ from segpy.toolkit import (extract_revision,
                            read_trace_header,
                            catalog_traces,
                            read_binary_values,
-                           compile_trace_header_format,
                            REEL_HEADER_NUM_BYTES,
                            TRACE_HEADER_NUM_BYTES,
                            read_textual_reel_header,
@@ -164,11 +165,12 @@ class SegYReader(object):
         self._fh = fh
         self._endian = endian
         self._encoding = encoding
-        self._trace_header_format = compile_trace_header_format(self._endian)
 
         self._textual_reel_header = textual_reel_header
         self._binary_reel_header = binary_reel_header
         self._extended_textual_headers = extended_textual_headers
+
+        self._trace_header_packer = HeaderPacker(TraceHeaderFormatRev1)  # Deal with hardwiring
 
         self._trace_offset_catalog = trace_offset_catalog
         self._trace_length_catalog = trace_length_catalog
@@ -261,7 +263,7 @@ class SegYReader(object):
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
         pos = self._trace_offset_catalog[trace_index]
-        trace_header = read_trace_header(self._fh, self._trace_header_format, pos)
+        trace_header = read_trace_header(self._fh, self._trace_header_packer, pos)
         return trace_header
 
     @property

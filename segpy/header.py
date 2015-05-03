@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from weakref import WeakKeyDictionary
 from segpy.docstring import docstring_property
-from segpy.util import is_magic_name, underscores_to_camelcase, first_sentence, ensure_contains
+from segpy.util import is_magic_name, underscores_to_camelcase, first_sentence, ensure_contains, conjoin
 
 
 class FormatMeta(type):
@@ -17,6 +17,8 @@ class FormatMeta(type):
         # TODO: This is a good point to validate that the fields are in order and that the
         # TODO: format specification is valid.  We shouldn't even build the class otherwise.
 
+
+        # TODO: In the case of inheritance, this collection may already exist
         namespace['_ordered_field_names'] = tuple(name for name in namespace.keys()
                                                   if not is_magic_name(name))
 
@@ -176,6 +178,8 @@ class BuildFromFormat(type):
 
 class HeaderBase:
 
+    _ordered_field_names = tuple()
+
     def __init__(self, **kwargs):
         for keyword, value in kwargs.items():
             setattr(self, keyword, value)
@@ -184,3 +188,16 @@ class HeaderBase:
         field_names = self._format._ordered_field_names
         return '{}({})'.format(self.__class__.__name__,
                                ', '.join('{}={}'.format(name, getattr(self, name)) for name in field_names))
+
+    @classmethod
+    def ordered_field_names(cls):
+        mro = cls.mro()
+        print("mro =", mro)
+        super_class = mro[1]
+        print("super_class =", super_class)
+        if not isinstance(super_class, HeaderBase):
+            super_field_names = tuple()
+        else:
+            super_field_names = super_class.ordered_field_names()
+        print("super_field_names =", super_field_names)
+        return conjoin(super_field_names, cls._format._ordered_field_names)

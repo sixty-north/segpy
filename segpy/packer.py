@@ -8,11 +8,14 @@ def size_of(t):
     return t.SIZE
 
 
-def compile_struct(header_format_class):
+def compile_struct(header_format_class, endian='>'):
     """Compile a struct description from a record.
 
     Args:
         header_format_class: A header_format class.
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard).
 
     Returns:
         A two-tuple containing in the zeroth element a format string which can be used with the struct.unpack function,
@@ -65,7 +68,7 @@ def compile_struct(header_format_class):
     for field, gap_span in zip(representative_fields, gap_spans):
         format_chunks.append(SEG_Y_TYPE_TO_CTYPE[field.value_type.SEG_Y_TYPE])
         format_chunks.append('x' * len(gap_span))
-    format = ''.join(format_chunks)
+    cformat = endian + ''.join(format_chunks)
 
     # Create a list of mapping item index to field names.
     # [0] -> ['field_1', 'field_2']
@@ -73,14 +76,14 @@ def compile_struct(header_format_class):
     # [2] -> ['field_4']
     field_name_allocations = [[field.name for field in fields]
                               for fields in offset_to_fields.values()]
-    return format, field_name_allocations
+    return cformat, field_name_allocations
 
 
 class HeaderPacker:
 
-    def __init__(self, header_format_class):
+    def __init__(self, header_format_class, endian='>'):
         self._header_format_class = header_format_class
-        self._format, self._field_name_allocations = compile_struct(header_format_class)
+        self._format, self._field_name_allocations = compile_struct(header_format_class, endian)
         self._struct = Struct(self._format)
 
     def pack(self, header):

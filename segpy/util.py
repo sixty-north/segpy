@@ -7,6 +7,8 @@ from itertools import (islice, cycle, tee, chain, repeat)
 
 NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
 
+EMPTY_BYTE_STRING = b''
+
 UNSET = object()
 
 def pairwise(iterable):

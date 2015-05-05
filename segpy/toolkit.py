@@ -18,8 +18,8 @@ from segpy.ibm_float import IBMFloat
 from segpy.packer import HeaderPacker
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
-from segpy.portability import EMPTY_BYTE_STRING
+from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING
+
 
 HEADER_NEWLINE = '\r\n'
 

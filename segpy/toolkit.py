@@ -9,7 +9,7 @@ import struct
 import re
 import logging
 
-from segpy import textual_reel_header_definition
+from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.catalog import CatalogBuilder
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
@@ -498,14 +498,14 @@ def format_standard_textual_header(revision, **kwargs):
         revision: The SEG Y revision.
 
         **kwargs: Named arguments corresponding to the values in the
-            textual_reel_header_definition.TEMPLATE_FIELD_NAMES dictionary,
+            textual_reel_header.TEMPLATE_FIELD_NAMES dictionary,
             which in turn correspond to the placeholders in the
-            textual_reel_header_definition.TEMPLATE string.  Any omitted
+            textual_reel_header.TEMPLATE string.  Any omitted
             arguments will result in placeholders being replaced by spaces.
             If the end_marker argument is not supplied, an appropriate end
             marker will be selected based on the SEG Y revision. For standard
-            end markers consider using textual_reel_header_definition.END_TEXTUAL_HEADER
-            or textual_reel_header_definition.END_EBCDIC.
+            end markers consider using textual_reel_header.END_TEXTUAL_HEADER
+            or textual_reel_header.END_EBCDIC.
 
     Returns:
         A list of forty Unicode strings.
@@ -524,9 +524,9 @@ def format_standard_textual_header(revision, **kwargs):
 
     """
 
-    kwargs.setdefault('end_marker', textual_reel_header_definition.END_MARKERS[revision])
+    kwargs.setdefault('end_marker', textual_reel_header.END_MARKERS[revision])
 
-    template = textual_reel_header_definition.TEMPLATE
+    template = textual_reel_header.TEMPLATE
 
     placeholder_slices = parse_template(template)
     background_slices = complementary_intervals(placeholder_slices.values(), 0, len(template))
@@ -539,7 +539,7 @@ def format_standard_textual_header(revision, **kwargs):
 
         if placeholder is not None:
             ph_name, ph_slice = placeholder
-            ph_arg_name = textual_reel_header_definition.TEMPLATE_FIELD_NAMES[ph_name]
+            ph_arg_name = textual_reel_header.TEMPLATE_FIELD_NAMES[ph_name]
             ph_value = kwargs.pop(ph_arg_name, '')
             ph_len = ph_slice.stop - ph_slice.start
             substitute = str(ph_value)[:ph_len].ljust(ph_len, ' ')

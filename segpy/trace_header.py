@@ -1,8 +1,10 @@
-from segpy.header import FormatMeta, field, BuildFromFormat
+from segpy.header import FormatMeta, field
 from segpy.types import Int32, Int16
 
 
-class TraceHeaderFormatRev0(metaclass=FormatMeta):
+class TraceHeaderRev0(metaclass=FormatMeta):
+
+    LENGTH_IN_BYTES = 240
 
     line_sequence_num = field(
         Int32, offset=1, default=0, documentation=
@@ -386,7 +388,7 @@ class TraceHeaderFormatRev0(metaclass=FormatMeta):
     )
 
 
-class TraceHeaderFormatRev1(TraceHeaderFormatRev0, metaclass=FormatMeta):
+class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
 
     cdp_x = field(
         Int32, offset=181, default=0, documentation=
@@ -556,14 +558,3 @@ class TraceHeaderFormatRev1(TraceHeaderFormatRev0, metaclass=FormatMeta):
         "5 = Newton (N), "
         "6 = Kilograms (kg)"
     )
-
-
-class TraceHeaderRev0(metaclass=BuildFromFormat, format_class=TraceHeaderFormatRev0):
-    pass
-
-
-class TraceHeaderRev1(metaclass=BuildFromFormat, format_class=TraceHeaderFormatRev1):
-    pass
-
-
-

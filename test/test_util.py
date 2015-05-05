@@ -1,8 +1,9 @@
 import unittest
 
-from hypothesis import given, assume
+from hypothesis import given, assume, example
 from hypothesis.specifiers import integers_in_range
-from segpy.util import batched
+from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin
+from test.strategies import spaced_ranges
 
 
 class TestBatched(unittest.TestCase):
@@ -45,6 +46,35 @@ class TestBatched(unittest.TestCase):
     def test_pad(self):
         batches = list(batched([0, 0], 3, 42))
         self.assertEqual(batches[-1], [0, 0, 42])
+
+
+class TestComplementaryIntervals(unittest.TestCase):
+
+    @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
+                         min_interval=0, max_interval=10))
+    def test_contiguous(self, intervals):
+        complements = complementary_intervals(intervals)
+        interleaved = list(roundrobin(complements, intervals))
+        self.assertTrue(intervals_are_contiguous(interleaved))
+
+    @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
+                         min_interval=0, max_interval=10),
+           integers_in_range(0, 10))
+    def test_contiguous_with_offset_start(self, intervals, start_offset):
+        first_interval_start = intervals[0].start
+        start_index = first_interval_start - start_offset
+        complements = list(complementary_intervals(intervals, start=start_index))
+        self.assertEqual(complements[0], range(start_index, first_interval_start))
+
+    @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
+                         min_interval=0, max_interval=10),
+           integers_in_range(0, 10))
+    @example(intervals=[range(0, 0)], end_offset=1)
+    def test_contiguous_with_offset_end(self, intervals, end_offset):
+        last_interval_end = intervals[-1].stop
+        end_index = last_interval_end + end_offset
+        complements = list(complementary_intervals(intervals, stop=end_index))
+        self.assertEqual(complements[-1], range(last_interval_end, end_index))
 
 if __name__ == '__main__':
     unittest.main()

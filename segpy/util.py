@@ -1,7 +1,9 @@
-import itertools
+
 import time
 import os
 import sys
+
+from itertools import (islice, cycle, tee, chain, repeat)
 
 from segpy.portability import izip
 
@@ -17,10 +19,13 @@ def pairwise(iterable):
 
     Returns:
         An iterator over 2-tuples.
+
+    Raises:
+        StopIteration: If the iterable contains fewer than two items.
     """
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return izip(a, b)
+    a, b = tee(iterable)
+    next(b)
+    yield from izip(a, b)
 
 
 def batched(iterable, batch_size, padding=UNSET):
@@ -61,8 +66,8 @@ def batched(iterable, batch_size, padding=UNSET):
 
 def pad(iterable, padding=None, size=None):
     if size is None:
-        return itertools.chain(iterable, itertools.repeat(padding))
-    return itertools.islice(pad(iterable, padding), size)
+        return chain(iterable, repeat(padding))
+    return islice(pad(iterable, padding), size)
 
 
 def complementary_intervals(intervals, start=None, stop=None):
@@ -106,6 +111,24 @@ def complementary_intervals(intervals, start=None, stop=None):
 
     yield interval_type(index, stop)
 
+def intervals_are_contiguous(intervals):
+    """Determine whether a series of intervals are contiguous.
+
+    Args:
+        intervals: An iterable series of intervals where each interval is either
+            a range or slice object.
+
+    Returns:
+        True if the intervals are in order, contiguous and non-overlapping,
+        otherwise False.
+    """
+
+    for a, b in pairwise(intervals):
+        if a.stop != b.start:
+            return False
+    return True
+
+
 def intervals_partially_overlap(interval_a, interval_b):
     """Determine whether two intervals partially overlap.
 
@@ -130,7 +153,6 @@ def intervals_partially_overlap(interval_a, interval_b):
     return second_interval.start < first_interval.stop
 
 
-
 def roundrobin(*iterables):
     """Take items from each iterable in turn until all iterables are exhausted.
 
@@ -138,14 +160,14 @@ def roundrobin(*iterables):
     """
     # Recipe credited to George Sakkis
     pending = len(iterables)
-    nexts = itertools.cycle(iter(it).__next__ for it in iterables)
+    nexts = cycle(iter(it).__next__ for it in iterables)
     while pending:
         try:
             for n in nexts:
                 yield n()
         except StopIteration:
             pending -= 1
-            nexts = itertools.cycle(itertools.islice(nexts, pending))
+            nexts = cycle(islice(nexts, pending))
 
 
 def contains_duplicates(sorted_iterable):
@@ -183,6 +205,7 @@ def measure_stride(iterable):
         elif stride != new_stride:
             return None
     return stride
+
 
 def minmax(iterable):
     """Return the minimum and maximum of an iterable series.
@@ -284,3 +307,17 @@ def conjoin(collection, item):
 
 def is_magic_name(name):
     return len(name) > 4 and name.startswith('__') and name.endswith('__')
+
+
+def super_class(cls):
+    """Return the next class in the MRO of cls."""
+    mro = cls.mro()
+    assert len(mro) > 0
+    if len(mro) == 1:
+        assert mro[0] is object
+        return object
+    return mro[1]
+
+
+def flatten(sequence_of_sequences):
+    return chain.from_iterable(sequence_of_sequences)

@@ -1,7 +1,35 @@
 from collections import OrderedDict
 from weakref import WeakKeyDictionary
+from itertools import chain
+
 from segpy.docstring import docstring_property
-from segpy.util import is_magic_name, underscores_to_camelcase, first_sentence, ensure_contains, conjoin
+from segpy.util import underscores_to_camelcase, first_sentence, super_class
+
+
+class Header:
+    """An abstract base class for header format definitions."""
+
+    def __init__(self, **kwargs):
+        # TODO: This has terrible performance - better to handle validation optimistically by overriding __getattr__()
+        for keyword, arg in kwargs.items():
+            if keyword not in self.ordered_field_names():
+                raise TypeError("{!r} is not a recognised field name for {!r}".format(keyword, self.__class__.__name__))
+            setattr(self, keyword, arg)
+
+    _ordered_field_names = tuple()
+
+    @classmethod
+    def ordered_field_names(cls):
+        """The ordered list of field names.
+
+        This is a metamethod which should be called on cls.
+
+        Returns:
+            An tuple containing the field names in order.
+        """
+        if cls is Header:
+            return cls._ordered_field_names
+        return super_class(cls).ordered_field_names() + cls._ordered_field_names
 
 
 class FormatMeta(type):
@@ -17,10 +45,15 @@ class FormatMeta(type):
         # TODO: This is a good point to validate that the fields are in order and that the
         # TODO: format specification is valid.  We shouldn't even build the class otherwise.
 
+        # TODO: Also validate existence of LENGTH_IN_BYTES
 
-        # TODO: In the case of inheritance, this collection may already exist
-        namespace['_ordered_field_names'] = tuple(name for name in namespace.keys()
-                                                  if not is_magic_name(name))
+        namespace['_ordered_field_names'] = tuple(name for name, attr in namespace.items()
+                                                  if isinstance(attr, HeaderFieldDescriptor))
+
+        transitive_bases = set(chain.from_iterable(type(base).mro(base) for base in bases))
+
+        if Header not in transitive_bases:
+            bases = (Header,) + bases
 
         for attr_name, attr in namespace.items():
 
@@ -28,7 +61,7 @@ class FormatMeta(type):
             # help(class), help(instance), help(class.property) and help(instance.property)
 
             # Set the _name attribute of the field instance if it hasn't already been set
-            if isinstance(attr, NamedField):
+            if isinstance(attr, HeaderFieldDescriptor):
                 if attr._name is None:
                     attr._name = attr_name
 
@@ -64,7 +97,7 @@ class NamedField:
 
     @property
     def offset(self):
-        "The offset it bytes from the beginning of the header."
+        "The offset in bytes from the beginning of the header."
         return self._offset
 
     @property
@@ -81,12 +114,13 @@ class NamedField:
     def __doc__(self):
         return first_sentence(self._documentation)
 
-    # TODO: Uncomment this to get HELP
-    # def __repr__(self):
-    #     return first_sentence(self._documentation)
-
     def __repr__(self):
-        return "{}()".format(self.__class__.__name__)
+        return "{}(name={!r}, value_type={!r}, offset={!r}, default={!r})".format(
+            self.__class__.__name__,
+            self.name,
+            self.value_type.__name__,
+            self.offset,
+            self.default)
 
 
 def field(value_type, offset, default, documentation):
@@ -109,95 +143,58 @@ def field(value_type, offset, default, documentation):
     # renamed when the NamedDescriptorMangler metaclass does its job, to
     # a class name based on the field name.
 
-    class SpecificField(NamedField):
+    class SpecificField(HeaderFieldDescriptor):
         pass
 
     return SpecificField(value_type, offset, default, documentation)
 
 
-class ValueField:
+class HeaderFieldDescriptor:
 
-    def __init__(self, name, value_type, default, documentation):
-        self._name = name
-        self._value_type = value_type
-        self._default = default
-        self._documentation = documentation
+    def __init__(self, value_type, offset, default, documentation):
+        self._named_field = NamedField(value_type, offset, default, documentation)
         self._instance_data = WeakKeyDictionary()
 
+    @property
+    def _name(self):
+        return self._named_field.name
+
+    @_name.setter
+    def _name(self, value):
+        self._named_field._name = value
+
     def __get__(self, instance, owner):
-        if owner is None:
-            return self
+        """Retrieve the format or instance data.
+
+        When called on the class we return a NamedField instance containing the format data. For example:
+
+            line_seq_num_default = TraceHeaderRev1.line_sequence_num.default
+            line_seq_num_offset = TraceHeaderRev1.line_sequence_num.offset
+
+        When called on an instance we return the field value.
+
+            line_seq_num = my_trace_header.line_sequence_num
+        """
+        #print("HeaderFieldDescriptor.__get__({!r}, {!r}, {!r})".format(self, instance, owner))
+        if instance is None:
+            return self._named_field
         if instance not in self._instance_data:
-            return self._default
+            return self._named_field.default
         return self._instance_data[instance]
 
     def __set__(self, instance, value):
+        """Set the field value."""
         try:
-            self._instance_data[instance] = self._value_type(value)
+            self._instance_data[instance] = self._named_field._value_type(value)
         except ValueError as e:
             raise ValueError("Assigned value {!r} for {} attribute must be convertible to {}: {}"
-                             .format(value, self._name, self._value_type.__name__, e)) from e
+                             .format(value, self._name, self._named_field._value_type.__name__, e)) from e
 
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))
 
     @docstring_property(__doc__)
     def __doc__(self):
-        return self._documentation
+        return self._named_field._documentation
 
     # TODO: Get documentation of these descriptors working correctly
-
-
-class BuildFromFormat(type):
-    """A metaclass for building a data transfer object from a format definition."""
-
-    def __new__(mcs, name, bases, namespace, format_class):
-        """Create a new DTO class from a format class."""
-        if format_class.__class__ is not FormatMeta:
-            raise TypeError("Format class {} specified for class {} does not use the FormatMeta metaclass"
-                            .format(format_class.__name__, name))
-
-        bases = ensure_contains(bases, HeaderBase)
-
-        namespace['_format'] = format_class
-
-        for field_name in format_class._ordered_field_names:
-            format_field = getattr(format_class, field_name)
-            namespace[field_name] = ValueField(
-                name=field_name,
-                value_type=format_field.value_type,
-                default=format_field.default,
-                documentation=format_field.documentation)
-
-        return super().__new__(mcs, name, bases, namespace)
-
-    def __init__(mcs, name, bases, namespace, format_class):
-        super().__init__(mcs, name, bases)
-        pass
-
-
-class HeaderBase:
-
-    _ordered_field_names = tuple()
-
-    def __init__(self, **kwargs):
-        for keyword, value in kwargs.items():
-            setattr(self, keyword, value)
-
-    def __repr__(self):
-        field_names = self._format._ordered_field_names
-        return '{}({})'.format(self.__class__.__name__,
-                               ', '.join('{}={}'.format(name, getattr(self, name)) for name in field_names))
-
-    @classmethod
-    def ordered_field_names(cls):
-        mro = cls.mro()
-        print("mro =", mro)
-        super_class = mro[1]
-        print("super_class =", super_class)
-        if not isinstance(super_class, HeaderBase):
-            super_field_names = tuple()
-        else:
-            super_field_names = super_class.ordered_field_names()
-        print("super_field_names =", super_field_names)
-        return conjoin(super_field_names, cls._format._ordered_field_names)

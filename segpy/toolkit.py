@@ -18,7 +18,7 @@ from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import IBMFloat
 from segpy.packer import HeaderPacker
 from segpy.revisions import canonicalize_revision
-from segpy.trace_header import TraceHeaderFormatRev1, TraceHeaderRev1
+from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
 from segpy.portability import EMPTY_BYTE_STRING, izip_longest
 
@@ -288,7 +288,7 @@ _READ_PROPORTION = 0.75  # The proportion of time spent in catalog_traces
                          # reading the file. Determined empirically.
 
 
-def catalog_traces(fh, bps, endian='>', progress=None):
+def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', progress=None):
     """Build catalogs to facilitate random access to trace_samples data.
 
     Note:
@@ -315,6 +315,9 @@ def catalog_traces(fh, bps, endian='>', progress=None):
         bps: The number of bytes per sample, such as obtained by a call
             to bytes_per_sample()
 
+        trace_header_format: The class defining the trace header format.
+            Defaults to TraceHeaderRev1.
+
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
 
@@ -336,8 +339,7 @@ def catalog_traces(fh, bps, endian='>', progress=None):
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
-    #trace_header_format = compile_trace_header_format(endian)
-    trace_header_packer = HeaderPacker(TraceHeaderFormatRev1)
+    trace_header_packer = HeaderPacker(trace_header_format, endian)
 
     length = file_length(fh)
 
@@ -355,8 +357,7 @@ def catalog_traces(fh, bps, endian='>', progress=None):
         data = fh.read(TRACE_HEADER_NUM_BYTES)
         if len(data) < TRACE_HEADER_NUM_BYTES:
             break
-        #trace_header = TraceHeader._make(trace_header_format.unpack(data))
-        trace_header = trace_header_packer.unpack(data, TraceHeaderRev1)
+        trace_header = trace_header_packer.unpack(data)
 
         num_samples = trace_header.num_samples
         trace_length_catalog_builder.add(trace_number, num_samples)
@@ -418,7 +419,7 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     data = fh.read(TRACE_HEADER_NUM_BYTES)
     # trace_header = TraceHeader._make(
     #     trace_header_format.unpack(data))
-    trace_header = trace_header_packer.unpack(data, TraceHeaderRev1)  # TODO: Remove hardwired TraceHeaderRev1
+    trace_header = trace_header_packer.unpack(data)
     return trace_header
 
 
@@ -745,7 +746,7 @@ def write_extended_textual_headers(fh, pages, encoding):
         fh.write(concatenated_page)
 
 
-def write_trace_header(fh, trace_header, trace_header_format, pos=None):
+def write_trace_header(fh, trace_header, trace_header_packer, pos=None):
     """Write a TraceHeader to file.
 
     Args:
@@ -753,8 +754,8 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
 
         trace_header: A TraceHeader object.
 
-        trace_header_format: A Struct object, such as obtained from a
-            call to compile_trace_header_format()
+        trace_header_packer: A Packer object configured for the trace
+            header format.
 
         pos: An optional file offset in bytes from the beginning of the
             file. Defaults to the current file position.
@@ -762,7 +763,7 @@ def write_trace_header(fh, trace_header, trace_header_format, pos=None):
     if pos is not None:
         fh.seek(pos, os.SEEK_SET)
 
-    buf = trace_header_format.pack(trace_header)
+    buf = trace_header_packer.pack(trace_header)
     fh.write(buf)
 
 

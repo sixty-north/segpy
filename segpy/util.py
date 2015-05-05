@@ -319,3 +319,8 @@ def super_class(cls):
 
 def flatten(sequence_of_sequences):
     return chain.from_iterable(sequence_of_sequences)
+
+
+def four_bytes(byte_str):
+    a, b, c, d = byte_str[:4]
+    return a, b, c, d

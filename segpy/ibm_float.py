@@ -1,7 +1,7 @@
 from math import frexp, isnan, isinf, ceil, floor, trunc
 from numbers import Real
 
-from segpy.portability import four_bytes
+from segpy.util import four_bytes
 
 
 

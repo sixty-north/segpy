@@ -26,10 +26,18 @@ This project aims to implement an open SEG Y module in Python for transporting s
 Python data structures in pure Python.
 
 
+Contributing
+============
+
+The easiest way to contribute is to use Segpy submit reports for defects or any other issues you come across.  It's our
+intention to open up Segpy for contributions once we have achieved a stable API and architecture.  This time is close,
+but in the interim we are won't be merging pull-requests until we have our ducks in a row.
+
+
 Segpy Versions
 ==============
 
-Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python and represents a complete break from all older versions
-of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is shared
-across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.  Earlier
-versions of Segpy are considered deprecated and completely unsupported.
+Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python and represents a complete break from any and all older
+versions of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is
+shared across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.
+Earlier versions of Segpy are deprecated and completely unsupported.

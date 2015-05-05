@@ -1,16 +1,15 @@
 from __future__ import print_function
 
 from array import array
-from collections import namedtuple, OrderedDict
-import itertools
+from collections import OrderedDict
+from itertools import zip_longest, count
+
 import os
 import struct
 import re
 import logging
 
 from segpy import textual_reel_header_definition
-
-
 from segpy.catalog import CatalogBuilder
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
@@ -20,7 +19,7 @@ from segpy.packer import HeaderPacker
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS
-from segpy.portability import EMPTY_BYTE_STRING, izip_longest
+from segpy.portability import EMPTY_BYTE_STRING
 
 HEADER_NEWLINE = '\r\n'
 
@@ -351,7 +350,7 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     alt_line_catalog_builder = CatalogBuilder()
     cdp_catalog_builder = CatalogBuilder()
 
-    for trace_number in itertools.count():
+    for trace_number in count():
         progress_callback(_READ_PROPORTION * pos_begin / length)
         fh.seek(pos_begin)
         data = fh.read(TRACE_HEADER_NUM_BYTES)
@@ -535,7 +534,7 @@ def format_standard_textual_header(revision, **kwargs):
     background_slices = complementary_intervals(placeholder_slices.values(), 0, len(template))
 
     chunks = []
-    for bg_slice, placeholder in izip_longest(background_slices, placeholder_slices.items()):
+    for bg_slice, placeholder in zip_longest(background_slices, placeholder_slices.items()):
 
         if bg_slice is not None:
             chunks.append(template[bg_slice])

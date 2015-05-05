@@ -2,7 +2,6 @@ from __future__ import print_function
 from segpy.encoding import ASCII
 from segpy.packer import HeaderPacker
 
-from segpy.portability import seekable
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, filename_from_handle
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes

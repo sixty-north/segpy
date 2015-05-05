@@ -5,8 +5,6 @@ import sys
 
 from itertools import (islice, cycle, tee, chain, repeat)
 
-from segpy.portability import izip
-
 NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
 
 UNSET = object()
@@ -25,7 +23,7 @@ def pairwise(iterable):
     """
     a, b = tee(iterable)
     next(b)
-    yield from izip(a, b)
+    yield from zip(a, b)
 
 
 def batched(iterable, batch_size, padding=UNSET):

@@ -1,7 +1,8 @@
 from collections import OrderedDict
 from struct import Struct
+from itertools import zip_longest
+
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE
-from segpy.portability import izip_longest
 from segpy.util import pairwise, intervals_partially_overlap, complementary_intervals
 
 
@@ -89,7 +90,7 @@ def compile_struct(header_format_class, length_in_bytes=None, endian='>'):
     # Create a format string usable with the struct module
     format_chunks = [endian]
     representative_fields = (fields[0] for fields in offset_to_fields.values())
-    for gap_interval, field in izip_longest(gap_intervals, representative_fields, fillvalue=None):
+    for gap_interval, field in zip_longest(gap_intervals, representative_fields, fillvalue=None):
         gap_length = len(gap_interval)
         if gap_length > 0:
             format_chunks.append('x' * gap_length)

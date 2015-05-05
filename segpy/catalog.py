@@ -1,8 +1,8 @@
 from abc import abstractmethod, ABCMeta
 from collections import Mapping, Sequence, OrderedDict
 from fractions import Fraction
+import reprlib
 
-from segpy.portability import reprlib
 from segpy.util import contains_duplicates, measure_stride, minmax
 
 

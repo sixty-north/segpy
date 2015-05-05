@@ -5,12 +5,6 @@ EMPTY_BYTE_STRING = b'' if sys.version_info >= (3, 0) else ''
 
 
 if sys.version_info >= (3, 0):
-    import reprlib
-    reprlib = reprlib  # Keep the static analyzer happy
-else:
-    import repr as reprlib
-
-if sys.version_info >= (3, 0):
     izip = zip
     from itertools import zip_longest as izip_longest
 else:

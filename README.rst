@@ -7,7 +7,7 @@ Segpy is open source software created by Sixty North and licensed under the GNU 
 Status
 ======
 
-Build status: rewrite branch:
+Build status:
 
 .. image:: https://travis-ci.org/sixty-north/segpy.svg?branch=master
     :target: https://travis-ci.org/sixty-north/segpy

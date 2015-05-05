@@ -9,8 +9,8 @@ Status
 
 Build status: rewrite branch:
 
-.. image:: https://travis-ci.org/rob-smallshire/segpy.svg?branch=master
-    :target: https://travis-ci.org/rob-smallshire/segpy
+.. image:: https://travis-ci.org/sixty-north/segpy.svg?branch=master
+    :target: https://travis-ci.org/sixty-north/segpy
 
 Segpy is alpha software but is usable in its current form.  That said you should expect minor breaking API changes
 between now and official release of a Segpy 2.

@@ -10,11 +10,14 @@ def size_of(t):
     return t.SIZE
 
 
-def compile_struct(header_format_class, length_in_bytes=None, endian='>'):
+def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, endian='>'):
     """Compile a struct description from a record.
 
     Args:
         header_format_class: A header_format class.
+
+        start_offset: Optional start offset for the header in bytes.  Indicates the position of the start of
+            the header in the same reference frame as which the field offsets are given.
 
         length_in_bytes: Optional length in bytes for the header. If the supplied header described a format shorter
             than this value the returned format will be padded with placeholders for bytes to be discarded. If the
@@ -60,7 +63,7 @@ def compile_struct(header_format_class, length_in_bytes=None, endian='>'):
                                   .format(a.name, a.offset, b.name, b.offset))
 
     last_field = sorted_fields[-1]
-    defined_length = last_field.offset + size_of(last_field.value_type)
+    defined_length = (last_field.offset - start_offset) + size_of(last_field.value_type)
     specified_length = defined_length if (length_in_bytes is None) else length_in_bytes
     padding_length = specified_length - defined_length
     if padding_length < 0:
@@ -69,23 +72,25 @@ def compile_struct(header_format_class, length_in_bytes=None, endian='>'):
 
     offset_to_fields = OrderedDict()
     for field in sorted_fields:
-        if field.offset not in offset_to_fields:
-            offset_to_fields[field.offset] = []
-        if len(offset_to_fields[field.offset]) > 0:
-            if offset_to_fields[field.offset][0].value_type is not field.value_type:
+        relative_offset = field.offset - start_offset  # relative_offser is zero-based
+        if relative_offset not in offset_to_fields:
+            offset_to_fields[relative_offset] = []
+        if len(offset_to_fields[relative_offset]) > 0:
+            if offset_to_fields[relative_offset][0].value_type is not field.value_type:
+                # TODO: Test this error handling
                 raise ValueError("Coincident fields {!r} and {!r} at offset {} have different types {!r} and {!r}"
-                                  .format(offset_to_fields[field.offset][0],
+                                  .format(offset_to_fields[relative_offset][0],
                                           field,
-                                          field.offset,
-                                          offset_to_fields[0].value_type,
+                                          offset_to_fields[relative_offset][0].offset,
+                                          offset_to_fields[relative_offset][0].value_type,
                                           field.value_type))
-        offset_to_fields[field.offset].append(field)
+        offset_to_fields[relative_offset].append(field)
 
     # Create a list of ranges where each range spans the byte indexes covered by each field
     field_spans = [range(offset, offset + size_of(fields[0].value_type))
                    for offset, fields in offset_to_fields.items()]
 
-    gap_intervals = complementary_intervals(field_spans, start=1, stop=specified_length + 1)  # One-based indexes
+    gap_intervals = complementary_intervals(field_spans, start=0, stop=specified_length)  # One-based indexes
 
     # Create a format string usable with the struct module
     format_chunks = [endian]
@@ -114,6 +119,7 @@ class HeaderPacker:
         self._header_format_class = header_format_class
         self._format, self._field_name_allocations = compile_struct(
             header_format_class,
+            header_format_class.START_OFFSET_IN_BYTES,
             header_format_class.LENGTH_IN_BYTES,
             endian)
         self._struct = Struct(self._format)
@@ -159,7 +165,7 @@ class HeaderPacker:
 
 def main():
     from segpy.trace_header import TraceHeaderRev0
-    compile_struct(TraceHeaderRev0, 240)
+    compile_struct(TraceHeaderRev0, 1, 240)
     pass
 
 if __name__ == '__main__':

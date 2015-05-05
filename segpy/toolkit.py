@@ -10,10 +10,10 @@ import re
 import logging
 
 from segpy import textual_reel_header_definition
+from segpy.binary_reel_header import BinaryReelHeader
 from segpy.catalog import CatalogBuilder
-from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
+from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
-from segpy.binary_reel_header_definition import HEADER_DEF
 from segpy.ibm_float import IBMFloat
 from segpy.packer import HeaderPacker
 from segpy.revisions import canonicalize_revision
@@ -50,7 +50,7 @@ def extract_revision(binary_reel_header):
         One of the constants revisions.SEGY_REVISION_0 or
         revisions.SEGY_REVISION_1
     """
-    raw_revision = binary_reel_header['SegyFormatRevisionNumber']
+    raw_revision = binary_reel_header.format_revision_num
     return canonicalize_revision(raw_revision)
 
 
@@ -64,7 +64,8 @@ def num_extended_textual_headers(binary_reel_header):
     in the final record. A positive value indicates that there are exactly that many
     Extended Textual File Header records.
     """
-    num_ext_headers = binary_reel_header['NumberOfExtTextualHeaders']
+    # TODO: Is this method needed any more?
+    num_ext_headers = binary_reel_header.num_extended_textual_headers
     return num_ext_headers
 
 
@@ -72,8 +73,7 @@ def bytes_per_sample(binary_reel_header, revision):
     """Determine the number of bytes per sample from the reel header.
 
     Args:
-        binary_reel_header: A dictionary containing a reel header, such as obtained
-            from read_binary_reel_header()
+        binary_reel_header: A header object.
 
         revision: One of the constants revisions.SEGY_REVISION_0 or
             revisions.SEGY_REVISION_1
@@ -81,8 +81,10 @@ def bytes_per_sample(binary_reel_header, revision):
     Returns:
         An integer number of bytes per sample.
     """
-    dsf = binary_reel_header['DataSampleFormat']
-    bps = HEADER_DEF["DataSampleFormat"]["bps"][revision][dsf]
+    dsf = binary_reel_header.data_sample_format
+    seg_y_type = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
+    ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+    bps = CTYPE_TO_SIZE[ctype]
     return bps
 
 
@@ -102,7 +104,7 @@ def samples_per_trace(binary_reel_header):
     Returns:
         An integer number of samples per trace_samples
     """
-    return binary_reel_header['ns']
+    return binary_reel_header.num_samples
 
 
 def trace_length_bytes(binary_reel_header, bps):
@@ -166,13 +168,10 @@ def read_binary_reel_header(fh, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<' for
             little-endian (non-standard)
     """
-    fh.seek(TEXTUAL_HEADER_NUM_BYTES)
-    reel_header = {}
-    for key in HEADER_DEF:
-        pos = HEADER_DEF[key]['pos']
-        ctype = HEADER_DEF[key]['type']
-        values = tuple(read_binary_values(fh, pos, ctype, 1, endian))
-        reel_header[key] = values[0]
+    header_packer = HeaderPacker(BinaryReelHeader, endian)
+    fh.seek(TEXTUAL_HEADER_NUM_BYTES)  # Consider using from_one_based(BinaryReelHeader.START_OFFSET_IN_BYTES)
+    buffer = fh.read(BinaryReelHeader.LENGTH_IN_BYTES)
+    reel_header = header_packer.unpack(buffer)
     return reel_header
 
 
@@ -421,7 +420,7 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     return trace_header
 
 
-def read_binary_values(fh, pos=None, ctype='int32', count=1, endian='>'):
+def read_binary_values(fh, pos=None, seg_y_type='int32', count=1, endian='>'):
     """Read a series of values from a binary file.
 
     Args:
@@ -435,8 +434,8 @@ c
     Returns:
         A sequence containing count items.
     """
-    fmt = SEG_Y_TYPE_TO_CTYPE[ctype]
-    item_size = size_in_bytes(fmt)
+    ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+    item_size = size_in_bytes(ctype)
     block_size = item_size * count
 
     fh.seek(pos, os.SEEK_SET)
@@ -447,8 +446,8 @@ c
             block_size, len(buf)))
 
     values = (unpack_ibm_floats(buf, count)
-              if fmt == 'ibm'
-              else unpack_values(buf, count, fmt, endian))
+              if ctype == 'ibm'
+              else unpack_values(buf, count, ctype, endian))
     assert len(values) == count
     return values
 
@@ -632,21 +631,15 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
     Args:
         fh: A file-like object open in binary mode for writing.
 
-        binary_reel_header: A dictionary of values using a subset of the keys
-            in binary_reel_header_definition.HEADER_DEF associated with
-            compatible values.
+        binary_reel_header: A header object.
 
     Post-condition:
         The file pointer for fh will be positioned at the first byte following
         the binary reel header.
     """
-
-    for key in HEADER_DEF:
-        pos = HEADER_DEF[key]['pos']
-        ctype = HEADER_DEF[key]['type']
-        value = binary_reel_header[key] if key in binary_reel_header else HEADER_DEF[key]['def']
-        write_binary_values(fh, [value], ctype, pos, endian)
-
+    header_packer = HeaderPacker(BinaryReelHeader, endian)  # TODO: Hard wiring
+    buffer = header_packer.pack(binary_reel_header)
+    fh.write(buffer)
     fh.seek(REEL_HEADER_NUM_BYTES)
 
 

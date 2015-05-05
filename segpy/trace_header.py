@@ -4,6 +4,7 @@ from segpy.types import Int32, Int16
 
 class TraceHeaderRev0(metaclass=FormatMeta):
 
+    START_OFFSET_IN_BYTES = 1
     LENGTH_IN_BYTES = 240
 
     line_sequence_num = field(

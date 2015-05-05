@@ -241,15 +241,15 @@ class SegYReader(object):
             raise ValueError("trace_samples(): start value {} out of range 0 to {}"
                              .format(start, stop_sample))
 
-        dsf = self._binary_reel_header['DataSampleFormat']
-        ctype = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
+        dsf = self._binary_reel_header.data_sample_format
+        seg_y_type = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
         start_pos = (self._trace_offset_catalog[trace_index]
                      + TRACE_HEADER_NUM_BYTES
-                     + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[ctype]))
+                     + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type]))
         num_samples_to_read = stop_sample - start_sample
 
         trace_values = read_binary_values(
-            self._fh, start_pos, ctype, num_samples_to_read, self._endian)
+            self._fh, start_pos, seg_y_type, num_samples_to_read, self._endian)
         return trace_values
 
     def trace_header(self, trace_index):
@@ -341,7 +341,7 @@ class SegYReader(object):
         Returns:
             One of the values from datatypes.DATA_SAMPLE_FORMAT
         """
-        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self._binary_reel_header['DataSampleFormat']]
+        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self._binary_reel_header.data_sample_format]
 
     @property
     def data_sample_format_description(self):

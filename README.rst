@@ -23,6 +23,6 @@ Python data structures in pure Python.
 Segpy Versions
 ==============
 
-Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python and represents a complete break from Segpy 1.0 in terms
-of the interface it presents to clients and the implementation behind those interfaces.   Segpy 1.0 should be considered
-unmaintained legacy software. The present and future of Segpy is Segpy 2.
+Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python and represents a complete break from the older
+Segpy 1.0 in terms of the interface it presents to clients and the implementation behind those interfaces.
+Segpy 1.0 should be considered unmaintained legacy software. The present and future of Segpy is Segpy 2.

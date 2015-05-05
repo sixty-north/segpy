@@ -5,14 +5,6 @@ EMPTY_BYTE_STRING = b'' if sys.version_info >= (3, 0) else ''
 
 
 if sys.version_info >= (3, 0):
-    def byte_string(integers):
-        return bytes(integers)
-else:
-    def byte_string(integers):
-        return EMPTY_BYTE_STRING.join(chr(i) for i in integers)
-
-
-if sys.version_info >= (3, 0):
     import reprlib
     reprlib = reprlib  # Keep the static analyzer happy
 else:

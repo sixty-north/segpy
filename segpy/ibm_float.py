@@ -1,7 +1,7 @@
 from math import frexp, isnan, isinf, ceil, floor, trunc
 from numbers import Real
 
-from segpy.portability import long_int, byte_string, four_bytes
+from segpy.portability import four_bytes
 
 
 
@@ -17,10 +17,10 @@ MAX_IBM_FLOAT = 7.2370051459731155e+75
 MAX_BITS_PRECISION_IBM_FLOAT = 24
 MIN_BITS_PRECISION_IBM_FLOAT = 21  # The first 3 bits of the mantissa may be zero
 EPSILON_IBM_FLOAT = pow(2.0, -(MIN_BITS_PRECISION_IBM_FLOAT - 1))
-_L24 = long_int(2) ** MAX_BITS_PRECISION_IBM_FLOAT
+_L24 = 2 ** MAX_BITS_PRECISION_IBM_FLOAT
 _F24 = float(pow(2, MAX_BITS_PRECISION_IBM_FLOAT))
 
-_L21 = long_int(2) ** MIN_BITS_PRECISION_IBM_FLOAT
+_L21 = 2 ** MIN_BITS_PRECISION_IBM_FLOAT
 
 EXPONENT_BIAS = 64
 
@@ -135,7 +135,7 @@ def ieee2ibm(f):
     # Convert the fraction (m) into an integer representation. IEEE float32
     # numbers have 23 explicit (24 implicit) bits of precision.
 
-    mantissa = abs(long_int(m * _L24))
+    mantissa = abs(int(m * _L24))
     exponent = e
     sign = 0x80 if f < 0 else 0x00
 
@@ -167,7 +167,7 @@ def ieee2ibm(f):
     c = (mantissa >> 8) & 0xff
     d = mantissa & 0xff
 
-    return byte_string((a, b, c, d))
+    return bytes((a, b, c, d))
 
 
 class IBMFloat(Real):

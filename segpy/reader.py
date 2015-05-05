@@ -75,7 +75,7 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
         raise TypeError(
             "SegYReader must be provided with a binary mode file object")
 
-    if not seekable(fh):
+    if not fh.seekable():
         raise TypeError(
             "SegYReader must be provided with a seekable file object")
 

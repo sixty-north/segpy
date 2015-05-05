@@ -1,8 +1,8 @@
-from math import trunc, floor
+import math
+from math import trunc
 import unittest
 
 from hypothesis import given, assume
-import math
 from hypothesis.specifiers import integers_in_range, floats_in_range
 
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,

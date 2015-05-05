@@ -142,8 +142,7 @@ def read_textual_reel_header(fh, encoding):
         encoding: Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Returns:
-        A tuple of forty Unicode strings (Python 2: unicode, Python 3: str)
-        containing the transcoded header data.
+        A tuple of forty Unicode strings containing the transcoded header data.
     """
     fh.seek(0)
     raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)

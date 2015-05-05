@@ -5,12 +5,6 @@ EMPTY_BYTE_STRING = b'' if sys.version_info >= (3, 0) else ''
 
 
 if sys.version_info >= (3, 0):
-    long_int = int
-else:
-    long_int = long
-
-
-if sys.version_info >= (3, 0):
     def byte_string(integers):
         return bytes(integers)
 else:

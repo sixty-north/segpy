@@ -199,7 +199,6 @@ class HeaderFieldDescriptor:
 
             line_seq_num = my_trace_header.line_sequence_num
         """
-        #print("HeaderFieldDescriptor.__get__({!r}, {!r}, {!r})".format(self, instance, owner))
         if instance is None:
             return self._named_field
         if instance not in self._instance_data:

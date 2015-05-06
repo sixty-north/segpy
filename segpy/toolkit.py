@@ -637,7 +637,7 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         The file pointer for fh will be positioned at the first byte following
         the binary reel header.
     """
-    header_packer = make_header_packer(BinaryReelHeader, endian)  # TODO: Hard wiring
+    header_packer = make_header_packer(type(binary_reel_header), endian)
     buffer = header_packer.pack(binary_reel_header)
     fh.write(buffer)
     fh.seek(REEL_HEADER_NUM_BYTES)

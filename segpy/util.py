@@ -4,6 +4,7 @@ import os
 import sys
 
 from itertools import (islice, cycle, tee, chain, repeat)
+from segpy.sorted_set import SortedFrozenSet
 
 NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
 
@@ -326,3 +327,24 @@ def flatten(sequence_of_sequences):
 def four_bytes(byte_str):
     a, b, c, d = byte_str[:4]
     return a, b, c, d
+
+
+def make_sorted_distinct_sequence(iterable):
+    """Create a sorted immutable sequence from an iterable series.
+
+    Args:
+        iterable: An iterable series of comparable values.
+
+    Returns:
+        An immutable collection which supports the Sized, Iterable,
+        Container and Sequence protocols.
+    """
+    sorted_set = SortedFrozenSet(iterable)
+    if len(sorted_set) == 1:
+        return sorted_set
+    stride = measure_stride(sorted_set)
+    if stride is not None:
+        start = sorted_set[0]
+        stop = sorted_set[-1] + stride
+        return range(start, stop, stride)
+    return sorted_set

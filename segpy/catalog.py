@@ -2,6 +2,7 @@ from abc import abstractmethod, ABCMeta
 from collections import Mapping, Sequence, OrderedDict
 from fractions import Fraction
 import reprlib
+from segpy.sorted_set import SortedFrozenSet
 
 from segpy.util import contains_duplicates, measure_stride, minmax
 
@@ -399,7 +400,7 @@ class ConstantCatalog(Catalog):
             value: A value associated with all keys.
         """
         super(ConstantCatalog, self).__init__(value_min=value, value_max=value)
-        self._items = frozenset(keys)
+        self._items = SortedFrozenSet(keys)
 
     def __getitem__(self, key):
         if key not in self:

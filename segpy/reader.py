@@ -1,9 +1,10 @@
 from __future__ import print_function
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
+from segpy.sorted_set import SortedFrozenSet
 
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, filename_from_handle
+from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
                            bytes_per_sample,
@@ -413,67 +414,50 @@ class SegYReader3D(SegYReader):
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
         self._line_catalog = line_catalog
-        self._num_inlines = None
-        self._num_xlines = None
+        self._inline_numbers = None
+        self._xline_numbers = None
 
     def _dimensionality(self):
         return 3
 
-    def inline_range(self):
-        """A range encompassing inline numbers.
+    def inline_numbers(self):
+        """A sorted immutable collection of inline numbers.
 
-        The number of inlines within this range can be found with len(reader.inline_range()).
+        Test for membership in this collection to determine if a particular inline
+        exists or iterate over this collection to generate all inline numbers in
+        order.
 
         Returns:
-            A range() object with start set to the first inline number and stop set to
-            one beyond the last inline number. The range always has a step of one, although
-            this should not be taken as meaning that any intermediate inline number generated
-            by the range is valid.
+            A sorted immutable collection of inline numbers which supports the
+            Sized, Iterable, Container and Sequence protocols.
         """
-        start = self._line_catalog.key_min()[0]
-        stop = self._line_catalog.key_max()[0] + 1
-        return range(start, stop)
+        if self._inline_numbers is None:
+            self._inline_numbers = make_sorted_distinct_sequence(i for i, j in self._line_catalog)
+        return self._inline_numbers
 
     def num_inlines(self):
-        """The number of distinct inlines in the survey.
+        """The number of distinct inlines in the survey."""
+        return len(self.inline_numbers())
 
-        This number is not necessarily the same as the value returned by
-        len(reader.inline_range()) as there may be missing inlines within the range.
-        """
-        if self._num_inlines is None:
-            try:
-                self._num_inlines = self._line_catalog.i_max - self._line_catalog.i_min + 1
-            except AttributeError:
-                self._num_inlines = len(set(i for i, j in self._line_catalog))
-        return self._num_inlines
+    def xline_numbers(self):
+        """A sorted immutable collection of crossline numbers.
 
-    def xline_range(self):
-        """A range encompassing crossline numbers.
-
-        The number of crosslines within this range can be found with len(reader.crossline_range()).
+        Test for membership in this collection to determine if a particular crossline
+        exists or iterate over this collection to generate all crossline numbers in
+        order.
 
         Returns:
-            A range() object with start set to the first crossline number and stop set to
-            one beyond the last crossline number. The range always has a step of one, although
-            this should not be taken as meaning that any intermediate crossline number generated
-            by the range is valid.
+            A sorted immutable collection of crossline numbers which supports the
+            Sized, Iterable, Container and Sequence protocols.
         """
-        start = self._line_catalog.key_min()[1]
-        stop = self._line_catalog.key_max()[1] + 1
-        return range(start, stop)
+        if self._xline_numbers is None:
+            self._xline_numbers = make_sorted_distinct_sequence(j for i, j in self._line_catalog)
+        return self._xline_numbers
 
     def num_xlines(self):
-        """The number of distinct crosslines in the survey.
+        """The number of distinct crosslines in the survey."""
+        return len(self.xline_numbers())
 
-        This number is not necessarily the same as the value returned by
-        len(reader.xline_range()) as there may be missing crosslines within the range.
-        """
-        if self._num_xlines is None:
-            try:
-                self._num_xlines = self._line_catalog.j_max - self._line_catalog.j_min + 1
-            except AttributeError:
-                self._num_xlines = len(set(j for i, j in self._line_catalog))
-        return self._num_xlines
 
     def inline_xline_numbers(self):
         """An iterator over all  (inline_number, xline_number) tuples
@@ -557,29 +541,25 @@ class SegYReader2D(SegYReader):
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
         self._cdp_catalog = cdp_catalog
+        self._cdp_numbers = None
 
     def _dimensionality(self):
         return 2
 
     def cdp_numbers(self):
-        """An iterator over all cdp numbers corresponding to traces.
-        """
-        return iter(self._cdp_catalog)
+        """A sorted immutable collection of CDP numbers.
 
-    def cdp_range(self):
-        """A range encompassing CDP numbers.
-
-        The number of CDPs within this range can be found with len(reader.cdp_range()).
+        Test for membership in this collection to determine if a particular CDP
+        exists or iterate over this collection to generate all CDP numbers in
+        order.
 
         Returns:
-            A range() object with start set to the first CDP number and stop set to
-            one beyond the last CDP number. The range always has a step of one, although
-            this should not be taken as meaning that any intermediate CDP number generated
-            by the range is valid.
+            A sorted immutable collection of CDP numbers which supports the
+            Sized, Iterable, Container and Sequence protocols.
         """
-        start = self._cdp_catalog.value_min()
-        stop = self._cdp_catalog.value_max() + 1
-        return range(start, stop)
+        if self._cdp_numbers is None:
+            self._cdp_numbers = make_sorted_distinct_sequence(self._cdp_catalog.keys())
+        return self._cdp_numbers
 
     def num_cdps(self):
         """The number of distinct CDPs.

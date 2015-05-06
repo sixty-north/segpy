@@ -10,11 +10,14 @@ class Header:
     """An abstract base class for header format definitions."""
 
     def __init__(self, **kwargs):
-        # TODO: This has terrible performance - better to handle validation optimistically by overriding __getattr__()
         for keyword, arg in kwargs.items():
-            if keyword not in self.ordered_field_names():
-                raise TypeError("{!r} is not a recognised field name for {!r}".format(keyword, self.__class__.__name__))
-            setattr(self, keyword, arg)
+            try:
+                getattr(self, keyword)
+            except AttributeError as e:
+                raise TypeError("{!r} is not a recognised field name for {!r}"
+                                .format(keyword, self.__class__.__name__)) from e
+            else:
+                setattr(self, keyword, arg)
 
     _ordered_field_names = tuple()
 
@@ -30,6 +33,9 @@ class Header:
         if cls is Header:
             return cls._ordered_field_names
         return super_class(cls).ordered_field_names() + cls._ordered_field_names
+
+    def __getattr__(self, name):
+        raise AttributeError("Object of type {!r} has no attribute {!r}".format(self.__class__.__name__, name))
 
 
 class FormatMeta(type):

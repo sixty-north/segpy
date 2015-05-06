@@ -9,7 +9,10 @@ from segpy.util import underscores_to_camelcase, first_sentence, super_class
 class Header:
     """An abstract base class for header format definitions."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        for keyword, arg in zip(self.ordered_field_names(), args):
+            setattr(self, keyword, arg)
+
         for keyword, arg in kwargs.items():
             try:
                 getattr(self, keyword)

@@ -174,11 +174,6 @@ class IBMFloat(Real):
 
     __slots__ = ['_data']
 
-    _INTERNED = {IBM_ZERO_BYTES: None,
-                 IBM_NEGATIVE_ONE_BYTES: None,
-                 IBM_POSITIVE_ONE_BYTES: None}
-
-    # noinspection PyUnresolvedReferences
     def __new__(cls, b):
         obj = object.__new__(cls)
 
@@ -187,15 +182,7 @@ class IBMFloat(Real):
         if num_bytes != 4:
             raise ValueError("{} cannot be constructed from {} values".format(cls.__name__, num_bytes))
         obj._data = data
-
-        # Intern common values
-        if data in cls._INTERNED:
-            if cls._INTERNED[data] is None:
-                cls._INTERNED[data] = obj
-            return cls._INTERNED[data]
-
         return obj
-
 
     @classmethod
     def from_float(cls, f):

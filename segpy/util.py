@@ -12,6 +12,7 @@ EMPTY_BYTE_STRING = b''
 
 UNSET = object()
 
+
 def pairwise(iterable):
     """Pairwise iteration.
 
@@ -19,10 +20,8 @@ def pairwise(iterable):
         iterable: An iterable series.
 
     Returns:
-        An iterator over 2-tuples.
-
-    Raises:
-        StopIteration: If the iterable contains fewer than two items.
+        An iterator over 2-tuples. If the iterable contains fewer than two
+        items the result series is empty.
     """
     a, b = tee(iterable)
     next(b)

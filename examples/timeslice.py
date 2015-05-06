@@ -1,5 +1,9 @@
 """Extract a timeslice from a 3D seismic volume to a Numpy array.
 
+This utility assumes the inline and crossline numbers are evenly spaced.
+Each inline of the source data will be represented as a single row, and
+each crossline as a single column in the resulting 2D array.
+
 Usage: timeslice.py [-h] [--dtype DTYPE] [--null NULL]
                     segy-file npy-file slice-index
 
@@ -18,7 +22,6 @@ Example:
 
   timeslice.py stack_final_int8.sgy slice_800.npy 800 --null=42.0 --dtype=f
 """
-from __future__ import print_function
 
 import argparse
 import os
@@ -60,17 +63,14 @@ def extract_timeslice(segy_filename, out_filename, slice_index, dtype=None, null
         if segy_reader.dimensionality != 3:
             raise DimensionalityError("Cannot slice {n} dimensional seismic.".format(segy_reader.dimensionality))
 
-        i_line_range = segy_reader.inline_range()
-        x_line_range = segy_reader.xline_range()
-
-        i_size = len(i_line_range)
-        x_size = len(x_line_range)
+        i_size = segy_reader.num_inlines()
+        x_size = segy_reader.num_xlines()
         t_size = segy_reader.max_num_trace_samples()
 
         if not (0 <= slice_index < t_size):
             raise ValueError("Time slice index {0} out of range {} to {}".format(slice_index, 0, t_size))
 
-        timeslice = np.full((x_size, i_size), null, dtype)
+        timeslice = np.full((i_size, x_size), null, dtype)
 
         for inline_num, xline_num in segy_reader.inline_xline_numbers():
             trace_index = segy_reader.trace_index((inline_num, xline_num))
@@ -81,9 +81,10 @@ def extract_timeslice(segy_filename, out_filename, slice_index, dtype=None, null
             except IndexError:
                 sample = null
 
-            i_index = inline_num - i_line_range.start
-            x_index = xline_num - x_line_range.start
-            timeslice[x_index, i_index] = sample
+            i_index = segy_reader.inline_numbers().index(inline_num)
+            x_index = segy_reader.xline_numbers().index(xline_num)
+
+            timeslice[i_index, x_index] = sample
 
         np.save(out_filename, timeslice)
 

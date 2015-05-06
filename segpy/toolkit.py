@@ -15,7 +15,7 @@ from segpy.catalog import CatalogBuilder
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.ibm_float import IBMFloat
-from segpy.packer import HeaderPacker
+from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING
@@ -168,7 +168,7 @@ def read_binary_reel_header(fh, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<' for
             little-endian (non-standard)
     """
-    header_packer = HeaderPacker(BinaryReelHeader, endian)
+    header_packer = make_header_packer(BinaryReelHeader, endian)
     fh.seek(TEXTUAL_HEADER_NUM_BYTES)  # Consider using from_one_based(BinaryReelHeader.START_OFFSET_IN_BYTES)
     buffer = fh.read(BinaryReelHeader.LENGTH_IN_BYTES)
     reel_header = header_packer.unpack(buffer)
@@ -336,7 +336,7 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
-    trace_header_packer = HeaderPacker(trace_header_format, endian)
+    trace_header_packer = make_header_packer(trace_header_format, endian)
 
     length = file_length(fh)
 
@@ -637,7 +637,7 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
         The file pointer for fh will be positioned at the first byte following
         the binary reel header.
     """
-    header_packer = HeaderPacker(BinaryReelHeader, endian)  # TODO: Hard wiring
+    header_packer = make_header_packer(BinaryReelHeader, endian)  # TODO: Hard wiring
     buffer = header_packer.pack(binary_reel_header)
     fh.write(buffer)
     fh.seek(REEL_HEADER_NUM_BYTES)

@@ -112,19 +112,28 @@ def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, en
     return cformat, field_name_allocations
 
 
+def make_header_packer(header_format_class, endian='>'):
+    cformat, field_name_allocations = compile_struct(
+        header_format_class,
+        header_format_class.START_OFFSET_IN_BYTES,
+        header_format_class.LENGTH_IN_BYTES,
+        endian)
+    structure = Struct(cformat)
+
+    one_to_one = all(len(fields) == 1 for fields in field_name_allocations)
+
+    if one_to_one:
+        return BijectiveHeaderPacker(header_format_class, structure, field_name_allocations)
+    return SurjectiveHeaderPacker(header_format_class, structure, field_name_allocations)
+
+
 class HeaderPacker:
     """Packing and unpacking header instances."""
 
-    def __init__(self, header_format_class, endian='>'):
+    def __init__(self, header_format_class, structure, field_name_allocations):
         self._header_format_class = header_format_class
-        self._format, self._field_name_allocations = compile_struct(
-            header_format_class,
-            header_format_class.START_OFFSET_IN_BYTES,
-            header_format_class.LENGTH_IN_BYTES,
-            endian)
-        self._struct = Struct(self._format)
-        self._one_to_one = all(len(fields) == 1 for fields in self._field_name_allocations)
-        pass
+        self._structure = structure
+        self._field_name_allocations = field_name_allocations
 
     @property
     def header_format_class(self):
@@ -140,7 +149,16 @@ class HeaderPacker:
                 header.__class__.__name__
             ))
         values = [getattr(header, names[0]) for names in self._field_name_allocations]
-        return self._struct.pack(*values)
+        return self._structure.pack(*values)
+
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            self._header_format_class.__name__)
+
+
+class BijectiveHeaderPacker(HeaderPacker):
+    """One-to-one packing/unpacking of serialised values to header fields."""
 
     def unpack(self, buffer):
         """Unpack a header into a header object.
@@ -151,21 +169,29 @@ class HeaderPacker:
         Returns:
             The header object.
         """
-        values = self._struct.unpack(buffer)
+        values = self._structure.unpack(buffer)
+        return self._header_format_class(*values)
 
-        if self._one_to_one:
-            return self._header_format_class(*values)
+
+class SurjectiveHeaderPacker(HeaderPacker):
+    """One-to-many unpacking of serialised values to header fields."""
+
+    def unpack(self, buffer):
+        """Unpack a header into a header object.
+
+        Overwrites any existing header field values with new values
+        obtained from the buffer.
+
+        Returns:
+            The header object.
+        """
+        values = self._structure.unpack(buffer)
 
         kwargs = {name: value
                   for names, value in zip(self._field_name_allocations, values)
                   for name in names}
 
         return self._header_format_class(**kwargs)
-
-    def __repr__(self):
-        return "{}({})".format(
-            self.__class__.__name__,
-            self._header_format_class.__name__)
 
 
 def main():

@@ -1,6 +1,6 @@
 from __future__ import print_function
 from segpy.encoding import ASCII
-from segpy.packer import HeaderPacker
+from segpy.packer import make_header_packer
 
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, filename_from_handle
@@ -175,7 +175,7 @@ class SegYReader(object):
         self._binary_reel_header = binary_reel_header
         self._extended_textual_headers = extended_textual_headers
 
-        self._trace_header_packer = HeaderPacker(trace_header_format, endian)
+        self._trace_header_packer = make_header_packer(trace_header_format, endian)
 
         self._trace_offset_catalog = trace_offset_catalog
         self._trace_length_catalog = trace_length_catalog

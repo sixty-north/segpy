@@ -325,7 +325,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     year_recorded = field(
-        Int16, offset=155, default=0, documentation=
+        Int16, offset=157, default=0, documentation=
         "Year data recorded. The 1975 standard is unclear as to whether this should be recorded as a 2-digit or a "
         "4-digit year and both have been used. For SEG Y revisions beyond rev 0, the year should be recorded as the "
         "complete 4-digit Gregorian calendar year (i.e. the year 2001 should be recorded as 2001 in base 10 "

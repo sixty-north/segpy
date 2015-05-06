@@ -49,45 +49,8 @@ def ibm2ieee(big_endian_bytes):
     value = sign * mantissa * pow(16, exponent_16_biased - EXPONENT_BIAS)
     return value
 
+
 BITS_PER_NYBBLE = 4
-
-
-def truncate(big_endian_bytes):
-    a, b, c, d = four_bytes(big_endian_bytes)
-
-    sign = -1 if (a & 0x80) else 1
-    exponent_16_biased = a & 0x7f
-    exponent_16 = exponent_16_biased - EXPONENT_BIAS
-    mantissa = ((b << 16) | (c << 8) | d)
-
-    print("sign =", sign)
-    print("exponent_16", exponent_16, hex(exponent_16), bin(exponent_16))
-    print("mantissa", mantissa, hex(mantissa), bin(mantissa))
-
-    num_nybbles_to_preserve = min(exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE)
-    num_bits_to_clear = MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
-    clear_mask = 2**num_bits_to_clear - 1
-    preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
-
-    print("num_nybbles_to_preserve", num_nybbles_to_preserve)
-    print("num_bits_to_clear", num_bits_to_clear)
-    print("clear_mask   ", bin(clear_mask))
-    print("preserve_mask", bin(preserve_mask))
-
-    truncated_mantissa = mantissa & preserve_mask
-
-    value = truncated_mantissa * pow(16, exponent_16)
-
-    scaled_value = value >> MAX_BITS_PRECISION_IBM_FLOAT
-
-    return scaled_value
-
-    #
-    # tb = (preserve_mask >> 16) & b
-    # tc = (preserve_mask >> 8) & c
-    # td = preserve_mask & d
-    #
-    # return byte_string((a, tb, tc, td))
 
 
 def ieee2ibm(f):

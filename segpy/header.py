@@ -10,6 +10,20 @@ class Header:
     """An abstract base class for header format definitions."""
 
     def __init__(self, *args, **kwargs):
+        """Initialise a header instance.
+
+        Args:
+            *args: Positional arguments are matched with header fields in the order they
+                are declared in the class definition (i.e. the same order defined by
+                the ordered_field_names() method.  From a performance perspective
+                positional arguments are faster than keyword arguments.
+
+            **kwargs: Keyword arguments are assigned to the header field of the same name.
+                Keyword argument values will overwrite any positional argument values.
+
+        Raises:
+            TypeError: If keyword argument names do not correspond to header fields.
+        """
         for keyword, arg in zip(self.ordered_field_names(), args):
             setattr(self, keyword, arg)
 
@@ -33,6 +47,7 @@ class Header:
         Returns:
             An tuple containing the field names in order.
         """
+
         if cls is Header:
             return cls._ordered_field_names
         return super_class(cls).ordered_field_names() + cls._ordered_field_names

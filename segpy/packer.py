@@ -155,12 +155,12 @@ class HeaderPacker:
 
         if self._one_to_one:
             return self._header_format_class(*values)
-        else:
-            kwargs = {name: value
-                      for names, value in zip(self._field_name_allocations, values)
-                      for name in names}
 
-            return self._header_format_class(**kwargs)
+        kwargs = {name: value
+                  for names, value in zip(self._field_name_allocations, values)
+                  for name in names}
+
+        return self._header_format_class(**kwargs)
 
     def __repr__(self):
         return "{}({})".format(

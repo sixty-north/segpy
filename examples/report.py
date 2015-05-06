@@ -47,11 +47,6 @@ def report_segy(in_filename):
         print(segy_reader.extended_textual_header)
         print("=== END EXTENDED TEXTUAL_HEADER ===")
 
-        for trace_index in segy_reader.trace_indexes():
-            trace_header = segy_reader.trace_header(trace_index)
-            print("Inline {}, Crossline {}, Shotpoint {}".format(trace_header.Inline3D, trace_header.Crossline3D,
-                                                                 trace_header.ShotPoint))
-
 
 def main(argv=None):
     if argv is None:

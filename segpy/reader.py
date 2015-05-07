@@ -39,7 +39,8 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             None (the default) a heuristic will be used to guess the
             header encoding.
 
-        trace_header_format: The class defining the layout of the trace header.
+        trace_header_format: An optional class defining the layout of the
+            trace header. Defaults to TraceHeaderRev1.
 
         endian: '>' for big-endian data (the standard and default), '<'
                 for little-endian (non-standard)
@@ -150,7 +151,7 @@ class SegYReader(object):
             textual_reel_header: A sequence of forty 80-character Unicode strings
                 containing header data.
 
-            binary_reel_header: A dictionary containing reel header data.
+            binary_reel_header: A Header object containing reel header data.
 
             extended_textual_headers: A sequence of sequences of Unicode strings.
 

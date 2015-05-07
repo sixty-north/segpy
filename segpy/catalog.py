@@ -1,3 +1,14 @@
+"""Catalogs are immutable mappings useful for building indexes.
+
+This module contains definitions of many different catalog types,
+all of which implement the interface defined by the Catalog abstract
+base class, which is itself implements the mapping protocol.
+
+Rather than constructing Catalog subtypes directly, prefer to use
+the CatalogBuilder class which will analyse the contents of the
+mapping to find a space and time efficient representation.
+"""
+
 from abc import abstractmethod, ABCMeta
 from collections import Mapping, Sequence, OrderedDict
 from fractions import Fraction
@@ -231,7 +242,7 @@ class RowMajorCatalog(Catalog):
             j_max (int): The maximum j value.
             c (int): The constant offset
         """
-        super(RowMajorCatalog, self).__init__()
+        super().__init__()
         self._i_min = i_min
         self._i_max = i_max
         self._j_min = j_min
@@ -306,7 +317,7 @@ class DictionaryCatalog(Catalog):
     """
 
     def __init__(self, items):
-        super(DictionaryCatalog, self).__init__()
+        super().__init__()
         self._items = OrderedDict(items)
 
     def __getitem__(self, key):
@@ -350,7 +361,7 @@ class RegularConstantCatalog(Catalog):
             raise ValueError("RegularIndex key range {!r} is not "
                              "a multiple of stride {!r}".format(
                                  key_stride, key_range))
-        super(RegularConstantCatalog, self).__init__(
+        super().__init__(
             key_min=key_min,
             key_max=key_max,
             value_min=value,
@@ -399,7 +410,7 @@ class ConstantCatalog(Catalog):
             key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
-        super(ConstantCatalog, self).__init__(value_min=value, value_max=value)
+        super().__init__(value_min=value, value_max=value)
         self._items = SortedFrozenSet(keys)
 
     def __getitem__(self, key):
@@ -491,10 +502,6 @@ class RegularCatalog(Catalog):
 class LinearRegularCatalog(Catalog):
     """A mapping which assumes a linear relationship between keys and values.
 
-    This is the ordering of items in a two-dimensional matrix where in
-    the (i, j) key tuple the j value changes fastest when iterating
-    through the items in order.
-
     A LinearRegularCatalog predicts the value v from the key according to the
     following formula:
 
@@ -539,7 +546,7 @@ class LinearRegularCatalog(Catalog):
                                  value_range))
         self._value_stride = value_stride
 
-        super(LinearRegularCatalog, self).__init__(
+        super().__init__(
             key_min=key_min,
             key_max=key_max,
             value_min=value_min,

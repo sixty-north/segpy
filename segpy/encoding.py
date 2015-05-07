@@ -1,3 +1,10 @@
+"""Support for the text encodings used in SEG Y.
+
+SEG Y data can contain textual data encoded in either ASCII
+or EBCDIC format. This module contains tools for detecting those
+encodings.
+"""
+
 ASCII = 'ascii'
 EBCDIC = 'cp037'
 
@@ -28,6 +35,7 @@ def is_supported_encoding(encoding):
 COMMON_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:_- '
 COMMON_EBCDIC_CHARS = set(COMMON_CHARS.encode(EBCDIC))
 COMMON_ASCII_CHARS = set(COMMON_CHARS.encode(ASCII))
+
 
 def guess_encoding(bs, threshold=0.5):
     """Try to determine whether the encoding of byte stream b is an ASCII string or an EBCDIC string.
@@ -72,7 +80,5 @@ def guess_encoding(bs, threshold=0.5):
 
     if ebcdic_freq < threshold and ascii_freq < threshold:
         return None
-
-
 
     return None

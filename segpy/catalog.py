@@ -86,6 +86,7 @@ class CatalogBuilder(object):
         index_min = self._catalog[0][0]
         index_max = self._catalog[-1][0]
         index_stride = measure_stride(index for index, value in self._catalog)
+        assert index_stride != 0
 
         value_start = self._catalog[0][1]
         value_stop = self._catalog[-1][1]
@@ -115,14 +116,18 @@ class CatalogBuilder(object):
                                   index_stride,
                                   (value for index, value in self._catalog))
 
-        assert (index_stride is not None) and (value_stride is not None)
-        catalog = LinearRegularCatalog(index_min,
-                                       index_max,
-                                       index_stride,
-                                       value_start,
-                                       value_stop,
-                                       value_stride)
-        return catalog
+        if (index_stride is not None) and (value_stride is not None):
+            assert value_stride != 0
+            return LinearRegularCatalog(index_min,
+                                           index_max,
+                                           index_stride,
+                                           value_start,
+                                           value_stop,
+                                           value_stride)
+
+        return DictionaryCatalog(self._catalog)
+
+
 
     def _create_catalog_2(self):
         """Create a catalog for two-dimensional integer keys.

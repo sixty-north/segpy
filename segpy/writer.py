@@ -6,7 +6,6 @@ from segpy.toolkit import (write_textual_reel_header, write_binary_reel_header,
                            write_extended_textual_headers)
 
 
-
 def write_segy(fh,
                seg_y_data,
                encoding=None,

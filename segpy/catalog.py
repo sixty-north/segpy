@@ -119,11 +119,11 @@ class CatalogBuilder(object):
         if (index_stride is not None) and (value_stride is not None):
             assert value_stride != 0
             return LinearRegularCatalog(index_min,
-                                           index_max,
-                                           index_stride,
-                                           value_start,
-                                           value_stop,
-                                           value_stride)
+                                        index_max,
+                                        index_stride,
+                                        value_start,
+                                        value_stop,
+                                        value_stride)
 
         return DictionaryCatalog(self._catalog)
 

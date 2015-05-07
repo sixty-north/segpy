@@ -1,4 +1,3 @@
-print("segpy_numpy.__init__ imported")
 
 from pkgutil import extend_path
 

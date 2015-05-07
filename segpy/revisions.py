@@ -6,6 +6,13 @@ From the specification:
     Thus for SEG Y Revision 1.0, as defined in this document, this will be recorded as 0100 in base 16.
 """
 
+# It's not at all obvious to me whether this means 0xHH.LL where the value is in binary-coded decimal, (in which case
+# version 1.1 would be represented as 0x0101, or whether it is in fixed-point binary, in which case we can't represent
+# version 1.1.  Until I learn otherwise, I'm going for the BCD interpretation.
+
+
+from decimal import Decimal
+
 
 SEGY_REVISION_0 = 0x0000
 SEGY_REVISION_1 = 0x0100
@@ -31,7 +38,7 @@ def canonicalize_revision(revision):
         revision: Any object representing a SEG Y revision.
 
     Returns:
-        Either SEGY_REVISION_0 or SEGY_REVISION_1.
+        An integer revision - either SEGY_REVISION_0 or SEGY_REVISION_1.
 
     Raises:
         SegYRevisionError: If the revision is not known.
@@ -39,4 +46,20 @@ def canonicalize_revision(revision):
     try:
         return VARIANTS[revision]
     except KeyError:
-        raise SegYRevisionError("Unknown SEG Y Revision {!r}".format(revision))
+        raise SegYRevisionError("Unknown SEG Y Revision raw={!r} hex={} decimal={}".format(
+            revision, hex(revision), integer_to_decimal_revision(revision)))
+
+
+def integer_to_decimal_revision(revision):
+    """Convert a SEG Y revision integer into decimal form.
+
+    Args:
+        revision: An canonical revision integer (e.g. as produced by
+        a call to canonicalize_revision().
+
+    Returns:
+        A decimal real number.
+    """
+    lo = revision & 0xFF
+    hi = (revision >> 8) & 0xFF
+    return Decimal(hi) + Decimal(lo)/Decimal(10)

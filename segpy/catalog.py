@@ -92,23 +92,23 @@ class CatalogBuilder(object):
             # Dictionary strategy - arbitrary keys and values
             return DictionaryCatalog(self._catalog)
 
-        self._catalog.sort(key=lambda index_value: index_value[1])
-        value_min = self._catalog[0][1]
-        value_max = self._catalog[-1][1]
+        #self._catalog.sort(key=lambda index_value: index_value[1])
+        value_start = self._catalog[0][1]
+        value_stop = self._catalog[-1][1]
         value_stride = measure_stride(value for index, value in self._catalog)
 
         if index_stride is not None and value_stride == 0:
-            assert value_min == value_max
+            assert value_start == value_stop
             return RegularConstantCatalog(index_min,
                                           index_max,
                                           index_stride,
-                                          value_min)
+                                          value_start)
 
         if index_stride is None and value_stride == 0:
-            assert value_min == value_max
+            assert value_start == value_stop
             return ConstantCatalog(
                     (index for index, value in self._catalog),
-                    value_min)
+                    value_start)
 
         if index_stride is not None and value_stride is None:
             # Regular index - regular keys and arbitrary values
@@ -121,8 +121,8 @@ class CatalogBuilder(object):
         catalog = LinearRegularCatalog(index_min,
                                        index_max,
                                        index_stride,
-                                       value_min,
-                                       value_max,
+                                       value_start,
+                                       value_stop,
                                        value_stride)
         return catalog
 
@@ -169,24 +169,19 @@ class CatalogBuilder(object):
         return True, diff
 
 
-class Catalog(Mapping):
+class Catalog(Mapping, metaclass=ABCMeta):
     """An abstract base class for Catalogs which provides min and max keys and values."""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, key_min=None, key_max=None, value_min=None, value_max=None):
+    def __init__(self, key_min=None, key_max=None):
         """Must be overridden and called by subclasses.
 
         Args:
             key_min: Optional minimum key.
             key_max: Optional maximum key.
-            value_min: Optional minimum value.
-            value_max: Optional maximum value.
         """
         self._min_key = key_min
         self._max_key = key_max
-        self._min_value = value_min
-        self._max_value = value_max
 
     def key_min(self):
         """Minimum key"""
@@ -199,18 +194,6 @@ class Catalog(Mapping):
         if self._max_key is None:
             self._max_key = max(self.keys())
         return self._max_key
-
-    def value_min(self):
-        """Minimum value"""
-        if self._min_value is None:
-            self._min_value = min(self.values())
-        return self._min_value
-
-    def value_max(self):
-        """Maximum value"""
-        if self._max_value is None:
-            self._max_value = max(self.values())
-        return self._max_value
 
 
 class RowMajorCatalog(Catalog):
@@ -231,7 +214,7 @@ class RowMajorCatalog(Catalog):
 
     and where c is an integer constant to allow zero- or one-based indexing.
     """
-
+    # TODO: Consider renaming i_min -> i1, i_max -> i2, j_min -> j1, j_max -> j2
     def __init__(self, i_min, i_max, j_min, j_max, c):
         """Initialize a RowMajorCatalog.
 
@@ -307,7 +290,7 @@ class RowMajorCatalog(Catalog):
                 yield (i, j)
 
     def __repr__(self):
-        return '{}({}, {}, {}, {}, {})'.format(
+        return '{}(i_min={}, i_max={}, j_min={}, j_max={}, c={})'.format(
             self.__class__.__name__,
             self._i_min, self._i_max, self._j_min, self._j_max, self._c)
 
@@ -333,7 +316,7 @@ class DictionaryCatalog(Catalog):
         return item in self._items
 
     def __repr__(self):
-        return '{}({})'.format(
+        return '{}(items={})'.format(
             self.__class__.__name__, reprlib.repr(self._items.items()))
 
 
@@ -363,15 +346,15 @@ class RegularConstantCatalog(Catalog):
                                  key_stride, key_range))
         super().__init__(
             key_min=key_min,
-            key_max=key_max,
-            value_min=value,
-            value_max=value)
+            key_max=key_max)
+
         self._key_stride = key_stride
+        self._value = value
 
     def __getitem__(self, key):
         if key not in self:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
-        return self.value_min()
+        return self._value
 
     def __len__(self):
         return 1 + (self.key_max() - self.key_min()) / self._key_stride
@@ -386,12 +369,12 @@ class RegularConstantCatalog(Catalog):
                           self._key_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {})'.format(
+        return '{}(key_min={}, key_max={}, key_stride={}, value={})'.format(
             self.__class__.__name__,
             self.key_min(),
             self.key_max(),
             self._key_stride,
-            self.value_min())
+            self._value)
 
 
 class ConstantCatalog(Catalog):
@@ -410,13 +393,14 @@ class ConstantCatalog(Catalog):
             key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
-        super().__init__(value_min=value, value_max=value)
+        super().__init__()
         self._items = SortedFrozenSet(keys)
+        self._value = value
 
     def __getitem__(self, key):
         if key not in self:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
-        return self.value_min()
+        return self._value
 
     def __len__(self):
         return len(self._items)
@@ -428,10 +412,10 @@ class ConstantCatalog(Catalog):
         return iter(self._items)
 
     def __repr__(self):
-        return '{}({}, {})'.format(
+        return '{}(keys={}, value={})'.format(
             self.__class__.__name__,
             reprlib.repr(self._items),
-            self.value_min())
+            self._value)
 
 
 class RegularCatalog(Catalog):
@@ -491,7 +475,7 @@ class RegularCatalog(Catalog):
                           self._key_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {})'.format(
+        return '{}(key_min={}, key_max={}, key_stride={}, values={})'.format(
             self.__class__.__name__,
             self.key_min(),
             self.key_max(),
@@ -512,8 +496,8 @@ class LinearRegularCatalog(Catalog):
                  key_min,
                  key_max,
                  key_stride,
-                 value_min,
-                 value_max,
+                 value_start,
+                 value_stop,
                  value_stride):
         """Initialize a LinearRegularCatalog.
 
@@ -521,8 +505,8 @@ class LinearRegularCatalog(Catalog):
             key_min: The minimum key.
             key_max: The maximum key.
             key_stride: The difference between successive keys.
-            value_min: The minimum value.
-            value_max: The maximum value.
+            value_start: The value corresponding to the minimum key.
+            value_max: The value corresponding to the maximum key.
 
         Raises:
             ValueError: There is any inconsistency in the keys, strides,
@@ -537,7 +521,7 @@ class LinearRegularCatalog(Catalog):
                                  key_range))
         self._key_stride = key_stride
 
-        value_range = value_max - value_min
+        value_range = value_stop - value_start
         if value_range % value_stride != 0:
             raise ValueError("{} value range {!r} is not "
                              "a multiple of value stride {!r}".format(
@@ -548,12 +532,13 @@ class LinearRegularCatalog(Catalog):
 
         super().__init__(
             key_min=key_min,
-            key_max=key_max,
-            value_min=value_min,
-            value_max=value_max)
+            key_max=key_max)
 
-        num_keys = (self.key_max() - self.key_min()) // self._key_stride
-        num_values = (self.value_max() - self.value_min()) // self._value_stride
+        self._value_start = value_start
+        self._value_stop = value_stop
+
+        num_keys = 1 + (self.key_max() - self.key_min()) // self._key_stride
+        num_values = 1 + (self._value_stop - self._value_start) // self._value_stride
         if num_keys != num_values:
             raise ValueError("{} inconsistent number of "
                              "keys {} and values {}".format(
@@ -561,7 +546,7 @@ class LinearRegularCatalog(Catalog):
                                  num_keys,
                                  num_values))
 
-        self._m = Fraction(self.value_max() - self.value_min(),
+        self._m = Fraction(self._value_stop - self._value_start,
                            self.key_max() - self.key_min())
 
     def __getitem__(self, key):
@@ -571,7 +556,7 @@ class LinearRegularCatalog(Catalog):
         if offset % self._key_stride != 0:
             raise KeyError("{!r} does not contain key {!r}".format(self, key))
 
-        v = self._m * (key - self.key_min()) + self.value_min()
+        v = self._m * (key - self.key_min()) + self._value_start
         assert v.denominator == 1
         return v.numerator
 
@@ -586,11 +571,11 @@ class LinearRegularCatalog(Catalog):
         return iter(range(self.key_min(), self.key_max() + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}({}, {}, {}, {}, {}, {})'.format(
+        return '{}(key_min={}, key_max{}, key_stride={}, value_start={}, value_stop={}, value_stride={})'.format(
             self.__class__.__name__,
             self.key_min(),
             self.key_max(),
             self._key_stride,
-            self.value_min(),
-            self.value_max(),
+            self._value_start,
+            self._value_stop,
             self._value_stride)

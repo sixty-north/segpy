@@ -1,4 +1,7 @@
-# A mapping from data sampel format codes to SEG Y types.
+"""Mappings between the coding systems used for sample types.
+"""
+
+# A mapping from data sample format codes to SEG Y types.
 DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
     1: 'ibm',
     2: 'int32',
@@ -6,7 +9,8 @@ DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
     5: 'float32',
     8: 'int8'}
 
-# A mapping from SEG Y data types to format characters used by the struct module
+# A mapping from SEG Y data types to format characters used by the
+# Python Standard Library struct module
 SEG_Y_TYPE_TO_CTYPE = {
     'int32':  'i',
     'uint32': 'I',
@@ -18,8 +22,9 @@ SEG_Y_TYPE_TO_CTYPE = {
     'ibm': 'ibm'}
 
 
+# Human readable descriptions of the sample types.
 SEG_Y_TYPE_DESCRIPTION = {
-    'ibm': 'IBM float',
+    'ibm': 'IBM 32 bit float',
     'int32': '32 bit signed integer',
     'uint32': '32 bit unsigned integer',
     'int16': '16 bit signed integer',
@@ -28,7 +33,7 @@ SEG_Y_TYPE_DESCRIPTION = {
     'int8': '8 bit signed integer (byte)',
     'uint8': '8 bit unsigned integer (byte)'}
 
-
+# Sizes of various ctypes in bytes
 CTYPE_TO_SIZE = dict(
     i=4,
     I=4,
@@ -41,4 +46,6 @@ CTYPE_TO_SIZE = dict(
 
 
 def size_in_bytes(ctype):
+    """The size in bytes of a ctype.
+    """
     return CTYPE_TO_SIZE[ctype]

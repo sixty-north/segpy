@@ -92,7 +92,6 @@ class CatalogBuilder(object):
             # Dictionary strategy - arbitrary keys and values
             return DictionaryCatalog(self._catalog)
 
-        #self._catalog.sort(key=lambda index_value: index_value[1])
         value_start = self._catalog[0][1]
         value_stop = self._catalog[-1][1]
         value_stride = measure_stride(value for index, value in self._catalog)

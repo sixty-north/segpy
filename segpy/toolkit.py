@@ -420,23 +420,21 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     return trace_header
 
 
-def read_binary_values(fh, pos=None, seg_y_type='int32', count=1, endian='>'):
+def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'):
     """Read a series of values from a binary file.
 
     Args:
         fh: A file-like-object open in binary mode.
 
-c
+        seg_y_type: The SEG Y data type.
 
-        ctype: The SEG Y data type.
-
-        number: The number of items to be read.
+        num_items: The number of items to be read.
     Returns:
         A sequence containing count items.
     """
     ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
     item_size = size_in_bytes(ctype)
-    block_size = item_size * count
+    block_size = item_size * num_items
 
     fh.seek(pos, os.SEEK_SET)
     buf = fh.read(block_size)
@@ -445,38 +443,34 @@ c
         raise EOFError("{} bytes requested but only {} available".format(
             block_size, len(buf)))
 
-    values = (unpack_ibm_floats(buf, count)
+    values = (unpack_ibm_floats(buf, num_items)
               if ctype == 'ibm'
-              else unpack_values(buf, count, ctype, endian))
-    assert len(values) == count
+              else unpack_values(buf, ctype, endian))
+    assert len(values) == num_items
     return values
 
 
-def unpack_ibm_floats(data, count):
+def unpack_ibm_floats(data, num_items):
     """Unpack a series of binary-encoded big-endian single-precision IBM floats.
 
     Args:
-        data: A sequence of bytes. (Python 2 - a str object,
-            Python 3 - a bytes object)
+        data: A sequence of bytes.
 
-        count: The number of floats to be read.
+        num_items: The number of floats to be read.
 
     Returns:
         A sequence of floats.
     """
-    return [IBMFloat.from_bytes(data[i: i+4]) for i in range(0, count * 4, 4)]
+    return [IBMFloat.from_bytes(data[i: i+4]) for i in range(0, num_items * 4, 4)]
 
 
-def unpack_values(buf, count, fmt, endian='>'):
+def unpack_values(buf, ctype, endian='>'):
     """Unpack a series items from a byte string.
 
     Args:
-        data: A sequence of bytes. (Python 2 - a str object,
-            Python 3 - a bytes object)
+        data: A sequence of bytes.
 
-        count: The number of floats to be read.
-
-        fmt: A format code (one of the values in the datatype.CTYPES
+        ctype: A format code (one of the values in the datatype.CTYPES
             dictionary)
 
         endian: '>' for big-endian data (the standard and default), '<'
@@ -485,7 +479,7 @@ def unpack_values(buf, count, fmt, endian='>'):
     Returns:
         A sequence of objects with type corresponding to the format code.
     """
-    a = array(fmt, buf)
+    a = array(ctype, buf)
     if endian != NATIVE_ENDIANNESS:
         a.byteswap()
     return a
@@ -758,7 +752,7 @@ def write_trace_header(fh, trace_header, trace_header_packer, pos=None):
     fh.write(buf)
 
 
-def write_trace_samples(fh, samples, ctype='l', pos=None, endian='>'):
+def write_trace_samples(fh, samples, seg_y_type, pos=None, endian='>'):
     """Write a trace samples to a file
 
     Args:
@@ -766,7 +760,7 @@ def write_trace_samples(fh, samples, ctype='l', pos=None, endian='>'):
 
         values: An iterable series of values.
 
-        ctype: The SEG Y data type.
+        seg_y_type: The SEG Y data type.
 
         pos: An optional offset from the beginning of the file. If omitted,
             any writing is done at the current file position.
@@ -774,10 +768,10 @@ def write_trace_samples(fh, samples, ctype='l', pos=None, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    write_binary_values(fh, samples, ctype, pos, endian)
+    write_binary_values(fh, samples, seg_y_type, pos, endian)
 
 
-def write_binary_values(fh, values, ctype, pos=None, endian='>'):
+def write_binary_values(fh, values, seg_y_type, pos=None, endian='>'):
     """Write a series of values to a file.
 
     Args:
@@ -785,7 +779,7 @@ def write_binary_values(fh, values, ctype, pos=None, endian='>'):
 
         values: An iterable series of values.
 
-        ctype: The SEG Y data type.
+        seg_y_type: The SEG Y data type.
 
         pos: An optional offset from the beginning of the file. If omitted,
             any writing is done at the current file position.
@@ -793,14 +787,14 @@ def write_binary_values(fh, values, ctype, pos=None, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    fmt = SEG_Y_TYPE_TO_CTYPE[ctype]
+    ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
 
     if pos is not None:
         fh.seek(pos, os.SEEK_SET)
 
     buf = (pack_ibm_floats(values)
-           if fmt == 'ibm'
-           else pack_values(values, fmt, endian))
+           if ctype == 'ibm'
+           else pack_values(values, ctype, endian))
 
     fh.write(buf)
 
@@ -812,13 +806,12 @@ def pack_ibm_floats(values):
         values: An iterable series of numeric values.
 
     Returns:
-        A sequence of bytes. (Python 2 - a str object, Python 3 - a bytes
-            object)
+        A sequence of bytes.
     """
     return EMPTY_BYTE_STRING.join(bytes(IBMFloat.from_real(value)) for value in values)
 
 
-def pack_values(values, fmt, endian='>'):
+def pack_values(values, ctype, endian='>'):
     """Pack values into binary encoded big-endian byte strings.
 
     Args:
@@ -830,5 +823,5 @@ def pack_values(values, fmt, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    c_format = '{}{}{}'.format(endian, len(values), fmt)
+    c_format = '{}{}{}'.format(endian, len(values), ctype)
     return struct.pack(c_format, *values)

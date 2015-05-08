@@ -433,7 +433,10 @@ class SegYReader3D(SegYReader):
             Sized, Iterable, Container and Sequence protocols.
         """
         if self._inline_numbers is None:
-            self._inline_numbers = make_sorted_distinct_sequence(i for i, j in self._line_catalog)
+            if hasattr(self._line_catalog, 'i_range'):
+                self._inline_numbers = self._line_catalog.i_range
+            else:
+                self._inline_numbers = make_sorted_distinct_sequence(i for i, j in self._line_catalog)
         return self._inline_numbers
 
     def num_inlines(self):
@@ -452,7 +455,10 @@ class SegYReader3D(SegYReader):
             Sized, Iterable, Container and Sequence protocols.
         """
         if self._xline_numbers is None:
-            self._xline_numbers = make_sorted_distinct_sequence(j for i, j in self._line_catalog)
+            if hasattr(self._line_catalog, 'j_range'):
+                self._xline_numbers = self._line_catalog.j_range
+            else:
+                self._xline_numbers = make_sorted_distinct_sequence(j for i, j in self._line_catalog)
         return self._xline_numbers
 
     def num_xlines(self):

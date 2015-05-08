@@ -328,6 +328,12 @@ def four_bytes(byte_str):
     return a, b, c, d
 
 
+def single_item_range(item):
+    """Construct a range object which generates a single value.
+    """
+    return range(item, item + 1)
+
+
 def make_sorted_distinct_sequence(iterable):
     """Create a sorted immutable sequence from an iterable series.
 
@@ -340,7 +346,7 @@ def make_sorted_distinct_sequence(iterable):
     """
     sorted_set = SortedFrozenSet(iterable)
     if len(sorted_set) == 1:
-        return sorted_set
+        return single_item_range(sorted_set[0])
     stride = measure_stride(sorted_set)
     if stride is not None:
         start = sorted_set[0]

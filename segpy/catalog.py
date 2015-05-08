@@ -14,7 +14,7 @@ from fractions import Fraction
 import reprlib
 from segpy.sorted_set import SortedFrozenSet
 
-from segpy.util import contains_duplicates, measure_stride, minmax
+from segpy.util import contains_duplicates, measure_stride, make_sorted_distinct_sequence
 
 
 class CatalogBuilder(object):
@@ -127,40 +127,28 @@ class CatalogBuilder(object):
 
         return DictionaryCatalog(self._catalog)
 
-
-
     def _create_catalog_2(self):
         """Create a catalog for two-dimensional integer keys.
 
         Each key must be a two-element sequence.
         """
-        i_min, i_max = minmax(i for (i, j), value in self._catalog)
-        j_min, j_max = minmax(j for (i, j), value in self._catalog)
+        i_sorted = make_sorted_distinct_sequence(i for (i, j), value in self._catalog)
+        j_sorted = make_sorted_distinct_sequence(j for (i, j), value in self._catalog)
 
-        is_rm, diff = self._is_row_major(i_min, j_min, j_max)
-        if is_rm:
-            return RowMajorCatalog(i_min, i_max, j_min, j_max, diff)
-        return DictionaryCatalog(self._catalog)
+        i_is_regular = isinstance(i_sorted, range)
+        j_is_regular = isinstance(j_sorted, range)
 
-    def _is_row_major(self, i_min, j_min, j_max):
-        """Does row major ordering predict values from keys?
+        if i_is_regular and j_is_regular:
+            is_rm, diff = self._is_row_major(i_sorted, j_sorted)
+            if is_rm:
+                return RowMajorCatalog2D(i_sorted, j_sorted, diff)
 
-        In row-major order the last dimension is contiguous, and so changes
-        quickest, when moving through the elements in storage order. Hence
-        the number of rows is the number of distinct i values and the numbers
-        of elements in each row (i.e. columns) is the number of distinct j.
+        return DictionaryCatalog2D(i_sorted, j_sorted, self._catalog)
 
-        Args:
-            i_min: The minimum i value.
-            j_min: The minimum j value.
-            j_max: The maximum j value.
-
-        Returns:
-            A 2-tuple containing, in the first element True if the values can
-            be predicted from the keys by assuming a row-major ordering,
-            otherwise False. If True, the second element will be a constant
-            offset, otherwise it can be ignored.
-        """
+    def _is_row_major(self, i_sorted, j_sorted):
+        i_min = i_sorted[0]
+        j_min = j_sorted[0]
+        j_max = j_sorted[-1]
         diff = None
         for (i, j), actual_value in self._catalog:
             proposed_value = (i - i_min) * (j_max + 1 - j_min) + (j - j_min)
@@ -172,7 +160,66 @@ class CatalogBuilder(object):
         return True, diff
 
 
-class RowMajorCatalog(Mapping):
+class Catalog2D(Mapping):
+    """An abstract base class for 2D catalogs.
+    """
+
+    def __init__(self, i_range, j_range):
+        """Initialize a Catalog2D.
+
+        Args:
+            i_range: A range which can generate all and only valid i indexes.
+            j_range: A range which can generate all and only valid j indexes.
+        """
+        self._i_range = i_range
+        self._j_range = j_range
+
+    @property
+    def i_range(self):
+        return self._i_range
+
+    @property
+    def j_range(self):
+        return self._j_range
+
+    @property
+    def i_min(self):
+        """Minimum i value"""
+        return self._i_range[0]
+
+    @property
+    def i_max(self):
+        """Maximum i value"""
+        return self._i_range[-1]
+
+    @property
+    def j_min(self):
+        """Minimum j value"""
+        return self._j_range[0]
+
+    @property
+    def j_max(self):
+        """Maximum j value"""
+        return self._j_range[-1]
+
+    def key_min(self):
+        """Minimum (i, j) key"""
+        return self.i_min, self.j_min
+
+    def key_max(self):
+        """Maximum (i, j) key"""
+        return self.i_max, self.j_max
+
+    def value_start(self):
+        """Minimum value at key_min"""
+        return self[self.key_min()]
+
+    def value_stop(self):
+        """Maximum value at key_max"""
+        return self[self.key_max()]
+
+
+class RowMajorCatalog2D(Catalog2D):
     """A mapping which assumes a row-major ordering of a two-dimensional matrix.
 
     This is the ordering of items in a two-dimensional matrix where in
@@ -190,84 +237,43 @@ class RowMajorCatalog(Mapping):
 
     and where c is an integer constant to allow zero- or one-based indexing.
     """
-    # TODO: Consider renaming i_min -> i1, i_max -> i2, j_min -> j1, j_max -> j2
-    def __init__(self, i_min, i_max, j_min, j_max, c):
-        """Initialize a RowMajorCatalog.
+
+    def __init__(self, i_range, j_range, constant):
+        """Initialize a RowMajorCatalog2D.
 
         Args:
-            i_min (int): The minimum i value.
-            i_max (int): The maximum i value.
-            j_min (int): The minimum j value.
-            j_max (int): The maximum j value.
-            c (int): The constant offset
+            i_range: A range which can generate all and only valid i indexes.
+            j_range: A range which can generate all and only valid j indexes.
+            constant: The constant offset used to produce the value.
         """
-        self._i_min = i_min
-        self._i_max = i_max
-        self._j_min = j_min
-        self._j_max = j_max
-        self._c = c
+        super().__init__(i_range, j_range)
+        self._c = constant
 
     @property
-    def i_min(self):
-        """Minimum i value"""
-        return self._i_min
-
-    @property
-    def i_max(self):
-        """Maximum i value"""
-        return self._i_max
-
-    @property
-    def j_min(self):
-        """Minimum j value"""
-        return self._j_min
-
-    @property
-    def j_max(self):
-        """Maximum j value"""
-        return self._j_max
-
-    def key_min(self):
-        """Minimum (i, j) key"""
-        return self._i_min, self._j_min
-
-    def key_max(self):
-        """Maximum (i, j) key"""
-        return self._i_max, self._j_max
-
-    def value_min(self):
-        """Minimum value at key_min"""
-        return self[self.key_min()]
-
-    def value_max(self):
-        """Maximum value at key_max"""
-        return self[self.key_max()]
+    def constant(self):
+        return self._c
 
     def __getitem__(self, key):
-        i, j = key
-        if not (self._i_min <= i <= self._i_max) and \
-               (self._j_min <= j <= self._j_max):
+        if key not in self:
             raise KeyError("{!r} key {!r} out of range".format(self, key))
-        value = (i - self._i_min) * (self._j_max + 1 - self._j_min) + (j - self._j_min) + self._c
+        i, j = key
+        value = (i - self.i_min) * (self.j_max + 1 - self.j_min) + (j - self.j_min) + self._c
         return value
 
     def __contains__(self, key):
-        i, j = key
-        return (self._i_min <= i <= self._i_max) and \
-               (self._j_min <= j <= self._j_max)
+        return (key[0] in self._i_range) and \
+               (key[1] in self._j_range)
 
     def __len__(self):
-        return (self._i_max - self._i_min) * (self._j_max + 1 - self._j_min)
+        return len(self._i_range) * len(self._j_range)
 
     def __iter__(self):
-        for i in range(self._i_min, self._i_max + 1):
-            for j in range(self._j_min, self._j_max + 1):
-                yield (i, j)
+        yield from ((i, j) for i in self._i_range for j in self._j_range)
 
     def __repr__(self):
-        return '{}(i_min={}, i_max={}, j_min={}, j_max={}, c={})'.format(
+        return '{}(i_range={}, j_range={}, c={})'.format(
             self.__class__.__name__,
-            self._i_min, self._i_max, self._j_min, self._j_max, self._c)
+            self.i_range, self.j_range, self._c)
 
 
 class DictionaryCatalog(Mapping):
@@ -291,6 +297,32 @@ class DictionaryCatalog(Mapping):
 
     def __repr__(self):
         return '{}(items={})'.format(
+            self.__class__.__name__, reprlib.repr(self._items.items()))
+
+
+class DictionaryCatalog2D(Catalog2D):
+    """An immutable, ordered, dictionary mapping for 2D keys.
+    """
+
+    def __init__(self, i_range, j_range, items):
+        super().__init__(i_range, j_range)
+        self._items = OrderedDict(items)
+
+    def __getitem__(self, key):
+        return self._items[key]
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __contains__(self, item):
+        return item in self._items
+
+    def __repr__(self):
+        return '{}(i_range={}, j_range={}, items={})'.format(
+            self.j_range, self.j_range,
             self.__class__.__name__, reprlib.repr(self._items.items()))
 
 

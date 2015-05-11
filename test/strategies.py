@@ -1,6 +1,7 @@
 from itertools import accumulate, starmap
 from hypothesis import strategy
-from hypothesis.specifiers import integers_in_range
+from hypothesis.specifiers import integers_in_range, just
+from segpy.trace_header import TraceHeaderRev0
 from segpy.util import batched
 
 PRINTABLE_ASCII_RANGE = (32, 127)
@@ -39,3 +40,31 @@ def spaced_ranges(min_num_ranges, max_num_ranges, min_interval, max_interval):
            .map(lambda lst: list(batched(lst, 2)))                                   \
            .map(lambda pairs: list(starmap(range, pairs)))
 
+
+def header(header_class, **kwargs):
+    """Create a strategy for producing headers of a specific class.
+
+    Args:
+        header_class: The type of header to be produced. This class will be
+            introspected to determine suitable strategies for each named
+            field.
+
+        **kwargs: Any supplied keyword arguments can be used to fix the value
+            of particular header fields.
+    """
+
+    field_strategies = {}
+    for field_name in header_class.ordered_field_names():
+        if field_name in kwargs:
+            field_strategy = just(kwargs.pop(field_name))
+        else:
+            value_type = getattr(header_class, field_name).value_type
+            field_strategy = integers_in_range(value_type.MINIMUM, value_type.MAXIMUM)
+        field_strategies[field_name] = field_strategy
+
+    if len(kwargs) > 0:
+        raise TypeError("Unrecognised binary header field names {} for {}".format(
+            ', '.join(kwargs.keys()),
+            header_class.__name__))
+
+    return strategy(field_strategies).map(lambda kw: header_class(**kw))

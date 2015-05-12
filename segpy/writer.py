@@ -14,7 +14,7 @@ def write_segy(fh,
                progress=None):
     """
     Args:
-        fh: A file-like object open for binary write.
+        fh: A file-like object open for binary write, positioned to write the textual reel header.
 
         seg_y_data:  An object from which the headers and trace_samples data can be retrieved. Requires the following
             properties and methods:

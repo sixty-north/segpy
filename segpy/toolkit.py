@@ -576,7 +576,7 @@ def parse_template(template):
 
 
 def write_textual_reel_header(fh, lines, encoding):
-    """Write the SEG Y card image header, also known as the textual header
+    """Write the SEG Y card image header, also known as the textual header.
 
     Args:
         fh: A file-like object open in binary mode positioned such that the
@@ -594,7 +594,7 @@ def write_textual_reel_header(fh, lines, encoding):
             warning.  Any excess lines over CARDS_PER_HEADER will be discarded.  Short
             or omitted lines will be padded with spaces.
 
-        encoding: Typically 'cp037' for EBCDIC or 'ascii' for ASCII.
+        encoding: Either 'cp037' for EBCDIC or 'ascii' for ASCII.
 
     Post-condition:
         The file pointer in fh will be positioned at the first byte following the textual
@@ -607,15 +607,11 @@ def write_textual_reel_header(fh, lines, encoding):
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing textual reel header", encoding)
 
-    fh.seek(0)
-
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
     joined_header = EMPTY_BYTE_STRING.join(padded_lines)
     assert len(joined_header) == 3200
     fh.write(joined_header)
-
-    fh.seek(TEXTUAL_HEADER_NUM_BYTES)
 
 
 def write_binary_reel_header(fh, binary_reel_header, endian='>'):
@@ -633,7 +629,6 @@ def write_binary_reel_header(fh, binary_reel_header, endian='>'):
     header_packer = make_header_packer(type(binary_reel_header), endian)
     buffer = header_packer.pack(binary_reel_header)
     fh.write(buffer)
-    fh.seek(REEL_HEADER_NUM_BYTES)
 
 
 def format_extended_textual_header(text, encoding, include_text_stop=False):

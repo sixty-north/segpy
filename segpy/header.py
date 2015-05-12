@@ -55,6 +55,22 @@ class Header:
     def __getattr__(self, name):
         raise AttributeError("Object of type {!r} has no attribute {!r}".format(self.__class__.__name__, name))
 
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            ', '.join("{}={}".format(k, getattr(self, k)) for k in self.ordered_field_names()))
+
+
+def are_equal(self, other):
+    """Compare two headers for equality.
+
+    Note:
+        This is not implemented as __eq__() to prevent recursive behaviour in the header descriptor.
+    """
+    if type(self) != type(other):
+        return False
+    return all(getattr(self, field_name) == getattr(other, field_name) for field_name in self.ordered_field_names())
+
 
 class FormatMeta(type):
     """A metaclass for header format classes.

@@ -169,7 +169,6 @@ def read_binary_reel_header(fh, endian='>'):
             little-endian (non-standard)
     """
     header_packer = make_header_packer(BinaryReelHeader, endian)
-    fh.seek(TEXTUAL_HEADER_NUM_BYTES)  # Consider using from_one_based(BinaryReelHeader.START_OFFSET_IN_BYTES)
     buffer = fh.read(BinaryReelHeader.LENGTH_IN_BYTES)
     reel_header = header_packer.unpack(buffer)
     return reel_header

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """A simple example which loads a SEG Y file and saves it again.
 
 Usage:
@@ -5,6 +7,7 @@ Usage:
     loadsave.py <in.segy> <out.segy>
 
 """
+
 from __future__ import print_function
 
 import os

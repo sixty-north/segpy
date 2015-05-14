@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Displays a simple report of a SEG Y file.
 
 Usage:

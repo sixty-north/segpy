@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Extract a timeslice from a 3D seismic volume to a Numpy array.
 
 This utility assumes the inline and crossline numbers are evenly spaced.

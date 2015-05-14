@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """A simple example which times reading of all traces in a SEG Y file.
 
 Usage:

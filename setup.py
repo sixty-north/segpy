@@ -48,7 +48,7 @@ setup(
     author_email='rob@sixty-north.com',
 
     # Choose your license
-    license='GPL',
+    license='GNU Affero General Public License v3',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[

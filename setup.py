@@ -41,11 +41,11 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/rob-smallshire/segpy',
+    url='https://github.com/sixty-north/segpy',
 
     # Author details
     author='Robert Smallshire',
-    author_email='robert@smallshire.org.uk',
+    author_email='rob@sixty-north.com',
 
     # Choose your license
     license='GPL',
@@ -68,7 +68,7 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],

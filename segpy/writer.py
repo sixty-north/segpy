@@ -1,5 +1,5 @@
 from segpy.encoding import ASCII, is_supported_encoding, UnsupportedEncodingError
-from segpy.packer import HeaderPacker
+from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
 from segpy.toolkit import (write_textual_reel_header, write_binary_reel_header,
                            write_trace_header, write_trace_samples,
@@ -53,7 +53,7 @@ def write_segy(fh,
     write_binary_reel_header(fh, seg_y_data.binary_reel_header, endian)
     write_extended_textual_headers(fh, seg_y_data.extended_textual_header, encoding)
 
-    trace_header_packer = HeaderPacker(trace_header_format, endian)
+    trace_header_packer = make_header_packer(trace_header_format, endian)
 
     for trace_index in seg_y_data.trace_indexes():
         write_trace_header(fh, seg_y_data.trace_header(trace_index), trace_header_packer)

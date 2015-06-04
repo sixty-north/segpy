@@ -4,6 +4,10 @@ Segpy 2
 
 Segpy is open source software created by Sixty North and licensed under the GNU Affero General Public License.
 
+Alternative commercial license terms are available from Sixty North AS if you wish to redistribute Segpy as
+part of a proprietary closed source product or deliver software software-as-a-service (SaaS) using Segpy as part
+of a proprietary closed source service.
+
 Status
 ======
 
@@ -29,9 +33,8 @@ Python data structures in pure Python.
 Contributing
 ============
 
-The easiest way to contribute is to use Segpy submit reports for defects or any other issues you come across.  It's our
-intention to open up Segpy for contributions once we have achieved a stable API and architecture.  This time is close,
-but in the interim we are won't be merging pull-requests until we have our ducks in a row.
+The easiest way to contribute is to use Segpy submit reports for defects or any other issues you come across. Please
+see `CONTRIBUTING.rst <https://github.com/sixty-north/segpy/blob/master/CONTRIBUTING.rst>`_ for more details.
 
 
 Segpy Versions

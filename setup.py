@@ -44,7 +44,7 @@ setup(
     url='https://github.com/sixty-north/segpy',
 
     # Author details
-    author='Robert Smallshire',
+    author='Sixty North AS',
     author_email='rob@sixty-north.com',
 
     # Choose your license

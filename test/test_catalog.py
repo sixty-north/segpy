@@ -26,6 +26,7 @@ class TestCatalogBuilder(unittest.TestCase):
            step=integers_in_range(-10000, 10000),
            value=int)
     def test_regular_constant_mapping(self, start, num, step, value):
+        assume(step != 0)
         mapping = {key: value for key in range(start, start + num*step, step)}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()

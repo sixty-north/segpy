@@ -30,8 +30,8 @@ Making Changes
 
 * You must own the copyright to the patch you're submitting, and be in a
   position to transfer the copyright to Sixty North by agreeing to the either
-  the `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-individual-cla.pdf>`_
-  (for private individuals) or the `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-entity-cla.pdf>`_
+  the `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-individual-cla.pdf>`_
+  (for private individuals) or the `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-entity-cla.pdf>`_
   (for corporations or other organisations).
 * Make small commits in logical units.
 * Ensure your code is in the spirit of `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_,
@@ -82,8 +82,8 @@ number::
 Submitting Changes
 ==================
 
-* Agree to the `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-individual-cla.pdf>`_
-  or the `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-entity-cla.pdf>`_
+* Agree to the `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-individual-cla.pdf>`_
+  or the `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-entity-cla.pdf>`_
   by attaching a copy of the current CLA to an email (so we know which
   version you're agreeing to). The body of the message should contain
   the text "I, <your name>, [representing <your company>] have read the
@@ -95,8 +95,8 @@ Submitting Changes
 Additional Resources
 ====================
 
-* `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-individual-cla.pdf>`_
-* `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/blob/master/docs/legal/segpy-entity-cla.pdf>`_
+* `Individual Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-individual-cla.pdf>`_
+* `Entity Contributor License Agreement <https://github.com/sixty-north/segpy/raw/master/docs/source/legal/segpy-entity-cla.pdf>`_
 * `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
 * `General GitHub documentation <http://help.github.com/>`_
 * `GitHub pull request documentation <http://help.github.com/send-pull-requests/>`_

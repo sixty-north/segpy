@@ -33,7 +33,7 @@ import traceback
 import numpy as np
 
 from segpy.reader import create_reader
-from segpy_numpy.numpy.dtypes import make_dtype
+from segpy_numpy.dtypes import make_dtype
 
 
 class DimensionalityError(Exception):

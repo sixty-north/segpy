@@ -55,7 +55,7 @@ Making Changes
 
 
 * Make sure you have added the necessary tests for your changes.
-* Run _all_ the tests to assure nothing else was accidentally broken.
+* Run **all** the tests to assure nothing else was accidentally broken.
 
 Making Trivial Changes
 ======================

@@ -18,7 +18,8 @@ from segpy.ibm_float import IBMFloat
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING
+from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING, \
+    restored_position_seek
 
 
 HEADER_NEWLINE = '\r\n'
@@ -69,22 +70,26 @@ def num_extended_textual_headers(binary_reel_header):
     return num_ext_headers
 
 
-def bytes_per_sample(binary_reel_header, revision):
+def bytes_per_sample(binary_reel_header):
     """Determine the number of bytes per sample from the reel header.
 
     Args:
         binary_reel_header: A header object.
 
-        revision: One of the constants revisions.SEGY_REVISION_0 or
-            revisions.SEGY_REVISION_1
-
     Returns:
         An integer number of bytes per sample.
+
+    Raises:
+        ValueError: If the data_sample_format of the supplied binary
+            reel header could not be decoded.
     """
     dsf = binary_reel_header.data_sample_format
-    seg_y_type = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
-    ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
-    bps = CTYPE_TO_SIZE[ctype]
+    try:
+        seg_y_type = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
+        ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+        bps = CTYPE_TO_SIZE[ctype]
+    except KeyError as e:
+        raise ValueError("Could not decode data sample format {!r}".format(dsf)) from e
     return bps
 
 
@@ -128,8 +133,17 @@ def trace_length_bytes(binary_reel_header, bps):
 
 
 def guess_textual_header_encoding(fh):
-    fh.seek(0)
-    raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)
+    """Read the SEG Y card image header, also known as the textual header
+
+    Args:
+        fh: A file-like object open in binary mode positioned such that the
+            beginning of the textual header will be the next byte to read.
+
+    Returns:
+        Either 'cp037' for EBCDIC or 'ascii' for ASCII.
+    """
+    with restored_position_seek(fh, 0):
+        raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)
     encoding = guess_encoding(raw_header)
     return encoding
 
@@ -146,7 +160,6 @@ def read_textual_reel_header(fh, encoding):
     Returns:
         A tuple of forty Unicode strings containing the transcoded header data.
     """
-    fh.seek(0)
     raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)
 
     num_bytes_read = len(raw_header)
@@ -516,17 +529,17 @@ def format_standard_textual_header(revision, **kwargs):
                                             sweep_type='spread')
 
     """
-
+    # Consider making the template module an argument with a default.
     kwargs.setdefault('end_marker', textual_reel_header.END_MARKERS[revision])
 
     template = textual_reel_header.TEMPLATE
 
     placeholder_slices = parse_template(template)
-    background_slices = complementary_intervals(placeholder_slices.values(), 0, len(template))
+    background_slices = complementary_intervals(list(placeholder_slices.values()), 0, len(template))
 
     chunks = []
-    for bg_slice, placeholder in zip_longest(background_slices, placeholder_slices.items()):
-
+    for bg_slice, placeholder in zip_longest(background_slices,
+                                             placeholder_slices.items()):
         if bg_slice is not None:
             chunks.append(template[bg_slice])
 
@@ -571,6 +584,34 @@ def parse_template(template):
         start = match.start()
         end = match.end()
         fields[name] = slice(start, end)
+
+    return fields
+
+
+def parse_standard_textual_header(header_lines):
+    """Parse a standard textual header.
+
+    Args:
+        header: A sequence of forty Unicode strings.
+
+    Returns:
+        A and ordered mapping of field names to Unicode strings.
+    """
+    # TODO: Consider making the template (or the template module) an argument with a default.
+
+    if not all(len(line) == CARD_LENGTH for line in header_lines):
+        raise ValueError("Cannot parse standard header where a line has length not equal to {}".format(CARD_LENGTH))
+
+    header = ''.join(header_lines)
+    template = textual_reel_header.TEMPLATE
+    placeholder_slices = parse_template(template)
+    fields = OrderedDict()
+    for field_placeholder_name, interval in placeholder_slices.items():
+        assert isinstance(interval, slice)
+        raw_field_value = header[interval]
+        field_value = raw_field_value.strip()
+        field_name = textual_reel_header.TEMPLATE_FIELD_NAMES[field_placeholder_name]
+        fields[field_name] = field_value
 
     return fields
 

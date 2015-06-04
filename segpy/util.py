@@ -1,4 +1,4 @@
-
+from contextlib import contextmanager
 import time
 import os
 import sys
@@ -110,6 +110,7 @@ def complementary_intervals(intervals, start=None, stop=None):
         index = s.stop
 
     yield interval_type(index, stop)
+
 
 def intervals_are_contiguous(intervals):
     """Determine whether a series of intervals are contiguous.
@@ -353,3 +354,11 @@ def make_sorted_distinct_sequence(iterable):
         stop = sorted_set[-1] + stride
         return range(start, stop, stride)
     return sorted_set
+
+
+@contextmanager
+def restored_position_seek(fh, pos):
+    original = fh.tell()
+    fh.seek(pos)
+    yield
+    fh.seek(original)

@@ -68,3 +68,19 @@ def header(header_class, **kwargs):
             header_class.__name__))
 
     return strategy(field_strategies).map(lambda kw: header_class(**kw))
+
+
+def dict_of_strings(keys, **kwargs):
+    """Create a strategy for producing a dictionary of strings with specific keys.
+
+    Args:
+        keys: A list of keys which the strategy will associate with arbitrary strings.
+
+        **kwargs: Specific keywords arguments can be supplied to associate certain keys
+            with specific values.  The values supplied via kwargs override any supplied
+            through the keys argument.
+    """
+    d = {key: str for key in keys}
+    d.update(kwargs)
+    return strategy(d)
+

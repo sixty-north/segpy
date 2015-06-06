@@ -292,6 +292,7 @@ class SegYReader(object):
         self._revision = extract_revision(self._binary_reel_header)
         self._bytes_per_sample = bytes_per_sample(
             self._binary_reel_header, self.revision)
+        self._max_num_trace_samples = None
 
     def __getstate__(self):
         """Copy the reader's state to a pickleable dictionary.
@@ -363,7 +364,9 @@ class SegYReader(object):
 
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
-        return max(self._trace_length_catalog.values())
+        if self._max_num_trace_samples is None:
+            self._max_num_trace_samples = max(self._trace_length_catalog.values())
+        return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):
         """The number of samples in the specified trace_samples."""

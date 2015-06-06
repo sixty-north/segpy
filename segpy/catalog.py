@@ -511,7 +511,8 @@ class LinearRegularCatalog(Mapping):
             key_max: The maximum key.
             key_stride: The difference between successive keys.
             value_start: The value corresponding to the minimum key.
-            value_max: The value corresponding to the maximum key.
+            value_stop: The value corresponding to the maximum key.
+            value_stride:
 
         Raises:
             ValueError: There is any inconsistency in the keys, strides,

@@ -346,6 +346,11 @@ def make_sorted_distinct_sequence(iterable):
         An immutable collection which supports the Sized, Iterable,
         Container and Sequence protocols.
     """
+    if isinstance(iterable, range):
+        if iterable.step > 0:
+            return iterable
+        else:
+            return reversed(iterable)
     sorted_set = SortedFrozenSet(iterable)
     if len(sorted_set) == 1:
         return single_item_range(sorted_set[0])

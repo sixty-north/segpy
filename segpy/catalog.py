@@ -574,7 +574,7 @@ class LinearRegularCatalog(Mapping):
         return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max{}, key_stride={}, value_start={}, value_stop={}, value_stride={})'.format(
+        return '{}(key_min={}, key_max={}, key_stride={}, value_start={}, value_stop={}, value_stride={})'.format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,

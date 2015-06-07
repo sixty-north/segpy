@@ -1,4 +1,4 @@
-
+import hashlib
 import time
 import os
 import sys
@@ -353,3 +353,34 @@ def make_sorted_distinct_sequence(iterable):
         stop = sorted_set[-1] + stride
         return range(start, stop, stride)
     return sorted_set
+
+
+def hash_for_file(fh, *args):
+    """Compute the SHA1 hash for file combined with any stringified additional args.
+
+    The resulting hash is based on both the contents and length of the supplied file-
+    like object.
+
+        fh: A file-like object opened in binary mode.
+
+        *args: The stringified values of ny additional arguments with be combined
+            with the file data used to compute the hash.
+
+    Returns:
+        A string containing the hexadecimal digest.
+    """
+    # TODO: Use decorator to reset file pointer
+    block_size=512*128
+    sha1 = hashlib.sha1()
+    fh.seek(0)
+    for chunk in iter(lambda: fh.read(block_size), EMPTY_BYTE_STRING):
+        sha1.update(chunk)
+    length = fh.tell()
+    length_as_bytes = length.to_bytes((length.bit_length() // 8) + 1, byteorder='little')
+    sha1.update(length_as_bytes)
+    fh.seek(0)
+    for arg in args:
+        encoded_arg = repr(arg).encode('utf8')
+        sha1.update(encoded_arg)
+    digest = sha1.hexdigest()
+    return digest

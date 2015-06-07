@@ -1,10 +1,12 @@
-from __future__ import print_function
+import os
+import pickle
+from pathlib import Path
+
+from segpy import __version__
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
-from segpy.sorted_set import SortedFrozenSet
-
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence
+from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence, hash_for_file
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
                            bytes_per_sample,
@@ -19,7 +21,7 @@ from segpy.toolkit import (extract_revision,
                            guess_textual_header_encoding)
 
 
-def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None):
+def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None, cache_directory=".segpy"):
     """Create a SegYReader (or one of its subclasses) based on performing
     a scan of SEG Y data.
 
@@ -49,6 +51,11 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             between zero and one indicating the progress made. If
             provided, this callback will be invoked at least once with
             an argument equal to one.
+
+        cache_directory: The directory for the cache file. Relative paths
+            are interpreted as being relative to the directory containing
+            the SEG Y file. Absolute paths are used as is. If
+            cache_directory is None, caching is disabled.
 
     Raises:
         ValueError: ``fh`` is unsuitable for some reason, such as not
@@ -94,32 +101,127 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
     if endian not in ('<', '>'):
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
+    reader = None
+    cache_file_path = None
+
+    if cache_directory is not None:
+        sha1 = hash_for_file(fh, encoding, trace_header_format, endian)
+        seg_y_path = filename_from_handle(fh)
+        cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
+        reader = _load_reader_from_cache(cache_file_path, seg_y_path)
+
+    if reader is None:
+        reader = _make_reader(fh, encoding, trace_header_format, endian, progress)
+        if cache_directory is not None:
+            _save_reader_to_cache(reader, cache_file_path)
+
+    return reader
+
+
+def _locate_cache_file(seg_y_path, cache_directory, sha1):
+    """Determine the location of the cache file.
+
+    Args:
+        seg_y_path: The path to the SEG Y file.
+
+        cache_directory: The directory for the cache file. Relative paths
+            are interpreted as being relative to the directory containing
+            the SEG Y file. Absolute paths are used as is.
+
+        sha1: The SHA1 hash corresponding to the file.
+
+    Returns:
+        A Path object containing the absolute path of the cache file.
+    """
+    cache_dir_path = Path(cache_directory)
+    cache_filename = (sha1 + '.p')
+    if cache_dir_path.is_absolute():
+        cache_file_path = cache_dir_path / cache_filename
+    else:
+        normalized_seg_y_path = Path(seg_y_path).resolve()
+        cache_file_path = normalized_seg_y_path.parent / cache_directory / cache_filename
+    return cache_file_path
+
+
+def _save_reader_to_cache(reader, cache_file_path):
+    """Save a reader object to a pickle file.
+
+    Args:
+        reader: The Reader instance to be persisted.
+        cache_file_path: A Path instance giving the path to the pickle file location.
+    """
+    cache_path = cache_file_path.parent
+    os.makedirs(str(cache_path), exist_ok=True)
+    try:
+        with cache_file_path.open('wb') as cache_file:
+            try:
+                pickle.dump(reader, cache_file)
+            except (pickle.PicklingError, TypeError) as pickling_error:
+                print("Could not pickle {} because {}".format(reader, pickling_error))
+                pass
+    except OSError as os_error:
+        print("Could not cache {} because {}".format(reader, os_error))
+
+
+def _load_reader_from_cache(cache_file_path, seg_y_path):
+    """Attempt to load a reader object from cache.
+
+    Any cache file could be located but not successfully read is removed.
+
+    Args:
+        cache_file_path: A Path object referring to the pickle file.
+
+        seg_y_filename: The name of the SEG Y file which the pickled reader is expected
+            to be able to read (used for error reporting).
+
+    Returns:
+        A Reader instance associated with seg_y_filename.
+
+    Raises:
+        TypeError: If the pickle could be read, but did not contain a SegYReader.
+    """
+
+    if not (cache_file_path.exists() and cache_file_path.is_file()):
+        return None
+
+    with cache_file_path.open('rb') as pickle_file:
+        try:
+            reader = pickle.load(pickle_file)
+        except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
+            reader = None
+            print("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
+            try:
+                cache_file_path.unlink()
+            except OSError as os_error:
+                print("Could not remove stale cache entry {} for {} because {}"
+                      .format(cache_file_path, seg_y_path, os_error))
+            else:
+                print("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
+    if not isinstance(reader, SegYReader):
+        raise TypeError("Pickle at {} does not contain a {} instance.".format(cache_file_path, SegYReader.__name__))
+    return reader
+
+
+def _make_reader(fh, encoding, trace_header_format, endian, progress):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
-
     if encoding is None:
         encoding = ASCII
-
     textual_reel_header = read_textual_reel_header(fh, encoding)
     binary_reel_header = read_binary_reel_header(fh, endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     revision = extract_revision(binary_reel_header)
     bps = bytes_per_sample(binary_reel_header, revision)
-
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
                                                                                            endian, progress)
-
     if cdp_catalog is not None and line_catalog is None:
         return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
-
     if cdp_catalog is None and line_catalog is not None:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
-
     return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
-
 
 class SegYReader(object):
     """A basic SEG Y reader.
@@ -186,6 +288,61 @@ class SegYReader(object):
         self._bytes_per_sample = bytes_per_sample(
             self._binary_reel_header, self.revision)
 
+    def __getstate__(self):
+        """Copy the reader's state to a pickleable dictionary.
+
+        Note:
+            Subclasses which have non-pickleable attributes must
+            override this method.
+        """
+        if self._fh.closed:
+            raise TypeError("Cannot pickle {} object where file handle has been closed"
+                            .format(self.__class__.__name__))
+
+        filename = filename_from_handle(self._fh)
+        if filename == '<unknown>':
+            raise TypeError("Cannot pickle {} object where file handle has filename {!r}"
+                            .format(self.__class__.__name__), filename)
+        file_pos = self._fh.tell()
+        file_mode = self._fh.mode
+
+        state = self.__dict__.copy()
+        state['__version__'] = __version__
+        state['_file_name'] = filename
+        state['_file_pos'] = file_pos
+        state['_file_mode'] = file_mode
+        del state['_fh']
+        return state
+
+    def __setstate__(self, state):
+        """Restore the reader's state from an unpickled dictionary.
+
+        Note: Subclasses which have non-pickleable attributes must
+              override this method.
+        """
+        if state['__version__'] != __version__:
+            raise TypeError("Cannot unpickle {} version {} into version {}"
+                            .format(self.__class__.__name__,
+                                    state['__version__'],
+                                    __version__))
+        del state['__version__']
+
+        try:
+            fh = open(state['_file_name'], state['_file_mode'])
+        except OSError as e:
+            raise TypeError("Cannot unpickle {} because file {} could not be opened"
+                            .format(self.__class__.__name__, state['_filename']))
+        else:
+            self._fh = fh
+            del state['_file_name']
+            del state['_file_mode']
+
+        file_pos = state['_file_pos']
+        fh.seek(file_pos)
+        del state['_file_pos']
+
+        self.__dict__.update(state)
+
     def trace_indexes(self):
         """An iterator over zero-based trace_samples indexes.
 
@@ -201,7 +358,7 @@ class SegYReader(object):
 
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
-        return self._trace_length_catalog.value_max()
+        return max(self._trace_length_catalog.values())
 
     def num_trace_samples(self, trace_index):
         """The number of samples in the specified trace_samples."""
@@ -418,6 +575,13 @@ class SegYReader3D(SegYReader):
         self._inline_numbers = None
         self._xline_numbers = None
 
+    def __getstate__(self):
+        # As we're pickling, force evaluation of these properties so they'll be cached
+        _ = self.inline_numbers()
+        _ = self.xline_numbers()
+        state = super().__getstate__()
+        return state
+
     def _dimensionality(self):
         return 3
 
@@ -549,6 +713,12 @@ class SegYReader2D(SegYReader):
                                            encoding, endian)
         self._cdp_catalog = cdp_catalog
         self._cdp_numbers = None
+
+    def __getstate__(self):
+        # As we're pickling, force evaluation of these so they'll be cached
+        _ = self.cdp_numbers()
+        state = super().__getstate__()
+        return state
 
     def _dimensionality(self):
         return 2

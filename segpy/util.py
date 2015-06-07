@@ -6,6 +6,8 @@ import sys
 from itertools import (islice, cycle, tee, chain, repeat)
 from segpy.sorted_set import SortedFrozenSet
 
+UNKNOWN_FILENAME = '<unknown>'
+
 NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
 
 EMPTY_BYTE_STRING = b''
@@ -256,13 +258,13 @@ def filename_from_handle(fh):
         fh: A file-like object.
 
     Returns:
-        A string containing the file name, or '<unknown>' if it could not
+        A string containing the file name, or UNKNOWN_FILENAME if it could not
         be determined.
     """
     try:
         return fh.name
     except AttributeError:
-        return '<unknown>'
+        return UNKNOWN_FILENAME
 
 
 def now_millis():

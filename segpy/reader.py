@@ -6,7 +6,7 @@ from segpy import __version__
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence, hash_for_file
+from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence, hash_for_file, UNKNOWN_FILENAME
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
                            bytes_per_sample,
@@ -108,7 +108,8 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
         sha1 = hash_for_file(fh, encoding, trace_header_format, endian)
         seg_y_path = filename_from_handle(fh)
         cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
-        reader = _load_reader_from_cache(cache_file_path, seg_y_path)
+        if cache_file_path is not None:
+            reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
         reader = _make_reader(fh, encoding, trace_header_format, endian, progress)
@@ -131,15 +132,19 @@ def _locate_cache_file(seg_y_path, cache_directory, sha1):
         sha1: The SHA1 hash corresponding to the file.
 
     Returns:
-        A Path object containing the absolute path of the cache file.
+        A Path object containing the absolute path of the cache file or None
+        if the cache file path could not be determined.
     """
     cache_dir_path = Path(cache_directory)
     cache_filename = (sha1 + '.p')
     if cache_dir_path.is_absolute():
         cache_file_path = cache_dir_path / cache_filename
     else:
-        normalized_seg_y_path = Path(seg_y_path).resolve()
-        cache_file_path = normalized_seg_y_path.parent / cache_directory / cache_filename
+        if seg_y_path != UNKNOWN_FILENAME:
+            normalized_seg_y_path = Path(seg_y_path).resolve()
+            cache_file_path = normalized_seg_y_path.parent / cache_directory / cache_filename
+        else:
+            cache_file_path = None
     return cache_file_path
 
 

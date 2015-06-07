@@ -2,6 +2,7 @@ from collections import OrderedDict
 from weakref import WeakKeyDictionary
 from itertools import chain
 
+from segpy import __version__
 from segpy.docstring import docstring_property
 from segpy.util import underscores_to_camelcase, first_sentence, super_class
 
@@ -60,6 +61,24 @@ class Header:
             self.__class__.__name__,
             ', '.join("{}={}".format(k, getattr(self, k)) for k in self.ordered_field_names()))
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['__version__'] = __version__
+        state['_all_attributes'] = OrderedDict((name, getattr(self, name)) for name in self._ordered_field_names)
+        return state
+
+    def __setstate__(self, state):
+        if state['__version__'] != __version__:
+            raise TypeError("Cannot unpickle {} version {} into version {}"
+                            .format(self.__class__.__name__,
+                                    state['__version__'],
+                                    __version__))
+        del state['__version__']
+
+        for name, value in state['_all_attributes'].items():
+            setattr(self, name, value)
+        del state['_all_attributes']
+        self.__dict__.update(state)
 
 def are_equal(self, other):
     """Compare two headers for equality.

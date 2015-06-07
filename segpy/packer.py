@@ -2,6 +2,7 @@ from collections import OrderedDict
 from struct import Struct
 from itertools import zip_longest
 
+from segpy import __version__
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE
 from segpy.util import pairwise, intervals_partially_overlap, complementary_intervals
 
@@ -134,6 +135,27 @@ class HeaderPacker:
         self._header_format_class = header_format_class
         self._structure = structure
         self._field_name_allocations = field_name_allocations
+
+    def __getstate__(self):
+
+        state = self.__dict__.copy()
+        state['__version__'] = __version__
+        state['_structure_format'] = self._structure.format
+        del state['_structure']
+        return state
+
+    def __setstate__(self, state):
+        if state['__version__'] != __version__:
+            raise TypeError("Cannot unpickle {} version {} into version {}"
+                            .format(self.__class__.__name__,
+                                    state['__version__'],
+                                    __version__))
+        del state['__version__']
+
+        structure = Struct(state['_structure_format'])
+        state['_structure'] = structure
+        del state['_structure_format']
+        self.__dict__.update(state)
 
     @property
     def header_format_class(self):

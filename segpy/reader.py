@@ -312,6 +312,8 @@ class SegYReader(object):
         file_pos = self._fh.tell()
         file_mode = self._fh.mode
 
+        _ = self.max_num_trace_samples()
+
         state = self.__dict__.copy()
         state['__version__'] = __version__
         state['_file_name'] = filename

@@ -11,6 +11,7 @@ class SortedFrozenSet(Sequence, Set):
             return items
         obj = object.__new__(cls)
         obj._items = sorted(set(items)) if items is not None else []
+        return obj
 
     def __contains__(self, item):
         try:

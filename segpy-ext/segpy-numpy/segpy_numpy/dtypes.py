@@ -9,7 +9,7 @@ NUMPY_DTYPES = {'ibm':     numpy.dtype('f4'),
                 'int8':    numpy.dtype('i1')}
 
 
-def make_dtype(data_sample_format):
+def make_dtype(data_sample_format): # TODO: What is the correct name for this arg?
     """Convert a SEG Y data sample format to a compatible numpy dtype.
 
     Note :

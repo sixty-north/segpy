@@ -3,7 +3,9 @@ import time
 import os
 import sys
 
+from collections.abc import Set
 from itertools import (islice, cycle, tee, chain, repeat)
+
 from segpy.sorted_set import SortedFrozenSet
 
 UNKNOWN_FILENAME = '<unknown>'
@@ -407,17 +409,21 @@ def is_range_superset_of_range(superset_range, subset_range):
     return True
 
 
-def is_subset(superset, subset):
-    """A more general version of set.issubset that is smart enough to work with ranges."""
+def is_superset(superset, subset):
+    """A more general version of set.issuperset that is smart enough to work with ranges."""
     if isinstance(subset, range) and isinstance(superset, range):
         return is_range_superset_of_range(superset, subset)
     if isinstance(superset, range):
         return all(item in superset for item in subset)
+    if isinstance(superset, set):
+        return superset.issuperset(subset)
+    if isinstance(subset, set):
+        return subset.issubset(superset)
     return set(superset).issuperset(subset)
 
 
 def ensure_superset(superset, subset):
-    """Obtains a subset of all items.
+    """Ensure that one collection is a subset of another.
 
     Args:
         all_items: A sequence containing all items.
@@ -437,7 +443,7 @@ def ensure_superset(superset, subset):
         return superset[subset]
     else:
         subset = make_sorted_distinct_sequence(subset)
-        if not is_subset(superset, subset):
+        if not is_superset(superset, subset):
             raise ValueError("subset_or_slice {!r} is not a subset of all_items {!r}"
                              .format(subset, superset))
         return subset

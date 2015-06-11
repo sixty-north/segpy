@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-"""Extract an inline from a 3D seismic volume to a Numpy array.
+"""Extract a single field from the trace headers of  3D seismic volume to a 2D Numpy array.
 
 This utility assumes the inline and crossline numbers are evenly spaced.
 Each inline of the source data will be represented as a single row, and
 each crossline as a single column in the resulting 2D array.
 
-Usage: inline.py [-h] [--dtype DTYPE] [--null NULL]
-                    segy-file npy-file inline-number
+Usage: extract_trace_header_field.py [-h] [--null NULL]
+                    segy-file npy-file field-name
 
 Positional arguments:
   segy-file      Path to an existing SEG Y file of 3D seismic data
   npy-file       Path to the Numpy array file to be created for the timeslice
-  slice-index    Zero based index of the time slice to be extracted
+  field-name     Zero based index of the time slice to be extracted
 
 Optional arguments:
   -h, --help     show this help message and exit
@@ -22,7 +22,7 @@ Optional arguments:
 
 Example:
 
-  inline.py stack_final_int8.sgy slice_800.npy 800 --null=42.0 --dtype=f
+  extract_trace_header_field.py stack_final_int8.sgy slice_800.npy ensemble_num
 """
 
 import argparse
@@ -35,15 +35,17 @@ import numpy as np
 from numpy import s_
 
 from segpy.reader import create_reader
+from segpy.trace_header import TraceHeaderRev1
 from segpy_numpy.dtypes import make_dtype
-from segpy_numpy.extract import extract_inline_3d
+from segpy_numpy.extract import extract_inline_3d, extract_trace_header_field_3d
 
 
 class DimensionalityError(Exception):
     pass
 
 
-def extract_inline(segy_filename, out_filename, inline_number, null=None):
+
+def extract_header_field(segy_filename, out_filename, field_name, null=None):
     """Extract a timeslice from a 3D SEG Y file to a Numpy NPY file.
 
     Args:
@@ -55,15 +57,17 @@ def extract_inline(segy_filename, out_filename, inline_number, null=None):
 
         null: Optional sample value to use for missing or short traces. Defaults to zero.
     """
+    header_field = getattr(TraceHeaderRev1, field_name)
+
     with open(segy_filename, 'rb') as segy_file:
 
         segy_reader = create_reader(segy_file)
-        inline_array = extract_inline_3d(segy_reader, inline_number, null=null)
-        return inline_array
+        header_field_array = extract_trace_header_field_3d(segy_reader, header_field, null=null)
+        return header_field_array
 
 
-def nullable_float(s):
-    return None if not bool(s) else float(s)
+def nullable_int(s):
+    return None if not bool(s) else int(s)
 
 
 def main(argv=None):
@@ -74,11 +78,11 @@ def main(argv=None):
     parser.add_argument("npy_file", metavar="npy-file",
                         help="Path to the Numpy array file to be created for the timeslice")
 
-    parser.add_argument("inline_number", metavar="inline-number", type=int,
-                        help="Zero based index of the inline to be extracted", )
+    parser.add_argument("field_name", metavar="field-name", type=str,
+                        help="Name of the trace header field to be extracted", )
 
-    parser.add_argument("--null",  type=nullable_float, default="",
-                        help="Sample value to use for missing or short traces.")
+    parser.add_argument("--null",  type=nullable_int, default="",
+                        help="Header value to use for missing or short traces.")
 
     if argv is None:
         argv = sys.argv[1:]
@@ -86,10 +90,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
-        extract_inline(
+        extract_header_field(
             segy_filename=args.segy_file,
             out_filename=args.npy_file,
-            inline_number=args.inline_number,
+            field_name=args.field_name,
             null=args.null)
     except (FileNotFoundError, IsADirectoryError) as e:
         print(e, file=sys.stderr)
@@ -105,4 +109,5 @@ def main(argv=None):
 
 if __name__ == '__main__':
     sys.exit(main())
+
 

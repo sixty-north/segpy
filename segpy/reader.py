@@ -292,6 +292,7 @@ class SegYReader(object):
         self._revision = extract_revision(self._binary_reel_header)
         self._bytes_per_sample = bytes_per_sample(
             self._binary_reel_header, self.revision)
+        self._max_num_trace_samples = None
 
     def __getstate__(self):
         """Copy the reader's state to a pickleable dictionary.
@@ -310,6 +311,8 @@ class SegYReader(object):
                             .format(self.__class__.__name__), filename)
         file_pos = self._fh.tell()
         file_mode = self._fh.mode
+
+        _ = self.max_num_trace_samples()
 
         state = self.__dict__.copy()
         state['__version__'] = __version__
@@ -363,7 +366,9 @@ class SegYReader(object):
 
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
-        return max(self._trace_length_catalog.values())
+        if self._max_num_trace_samples is None:
+            self._max_num_trace_samples = max(self._trace_length_catalog.values())
+        return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):
         """The number of samples in the specified trace_samples."""
@@ -416,11 +421,14 @@ class SegYReader(object):
             self._fh, start_pos, seg_y_type, num_samples_to_read, self._endian)
         return trace_values
 
-    def trace_header(self, trace_index):
+    def trace_header(self, trace_index, header_packer_override=None):
         """Read a specific trace_samples.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
+
+            header_packer_override: Override the default header packer (for example
+               to more efficiently extract only a few fields)
 
         Returns:
             A TraceHeader corresponding to the requested trace_samples.
@@ -431,9 +439,18 @@ class SegYReader(object):
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
+        header_packer = self._trace_header_packer if header_packer_override is None else header_packer_override
         pos = self._trace_offset_catalog[trace_index]
-        trace_header = read_trace_header(self._fh, self._trace_header_packer, pos)
+        trace_header = read_trace_header(self._fh, header_packer, pos)
         return trace_header
+
+    @property
+    def trace_header_format_class(self):
+        """The trace header format class.
+
+        Instances of this class are what is returned from trace_header() unless the
+        header_packer has been overridden."""
+        return self._trace_header_packer.header_format_class
 
     @property
     def dimensionality(self):

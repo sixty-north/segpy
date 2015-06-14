@@ -6,8 +6,12 @@ from itertools import chain
 
 class SortedFrozenSet(Sequence, Set):
 
-    def __init__(self, items=None):
-        self._items = sorted(set(items)) if items is not None else []
+    def __new__(cls, items=None):
+        if type(items) == cls:
+            return items
+        obj = object.__new__(cls)
+        obj._items = sorted(set(items)) if items is not None else []
+        return obj
 
     def __contains__(self, item):
         try:

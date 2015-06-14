@@ -421,11 +421,14 @@ class SegYReader(object):
             self._fh, start_pos, seg_y_type, num_samples_to_read, self._endian)
         return trace_values
 
-    def trace_header(self, trace_index):
+    def trace_header(self, trace_index, header_packer_override=None):
         """Read a specific trace_samples.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
+
+            header_packer_override: Override the default header packer (for example
+               to more efficiently extract only a few fields)
 
         Returns:
             A TraceHeader corresponding to the requested trace_samples.
@@ -436,9 +439,18 @@ class SegYReader(object):
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
+        header_packer = self._trace_header_packer if header_packer_override is None else header_packer_override
         pos = self._trace_offset_catalog[trace_index]
-        trace_header = read_trace_header(self._fh, self._trace_header_packer, pos)
+        trace_header = read_trace_header(self._fh, header_packer, pos)
         return trace_header
+
+    @property
+    def trace_header_format_class(self):
+        """The trace header format class.
+
+        Instances of this class are what is returned from trace_header() unless the
+        header_packer has been overridden."""
+        return self._trace_header_packer.header_format_class
 
     @property
     def dimensionality(self):

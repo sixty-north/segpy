@@ -146,11 +146,12 @@ class SubFormatMeta(FormatMeta):
 
     SubFormat classes must be declared as:
 
-    class MySubFormat(metaclass=SubFormatMeta,
-                     format_class=MyFormatClass,
-                     field_names=['first_field_name',
-                                  'second_field_name'])
-        pass
+        class MySubFormat(metaclass=SubFormatMeta,
+                          parent_format=MyFormatClass,
+                          parent_field_names=[
+                             'first_field_name',
+                             'second_field_name']):
+            pass
     """
 
     def __new__(mcs, name, bases, namespace, parent_format, parent_field_names):
@@ -160,14 +161,12 @@ class SubFormatMeta(FormatMeta):
             bases: The base classes of the actual class.
             parent_format: An existing Format (?Header) on which (sort out terminology here)
                 of which this format has a subset of fields.
-            field_names: An iterable series of field names which this format should
+            parent_field_names: An iterable series of field names which this format should
                 duplicate from the parent_format.
         """
 
-        # TODO: We need an inheritance aware getattr for class attributes!
         # Copy the requested fields, by creating a new descriptor based
         # on information retrieved from the existing descriptor
-
         for field_name in parent_field_names:
             named_field = getattr(parent_format, field_name)
             assert named_field.name == field_name

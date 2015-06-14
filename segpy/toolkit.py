@@ -347,6 +347,8 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     alt_line_catalog_builder = CatalogBuilder()
     cdp_catalog_builder = CatalogBuilder()
 
+    # TODO: Use a SubHeaderFormat to only load the fields we're interestedin
+
     for trace_number in count():
         progress_callback(_READ_PROPORTION * pos_begin / length)
         fh.seek(pos_begin)

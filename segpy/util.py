@@ -447,3 +447,31 @@ def ensure_superset(superset, subset):
             raise ValueError("subset_or_slice {!r} is not a subset of all_items {!r}"
                              .format(subset, superset))
         return subset
+
+def true(*args, **kwargs):
+    return True
+
+
+def collect_attributes(derived_class, base_class=object, predicate=None):
+    """
+
+    Args:
+        derived_class: The class at which to start searching.
+        base_class: The class at which to stop searching
+        predicate: A predicate which accepts
+
+    Returns:
+        A generator of items containing the (class, attribute_name)
+    """
+    # TODO: Consider using the inspect module to do this
+    if predicate is None:
+        predicate = true
+
+    for cls in derived_class.__mro__:
+        for key, value in vars(cls).items():
+            if predicate(key, value):
+                yield cls, key, value
+        if cls is base_class:
+            break
+
+

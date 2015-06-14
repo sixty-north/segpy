@@ -8,11 +8,6 @@ from segpy.util import ensure_superset
 from segpy_numpy.dtypes import make_dtype
 
 
-class DimensionalityError:
-    pass
-
-
-# TODO: Add inline_numbers and xline_numbers arguments
 def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_numbers=None, null=None):
     """Extract a single trace header field from all trace headers as an array.
 

@@ -66,16 +66,16 @@ def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_
     xline_numbers = ensure_superset(reader_3d.xline_numbers(), xline_numbers)
     shape = (len(inline_numbers), len(xline_numbers))
 
-    class SubHeader(metaclass=SubFormatMeta,
+    class SubFormat(metaclass=SubFormatMeta,
                     parent_format=reader_3d.trace_header_format_class,
                     parent_field_names=field_names):
         pass
 
-    sub_header_packer = make_header_packer(SubHeader, reader_3d.endian)
+    sub_header_packer = make_header_packer(SubFormat, reader_3d.endian)
     TraceHeaderArrays = namedtuple('TraceHeaderArrays', field_names)
 
     arrays = (_make_array(shape,
-                          make_dtype(getattr(SubHeader, field_name).value_type.SEG_Y_TYPE),
+                          make_dtype(getattr(SubFormat, field_name).value_type.SEG_Y_TYPE),
                           null)
               for field_name in field_names)
 

@@ -14,6 +14,7 @@ from segpy.binary_reel_header import BinaryReelHeader
 from segpy.catalog import CatalogBuilder
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
+from segpy.header import SubFormatMeta
 from segpy.ibm_float import IBMFloat
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
@@ -335,7 +336,18 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
-    trace_header_packer = make_header_packer(trace_header_format, endian)
+    class CatalogSubFormat(metaclass=SubFormatMeta,
+                           parent_format=trace_header_format,
+                           parent_field_names=(
+                               'file_sequence_num',
+                               'ensemble_num',
+                               'num_samples',
+                               'inline_number',
+                               'crossline_number',
+                           )):
+        pass
+
+    trace_header_packer = make_header_packer(CatalogSubFormat, endian)
 
     length = file_length(fh)
 
@@ -346,8 +358,6 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     line_catalog_builder = CatalogBuilder()
     alt_line_catalog_builder = CatalogBuilder()
     cdp_catalog_builder = CatalogBuilder()
-
-    # TODO: Use a SubHeaderFormat to only load the fields we're interestedin
 
     for trace_number in count():
         progress_callback(_READ_PROPORTION * pos_begin / length)

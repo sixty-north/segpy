@@ -62,8 +62,9 @@ def extract_header_field(segy_filename, out_filename, field_name, null=None):
     with open(segy_filename, 'rb') as segy_file:
 
         segy_reader = create_reader(segy_file)
-        header_field_array = extract_trace_header_field_3d(segy_reader, header_field, null=null)
-        return header_field_array
+
+        header_field_arrays = extract_trace_header_field_3d(segy_reader, [header_field], null)
+        return header_field_arrays
 
 
 def nullable_int(s):

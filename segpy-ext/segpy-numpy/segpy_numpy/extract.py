@@ -1,5 +1,8 @@
 """Tools for interoperability between Segpy and Numpy arrays."""
+from collections import namedtuple
 import numpy as np
+from segpy.header import Header, SubFormatMeta
+from segpy.packer import make_header_packer
 
 from segpy.util import ensure_superset
 from segpy_numpy.dtypes import make_dtype
@@ -8,26 +11,60 @@ from segpy_numpy.dtypes import make_dtype
 class DimensionalityError:
     pass
 
-def extract_trace_header_field_3d(reader, field, null=None):
+
+# TODO: Add inline_numbers and xline_numbers arguments
+def extract_trace_header_field_3d(reader, fields, null=None):
     """Extract a single trace header field from all trace headers as an array.
 
     Args:
-        reader: A SegYReader
-        field: A header field
+        reader: A SegYReader3D
+
+        fields: A an iterable series where each item is either the string name of a field
+            or an object with a 'name' attribute which is the name of a field, such as a
+            NamedField.
+
+        null: An optional null value for missing traces. The null value must be convertible
+            to all field value types.
+
+    Returns:
+        An namedtuple object with attributes which are two-dimensional Numpy arrays.
+        If a null value was specified the arrays will be ndarrays, otherwise they
+        will be masked arrays.  The attributes of the named tuple are in the same
+        order as the fields specified in the `fields` argument.
+
+    Raises:
+        AttributeError: If the the named fields do not exist in the trace header definition.
     """
+    field_names = [_extract_field_name(field) for field in fields]
+
+    class SubHeader(metaclass=SubFormatMeta,
+                    parent_format=reader.trace_header_format_class,
+                    parent_field_names=field_names):
+        pass
+
+    sub_header_packer = make_header_packer(SubHeader, reader.endian)
+    TraceHeaderArrays = namedtuple('TraceHeaderArrays', field_names)
     shape = (reader.num_inlines(), reader.num_xlines())
-    dtype = make_dtype(field.value_type.SEG_Y_TYPE)
-    arr = _make_array(shape, dtype, null)
-    field_name = field.name
+
+    arrays = (_make_array(shape,
+                          make_dtype(getattr(SubHeader, field_name).value_type.SEG_Y_TYPE),
+                          null)
+              for field_name in field_names)
+
+    trace_header_arrays = TraceHeaderArrays(*arrays)
+
     for inline_xline in reader.inline_xline_numbers():
         inline_number, xline_number = inline_xline
         trace_index = reader.trace_index(inline_xline)
-        trace_header = reader.trace_header(trace_index)
+        trace_header = reader.trace_header(trace_index, sub_header_packer)
         inline_index = reader.inline_numbers().index(inline_number)
         xline_index = reader.xline_numbers().index(xline_number)
-        field_value = getattr(trace_header, field_name)
-        arr[inline_index, xline_index] = field_value
-    return arr
+
+        for field_name, a in zip(field_names, trace_header_arrays):
+            field_value = getattr(trace_header, field_name)
+            a[inline_index, xline_index] = field_value
+
+    return trace_header_arrays
 
 
 def extract_trace(reader, trace_index, sample_numbers):
@@ -165,3 +202,17 @@ def _make_array(shape, dtype, null=None):
     array = np.empty(shape, dtype)
     array.fill(null)
     return array
+
+def _extract_field_name(field):
+    """Args:
+        field: If field in an object with a name attribute the name is returned. If field is a string it is returned
+            unmodified.
+      Raises:
+        TypeError:
+    """
+    if isinstance(field, str):
+        return field
+    try:
+        return field.name
+    except AttributeError:
+        raise TypeError("{!r} neither is a string nor has a 'name' attribute".format(field))

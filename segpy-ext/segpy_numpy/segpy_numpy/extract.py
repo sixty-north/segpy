@@ -52,7 +52,7 @@ def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_
             to all field value types.
 
     Returns:
-        An namedtuple object with attributes which are two-dimensional Numpy arrays.
+        A namedtuple object with attributes which are two-dimensional Numpy arrays.
         If a null value was specified the arrays will be ndarrays, otherwise they
         will be masked arrays.  The attributes of the named tuple are in the same
         order as the fields specified in the `fields` argument.
@@ -138,7 +138,7 @@ def extract_inline_3d(reader_3d, inline_number, xline_numbers=None, sample_numbe
     """Extract an inline as a two-dimensional array.
 
     Args:
-        reader: A SegYReader3D object.
+        reader_3d: A SegYReader3D object.
 
         inline_number: The number of the inline to be extracted.
 
@@ -227,7 +227,7 @@ def extract_xline_3d(reader_3d, xline_number, inline_numbers=None, sample_number
     """Extract an inline as a two-dimensional array.
 
     Args:
-        reader: A SegYReader3D object.
+        reader_3d: A SegYReader3D object.
 
         xline_number: The number of the xline to be extracted.
 

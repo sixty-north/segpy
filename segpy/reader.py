@@ -3,6 +3,7 @@ import pickle
 from pathlib import Path
 
 from segpy import __version__
+from segpy.dataset import Dataset
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
@@ -228,7 +229,7 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
 
-class SegYReader(object):
+class SegYReader(Dataset):
     """A basic SEG Y reader.
 
     Use to obtain read the reel header, the trace_samples headers or trace_samples

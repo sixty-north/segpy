@@ -1,7 +1,7 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
-class Dataset:
+class Dataset(metaclass=ABCMeta):
 
     @property
     @abstractmethod
@@ -19,6 +19,10 @@ class Dataset:
         raise NotImplementedError
 
     @property
+    def dimensionality(self):
+        raise NotImplementedError
+
+    @property
     @abstractmethod
     def trace_indexes(self):
         raise NotImplementedError
@@ -30,3 +34,4 @@ class Dataset:
     @abstractmethod
     def trace_samples(self, trace_index):
         raise NotImplementedError
+

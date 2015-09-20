@@ -213,17 +213,15 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(trunc(ibm), i)
 
     @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 1.0))
+           floats_in_range(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_ceil(self, i, f):
-        assume(f != 1.0)
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(math.ceil(ibm), i + 1)
 
     @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 1.0))
+           floats_in_range(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_floor(self, i, f):
-        assume(f != 1.0)
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(math.floor(ibm), i)

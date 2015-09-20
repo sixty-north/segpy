@@ -652,7 +652,6 @@ class SegYReader3D(SegYReader):
         """The number of distinct crosslines in the survey."""
         return len(self.xline_numbers())
 
-
     def inline_xline_numbers(self):
         """An iterator over all  (inline_number, xline_number) tuples
         corresponding to traces.

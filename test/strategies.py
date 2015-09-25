@@ -1,6 +1,5 @@
 from itertools import accumulate, starmap
-from hypothesis import strategy
-from hypothesis.specifiers import integers_in_range, just
+from hypothesis.strategies import integers, just, fixed_dictionaries, lists
 from segpy.trace_header import TraceHeaderRev0
 from segpy.util import batched
 
@@ -19,8 +18,8 @@ def multiline_ascii_encodable_text(min_num_lines, max_num_lines):
         and characters which are encodable as printable 7-bit ASCII characters.
     """
 
-    return strategy(integers_in_range(min_num_lines, max_num_lines))               \
-           .flatmap(lambda n: ([integers_in_range(*PRINTABLE_ASCII_RANGE)],) * n)  \
+    return integers(min_num_lines, max_num_lines) \
+           .flatmap(lambda n: lists(integers(*PRINTABLE_ASCII_RANGE), min_size=n, max_size=n))  \
            .map(lambda xs: '\n'.join(bytes(x).decode('ascii') for x in xs))
 
 
@@ -33,9 +32,9 @@ def spaced_ranges(min_num_ranges, max_num_ranges, min_interval, max_interval):
         min_interval: The minimum interval used for the lengths of the alternating ranges and spaces.
         max_interval: The maximum interval used for the lengths of the alternating ranges and spaces.
     """
-    return strategy(integers_in_range(min_num_ranges, max_num_ranges))               \
+    return integers(min_num_ranges, max_num_ranges)               \
            .map(lambda n: 2*n)                                                       \
-           .flatmap(lambda n: (integers_in_range(min_interval, max_interval),) * n)  \
+           .flatmap(lambda n: lists(integers(min_interval, max_interval), min_size=n, max_size=n))  \
            .map(list).map(lambda lst: list(accumulate(lst)))                         \
            .map(lambda lst: list(batched(lst, 2)))                                   \
            .map(lambda pairs: list(starmap(range, pairs)))
@@ -59,7 +58,7 @@ def header(header_class, **kwargs):
             field_strategy = just(kwargs.pop(field_name))
         else:
             value_type = getattr(header_class, field_name).value_type
-            field_strategy = integers_in_range(value_type.MINIMUM, value_type.MAXIMUM)
+            field_strategy = integers(value_type.MINIMUM, value_type.MAXIMUM)
         field_strategies[field_name] = field_strategy
 
     if len(kwargs) > 0:
@@ -67,4 +66,5 @@ def header(header_class, **kwargs):
             ', '.join(kwargs.keys()),
             header_class.__name__))
 
-    return strategy(field_strategies).map(lambda kw: header_class(**kw))
+    return fixed_dictionaries(field_strategies) \
+        .map(lambda kw: header_class(**kw))

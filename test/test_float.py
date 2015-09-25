@@ -3,7 +3,7 @@ from math import trunc
 import unittest
 
 from hypothesis import given, assume
-from hypothesis.specifiers import integers_in_range, floats_in_range
+from hypothesis.strategies import integers, floats
 
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT,
@@ -178,49 +178,49 @@ class TestIBMFloat(unittest.TestCase):
         with self.assertRaises(OverflowError):
             IBMFloat.from_float(MIN_IBM_FLOAT * 10)
 
-    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
     def test_bool(self, f):
         self.assertEqual(bool(IBMFloat.from_float(f)), bool(f))
 
-    @given(integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255))
+    @given(integers(0, 255),
+           integers(0, 255),
+           integers(0, 255),
+           integers(0, 255))
     def test_bytes_roundtrip(self, a, b, c, d):
         b = bytes((a, b, c, d))
         ibm = IBMFloat.from_bytes(b)
         self.assertEqual(bytes(ibm), b)
 
-    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
     def test_floats_roundtrip(self, f):
         ibm = IBMFloat.from_float(f)
         self.assertTrue(almost_equal(f, float(ibm), epsilon=EPSILON_IBM_FLOAT))
 
-    @given(integers_in_range(0, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(0.0, 1.0))
+    @given(integers(0, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
+           floats(0.0, 1.0))
     def test_trunc_above_zero(self, i, f):
         assume(f != 1.0)
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(trunc(ibm), i)
 
-    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT + 1, 0),
-           floats_in_range(0.0, 1.0))
+    @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT + 1, 0),
+           floats(0.0, 1.0))
     def test_trunc_below_zero(self, i, f):
         assume(f != 1.0)
         ieee = i - f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(trunc(ibm), i)
 
-    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
+    @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
+           floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_ceil(self, i, f):
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(math.ceil(ibm), i + 1)
 
-    @given(integers_in_range(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats_in_range(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
+    @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
+           floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_floor(self, i, f):
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
@@ -245,10 +245,10 @@ class TestIBMFloat(unittest.TestCase):
         normalized = ibm.normalize()
         self.assertFalse(normalized.is_subnormal())
 
-    @given(integers_in_range(128, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(4, 23))
+    @given(integers(128, 255),
+           integers(0, 255),
+           integers(0, 255),
+           integers(4, 23))
     def test_normalise_subnormal(self, b, c, d, shift):
         mantissa = (b << 16) | (c << 8) | d
         assume(mantissa != 0)
@@ -265,10 +265,10 @@ class TestIBMFloat(unittest.TestCase):
         normalized = ibm.normalize()
         self.assertFalse(normalized.is_subnormal())
 
-    @given(integers_in_range(128, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(4, 23))
+    @given(integers(128, 255),
+           integers(0, 255),
+           integers(0, 255),
+           integers(4, 23))
     def test_zero_subnormal(self, b, c, d, shift):
         mantissa = (b << 16) | (c << 8) | d
         assume(mantissa != 0)
@@ -285,19 +285,19 @@ class TestIBMFloat(unittest.TestCase):
         z = ibm.zero_subnormal()
         self.assertTrue(z.is_zero())
 
-    @given(integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255))
+    @given(integers(0, 255),
+           integers(0, 255),
+           integers(0, 255),
+           integers(0, 255))
     def test_abs(self, a, b, c, d):
         ibm = IBMFloat.from_bytes((a, b, c, d))
         abs_ibm = abs(ibm)
         self.assertGreaterEqual(abs_ibm.signbit, 0)
 
-    @given(integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255),
-           integers_in_range(0, 255))
+    @given(integers(0, 255),
+           integers(0, 255),
+           integers(0, 255),
+           integers(0, 255))
     def test_negate_non_zero(self, a, b, c, d):
         ibm = IBMFloat.from_bytes((a, b, c, d))
         assume(not ibm.is_zero())
@@ -309,14 +309,14 @@ class TestIBMFloat(unittest.TestCase):
         negated = -zero
         self.assertTrue(negated.is_zero())
 
-    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
     def test_signbit(self, f):
         ltz = f < 0
         ibm = IBMFloat.from_float(f)
         self.assertEqual(ltz, ibm.signbit)
 
-    @given(floats_in_range(-1.0, +1.0),
-           integers_in_range(-256, 255))
+    @given(floats(-1.0, +1.0),
+           integers(-256, 255))
     def test_ldexp_frexp(self, fraction, exponent):
         try:
             ibm = IBMFloat.ldexp(fraction, exponent)
@@ -326,8 +326,8 @@ class TestIBMFloat(unittest.TestCase):
             f, e = ibm.frexp()
             self.assertTrue(almost_equal(fraction * 2**exponent, f * 2**e, epsilon=EPSILON_IBM_FLOAT))
 
-    @given(floats_in_range(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
-           floats_in_range(0.0, 1.0))
+    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
+           floats(0.0, 1.0))
     def test_add(self, f, p):
         a = f * p
         b = f - a
@@ -342,8 +342,8 @@ class TestIBMFloat(unittest.TestCase):
 
         self.assertTrue(almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT * 4))
 
-    @given(floats_in_range(0, MAX_IBM_FLOAT),
-           floats_in_range(0, MAX_IBM_FLOAT))
+    @given(floats(0, MAX_IBM_FLOAT),
+           floats(0, MAX_IBM_FLOAT))
     def test_sub(self, a, b):
         ibm_a = IBMFloat.from_float(a)
         ibm_b = IBMFloat.from_float(b)

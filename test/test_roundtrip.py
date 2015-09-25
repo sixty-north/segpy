@@ -2,7 +2,7 @@ from itertools import zip_longest
 import unittest
 from hypothesis import given
 from io import BytesIO
-from hypothesis.specifiers import sampled_from
+from hypothesis.strategies import sampled_from
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC
 from segpy.header import are_equal

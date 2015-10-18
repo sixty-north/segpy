@@ -232,7 +232,7 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
 class SegYReader(Dataset):
     """A basic SEG Y reader.
 
-    Use to obtain read the reel header, the trace_samples headers or trace_samples
+    Use to obtain the reel header, the trace_samples headers or trace_samples
     values. Traces can be accessed only by trace_samples index.
     """
 

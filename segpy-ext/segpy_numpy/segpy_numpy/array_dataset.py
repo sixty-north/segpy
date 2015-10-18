@@ -7,7 +7,8 @@ from segpy.util import identity
 
 
 class ArrayDataset3d(Dataset, metaclass=ABCMeta):
-    """A Dataset where the traces are stored in a NumpyArray
+    """A Dataset where the traces are stored in a NumpyArray.
+
     """
 
     def __init__(self,
@@ -16,11 +17,48 @@ class ArrayDataset3d(Dataset, metaclass=ABCMeta):
                  extended_textual_header,
                  samples,
                  trace_header_template,
-                 inline_number_map=identity,
-                 xline_number_map=identity,
+                 inline_number_map=identity, # TODO: What about one-based indexing. Should we also have a one_based
+                 xline_number_map=identity,  # TODO: which maps zero in the array to one in the SEG Y
                  sample_number_map=identity,
                  complete=True,
                  null=None):
+        """
+        Args:
+            binary_reel_header:
+
+            textual_reel_header:
+
+            extended_textual_header:
+
+            samples: A three dimensional numpy array of samples.
+
+            trace_header_template: A trace header from which trace-invariant
+                field values will be copied to generate the trace header
+                corresponding to each trace. TODO: Should this be a
+                trace-header containing functions?
+
+            inline_number_map: A function mapping array index to inline
+                number.
+
+            xline_number_map: A function mapping array index to crossline
+                number.
+
+            sample_number_map: A function mapping array index to sample
+                number.
+
+            complete (bool): If True, all traces and samples will be
+                included in the data set. If false, traces which are
+                entirely consist of null or masked samples will be
+                excluded.
+
+            null: An optional null value for samples. Any samples which
+                are equal to this null value will be treated as null.
+                Traces which consist only of null samples will be
+                excluded from the data set if 'complete' is False.
+                When 'complete' is True and samples is a masked array,
+                any masked values will be presented in the dataset as
+                being on the null value.
+        """
         # TODO: Validate
         self._binary_reel_header = binary_reel_header
         self._textual_reel_header = textual_reel_header
@@ -61,7 +99,12 @@ class ArrayDataset3d(Dataset, metaclass=ABCMeta):
         pass
 
     def trace_samples(self, trace_index):
-        pass
+        self._completion_strategy.inline_xline_index(trace_index)
+
+    def __repr__(self):
+        # TODO: More details
+        return "{}()".format(self.__class__.__name__)
+
 
 class NullSampleStrategy(metaclass=ABCMeta):
 
@@ -102,6 +145,11 @@ class CompletionStrategy(metaclass=ABCMeta):
     def trace_indexes(self):
         raise NotImplementedError
 
+    @abstractmethod
+    def inline_xline_index(self, trace_index):
+        raise NotImplementedError
+
+
 class IncompleteStrategy(CompletionStrategy):
 
     def __init__(self, array_dataset):
@@ -122,6 +170,14 @@ class IncompleteStrategy(CompletionStrategy):
             self._trace_index_catalog = trace_index_catalog_builder.create()
         return self._trace_index_catalog.keys()
 
+    def inline_xline_index(self, trace_index):
+        """Given a trace index, return the 2d index of the trace in the array."""
+        try:
+            return self._trace_index_catalog[trace_index]
+        except KeyError as e:
+            raise ValueError("Trace index {} not present in {}".format(trace_index, self._array_dataset))
+
+
 class CompleteStrategy(CompletionStrategy):
 
     def __init__(self, array_dataset):
@@ -133,4 +189,11 @@ class CompleteStrategy(CompletionStrategy):
             samples = self._array_dataset._samples
             self._trace_indexes = range(0, samples.shape[0] * samples.shape[1])
         return self._trace_indexes
+
+    def inline_xline_index(self, trace_index):
+        samples = self._array_dataset._samples
+        inline_index, xline_index = divmod(trace_index, samples.shape[0])
+        if not ((0 <= inline_index < samples.shape[0]) and (0 <= xline_index < samples.shape[1])):
+            raise ValueError("Trace index {} not present in {}".format(trace_index, self._array_dataset))
+        return inline_index, xline_index
 

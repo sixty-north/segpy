@@ -79,6 +79,10 @@ class Header:
             setattr(self, name, value)
         del state['_all_attributes']
         self.__dict__.update(state)
+        
+    def __iter__(self):
+       for name in self._ordered_field_names:
+           yield getattr(self, name)
 
 def are_equal(self, other):
     """Compare two headers for equality.

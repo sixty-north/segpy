@@ -219,14 +219,17 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     bps = bytes_per_sample(binary_reel_header, revision)
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
                                                                                            endian, progress)
-    if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
-    if cdp_catalog is None and line_catalog is not None:
+                                                                                           
+    if line_catalog is not None:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
+    if cdp_catalog is not None:
+        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
+
     return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
+
 
 class SegYReader(object):
     """A basic SEG Y reader.

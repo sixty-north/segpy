@@ -19,7 +19,7 @@ from segpy.ibm_float import IBMFloat
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING
+from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING, filename_from_handle
 
 
 HEADER_NEWLINE = '\r\n'
@@ -405,6 +405,100 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
             trace_length_catalog,
             cdp_catalog,
             line_catalog)
+
+
+def catalog_fixed_length_traces(fh, binary_reel_header, trace_header_format=TraceHeaderRev1, endian='>', progress=None):
+    """Build catalogs to for a fixed length SEG Y file. This is much faster 
+    than the full catalog, but has limitations. No CDP, or inline, xline
+    catalogs, and it only works for segy files with fixed legth SEG Y files.
+
+    Note:
+        This function is faster than the full catalog, but has limitations. 
+        No CDP, or inline, xline catalogs, and it only works for SEG Y files 
+        with a fixed number of samples in each trace.
+
+    Two catalogs will be built:
+
+     1. A catalog mapping trace_samples index (0-based) to the position of that
+        trace_samples header in the file.
+
+     2. A catalog mapping trace_samples index (0-based) to the number of
+        samples in that trace_samples.
+
+    Args:
+        fh: A file-like-object open in binary mode, positioned at the
+            start of the first trace_samples header.
+
+        bps: The number of bytes per sample, such as obtained by a call
+            to bytes_per_sample()
+
+        trace_header_format: The class defining the trace header format.
+            Defaults to TraceHeaderRev1.
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
+
+        progress: A unary callable which will be passed a number
+            between zero and one indicating the progress made. If
+            provided, this callback will be invoked at least once with
+            an argument equal to 1
+
+    Returns:
+        A 4-tuple of the form (trace_samples-offset-catalog,
+                               trace_samples-length-catalog,
+                               None,
+                               None)` where
+        each catalog is an instance of ``collections.Mapping`` or None
+        if no catalog could be built.
+    """
+    
+    revision = extract_revision(binary_reel_header)
+    bps = bytes_per_sample(binary_reel_header, revision)
+    
+    progress_callback = progress if progress is not None else lambda p: None
+
+    if not callable(progress_callback):
+        raise TypeError("catalog_traces(): progress callback must be callable")
+
+    class CatalogSubFormat(metaclass=SubFormatMeta,
+                           parent_format=trace_header_format,
+                           parent_field_names=(
+                               'file_sequence_num',
+                               'ensemble_num',
+                               'num_samples',
+                               'inline_number',
+                               'crossline_number',
+                           )):
+        pass
+
+    num_file_bytes = file_length(fh)
+    num_samples=binary_reel_header.num_samples
+    num_traces_float = (num_file_bytes-REEL_HEADER_NUM_BYTES)/(TRACE_HEADER_NUM_BYTES+num_samples*bps)
+    num_traces = int(num_traces_float)
+    if num_traces != num_traces_float:
+        raise ValueError(
+            "SEG Y file {!r} of {} bytes is not consistent with a fixed trace length".format(
+                filename_from_handle(fh),
+                num_file_bytes))
+    
+    trace_offset_catalog_builder = CatalogBuilder()
+    trace_length_catalog_builder = CatalogBuilder()
+    
+    for trace_index in range(num_traces):
+        pos_begin=REEL_HEADER_NUM_BYTES+(num_samples * bps+TRACE_HEADER_NUM_BYTES) * trace_index
+        
+        trace_length_catalog_builder.add(trace_index, num_samples)
+        trace_offset_catalog_builder.add(trace_index, pos_begin)
+        
+    trace_offset_catalog = trace_offset_catalog_builder.create()
+    trace_length_catalog = trace_length_catalog_builder.create()
+
+    progress_callback(1)
+
+    return (trace_offset_catalog,
+            trace_length_catalog,
+            None,
+            None)
 
 
 def read_trace_header(fh, trace_header_packer, pos=None):

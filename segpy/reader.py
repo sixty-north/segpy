@@ -13,6 +13,7 @@ from segpy.toolkit import (extract_revision,
                            read_binary_reel_header,
                            read_trace_header,
                            catalog_traces,
+                           catalog_fixed_length_traces,
                            read_binary_values,
                            REEL_HEADER_NUM_BYTES,
                            TRACE_HEADER_NUM_BYTES,
@@ -21,7 +22,7 @@ from segpy.toolkit import (extract_revision,
                            guess_textual_header_encoding)
 
 
-def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None, cache_directory=".segpy"):
+def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None, cache_directory=".segpy", fast=False):
     """Create a SegYReader (or one of its subclasses) based on performing
     a scan of SEG Y data.
 
@@ -56,6 +57,9 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             are interpreted as being relative to the directory containing
             the SEG Y file. Absolute paths are used as is. If
             cache_directory is None, caching is disabled.
+            
+        fast: Boolean flag to try a quick fixed length catalog before inline or
+            CDP catalogs.
 
     Raises:
         ValueError: ``fh`` is unsuitable for some reason, such as not
@@ -112,7 +116,7 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, trace_header_format, endian, progress)
+        reader = _make_reader(fh, encoding, trace_header_format, endian, progress, fast=fast)
         if cache_directory is not None:
             _save_reader_to_cache(reader, cache_file_path)
 
@@ -207,7 +211,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     return reader
 
 
-def _make_reader(fh, encoding, trace_header_format, endian, progress):
+def _make_reader(fh, encoding, trace_header_format, endian, progress, fast=False):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
     if encoding is None:
@@ -217,16 +221,29 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     revision = extract_revision(binary_reel_header)
     bps = bytes_per_sample(binary_reel_header, revision)
-    trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
-                                                                                           endian, progress)
-    if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
-    if cdp_catalog is None and line_catalog is not None:
+    if fast:
+        try:
+            trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_fixed_length_traces(fh, binary_reel_header, trace_header_format,endian, progress)
+        except:
+            trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,endian, progress)
+    else: 
+        try:
+            trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,endian, progress)
+        except:
+            fh.seek(REEL_HEADER_NUM_BYTES)
+            trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_fixed_length_traces(fh, binary_reel_header, trace_header_format,endian, progress)
+    
+                                                                                           
+    if line_catalog is not None:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
+    if cdp_catalog is not None:
+        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
+
     return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
+
 
 class SegYReader(object):
     """A basic SEG Y reader.

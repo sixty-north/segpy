@@ -82,7 +82,13 @@ class Header:
         
     def __iter__(self):
        for name in self._ordered_field_names:
-           yield getattr(self, name)
+           yield name,getattr(self, name)
+           
+    def __getitem__(self, key): 
+        return getattr(self, key)
+        
+    def __setitem__(self, key, item): 
+        setattr(self, key, item)
 
 def are_equal(self, other):
     """Compare two headers for equality.

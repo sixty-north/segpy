@@ -6,6 +6,7 @@ from segpy.util import batched
 PRINTABLE_ASCII_RANGE = (32, 127)
 PRINTABLE_ASCII_ALPHABET = ''.join(map(chr, range(*PRINTABLE_ASCII_RANGE)))
 
+
 def multiline_ascii_encodable_text(min_num_lines, max_num_lines):
     """A Hypothesis strategy to produce a multiline Unicode string.
 

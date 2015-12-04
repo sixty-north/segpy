@@ -213,7 +213,6 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     textual_reel_header = read_textual_reel_header(fh, encoding)
     binary_reel_header = read_binary_reel_header(fh, endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
-    revision = extract_revision(binary_reel_header)
     bps = bytes_per_sample(binary_reel_header)
 
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,

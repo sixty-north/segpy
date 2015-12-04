@@ -169,7 +169,7 @@ def _save_reader_to_cache(reader, cache_file_path):
 def _load_reader_from_cache(cache_file_path, seg_y_path):
     """Attempt to load a reader object from cache.
 
-    Any cache file could be located but not successfully read is removed.
+    Any cache file that can be located but not successfully read is removed.
 
     Args:
         cache_file_path: A Path object referring to the pickle file.
@@ -192,14 +192,18 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
             reader = pickle.load(pickle_file)
         except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
             reader = None
+            # TODO: Use logging here
             print("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
             try:
                 cache_file_path.unlink()
             except OSError as os_error:
+                # TODO: Use logging here
                 print("Could not remove stale cache entry {} for {} because {}"
                       .format(cache_file_path, seg_y_path, os_error))
             else:
+                # TODO: Use logging here
                 print("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
+            return None
     if not isinstance(reader, SegYReader):
         raise TypeError("Pickle at {} does not contain a {} instance.".format(cache_file_path, SegYReader.__name__))
     return reader

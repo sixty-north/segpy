@@ -1,10 +1,8 @@
 from itertools import zip_longest
 import unittest
 from io import BytesIO
-
-from hypothesis import given
+from hypothesis import given, example
 from hypothesis.specifiers import sampled_from
-
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC
@@ -17,7 +15,6 @@ from test.strategies import header, multiline_ascii_encodable_text, dict_of_stri
 
 
 class TestBinaryReelHeader(unittest.TestCase):
-
     @given(header(BinaryReelHeader),
            sampled_from(['<', '>']))
     def test_roundtrip(self, write_header, endian):
@@ -32,7 +29,6 @@ class TestBinaryReelHeader(unittest.TestCase):
 
 
 class TestTextualReelHeader(unittest.TestCase):
-
     @given(multiline_ascii_encodable_text(0, CARDS_PER_HEADER),
            sampled_from([ASCII, EBCDIC]))
     def test_roundtrip(self, write_header_text, encoding):
@@ -80,6 +76,8 @@ class TestTextualReelHeader(unittest.TestCase):
            revision=sampled_from([SEGY_REVISION_0, SEGY_REVISION_1]),
            encoding=sampled_from([ASCII, EBCDIC]))
     def test_header_template(self, write_header_fields, revision, encoding):
+        self.maxDiff = None
+
         write_header_lines = format_standard_textual_header(revision, **write_header_fields)
 
         with BytesIO() as write_stream:
@@ -89,6 +87,15 @@ class TestTextualReelHeader(unittest.TestCase):
         with BytesIO(written_stream) as read_stream:
             read_header_lines = read_textual_reel_header(read_stream, encoding)
 
+        self.assertListEqual(write_header_lines, list(read_header_lines))
+
         read_header_fields = parse_standard_textual_header(read_header_lines)
 
-        self.assertEqual(write_header_fields, read_header_fields)
+        self.assertEqual(write_header_fields.keys(), read_header_fields.keys())
+
+        # When checking for equality, we need to take account of the fact that
+        # the header values will have been stripped and may have been trunctated
+        for field_name in write_header_fields:
+            written_field_value = write_header_fields[field_name]
+            read_field_value = read_header_fields[field_name]
+            self.assertTrue(written_field_value.strip().startswith(read_field_value.strip()))

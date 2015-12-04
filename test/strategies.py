@@ -67,20 +67,20 @@ def header(header_class, **kwargs):
             header_class.__name__))
 
     return fixed_dictionaries(field_strategies) \
-        .map(lambda kw: header_class(**kw))
+           .map(lambda kw: header_class(**kw))
 
 
-def dict_of_strings(keys, **kwargs):
+def fixed_dict_of_printable_strings(keys, **overrides):
     """Create a strategy for producing a dictionary of strings with specific keys.
 
     Args:
         keys: A list of keys which the strategy will associate with arbitrary strings.
 
-        **kwargs: Specific keywords arguments can be supplied to associate certain keys
+        **overrides: Specific keywords arguments can be supplied to associate certain keys
             with specific values.  The values supplied via kwargs override any supplied
             through the keys argument.
     """
     d = {key: text(alphabet=PRINTABLE_ASCII_ALPHABET) for key in keys}
-    d.update(kwargs)
-    return strategy(d)
-
+    for keyword in overrides:
+        d[keyword] = just(overrides[keyword])
+    return fixed_dictionaries(d)

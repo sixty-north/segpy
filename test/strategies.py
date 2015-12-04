@@ -1,11 +1,13 @@
 from itertools import accumulate, starmap
 from hypothesis import strategy
 from hypothesis.specifiers import integers_in_range, just
+from hypothesis.strategies import text
+
 from segpy.trace_header import TraceHeaderRev0
 from segpy.util import batched
 
 PRINTABLE_ASCII_RANGE = (32, 127)
-
+PRINTABLE_ASCII_ALPHABET = ''.join(map(chr, range(*PRINTABLE_ASCII_RANGE)))
 
 def multiline_ascii_encodable_text(min_num_lines, max_num_lines):
     """A Hypothesis strategy to produce a multiline Unicode string.
@@ -68,3 +70,19 @@ def header(header_class, **kwargs):
             header_class.__name__))
 
     return strategy(field_strategies).map(lambda kw: header_class(**kw))
+
+
+def dict_of_strings(keys, **kwargs):
+    """Create a strategy for producing a dictionary of strings with specific keys.
+
+    Args:
+        keys: A list of keys which the strategy will associate with arbitrary strings.
+
+        **kwargs: Specific keywords arguments can be supplied to associate certain keys
+            with specific values.  The values supplied via kwargs override any supplied
+            through the keys argument.
+    """
+    d = {key: text(alphabet=PRINTABLE_ASCII_ALPHABET) for key in keys}
+    d.update(kwargs)
+    return strategy(d)
+

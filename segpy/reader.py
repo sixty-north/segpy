@@ -214,7 +214,8 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     binary_reel_header = read_binary_reel_header(fh, endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     revision = extract_revision(binary_reel_header)
-    bps = bytes_per_sample(binary_reel_header, revision)
+    bps = bytes_per_sample(binary_reel_header)
+
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
                                                                                            endian, progress)
     if cdp_catalog is not None and line_catalog is None:
@@ -288,8 +289,7 @@ class SegYReader(Dataset):
         self._trace_length_catalog = trace_length_catalog
 
         self._revision = extract_revision(self._binary_reel_header)
-        self._bytes_per_sample = bytes_per_sample(
-            self._binary_reel_header, self.revision)
+        self._bytes_per_sample = bytes_per_sample(self._binary_reel_header)
         self._max_num_trace_samples = None
 
     def __getstate__(self):

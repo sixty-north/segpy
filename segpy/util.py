@@ -3,6 +3,7 @@ import time
 import os
 import sys
 
+from contextlib import contextmanager
 from collections.abc import Set
 from itertools import (islice, cycle, tee, chain, repeat)
 
@@ -107,6 +108,7 @@ def complementary_intervals(intervals, start=None, stop=None):
         index = s.stop
 
     yield interval_type(index, stop)
+
 
 def intervals_are_contiguous(intervals):
     """Determine whether a series of intervals are contiguous.
@@ -471,3 +473,9 @@ def collect_attributes(derived_class, base_class=object, predicate=None):
             break
 
 
+@contextmanager
+def restored_position_seek(fh, pos):
+    original = fh.tell()
+    fh.seek(pos)
+    yield
+    fh.seek(original)

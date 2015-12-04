@@ -174,7 +174,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     Args:
         cache_file_path: A Path object referring to the pickle file.
 
-        seg_y_filename: The name of the SEG Y file which the pickled reader is expected
+        seg_y_path: The name of the SEG Y file which the pickled reader is expected
             to be able to read (used for error reporting).
 
     Returns:
@@ -226,6 +226,7 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
     return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
+
 
 class SegYReader(Dataset):
     """A basic SEG Y reader.

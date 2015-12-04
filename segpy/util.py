@@ -18,18 +18,11 @@ UNSET = object()
 
 
 def pairwise(iterable):
-    """Pairwise iteration.
-
-    Args:
-        iterable: An iterable series.
-
-    Returns:
-        An iterator over 2-tuples. If the iterable contains fewer than two
-        items the result series is empty.
-    """
     a, b = tee(iterable)
     next(b)
     yield from zip(a, b)
+
+
 
 
 def batched(iterable, batch_size, padding=UNSET):
@@ -294,7 +287,7 @@ def lower_first(s):
     return s[:1].lower() + s[1:]
 
 
-def almost_equal(x, y, epsilon):
+def almost_equal(x, y, epsilon=sys.float_info.epsilon):
     max_xy_one = max(1.0, abs(x), abs(y))
     e = epsilon * max_xy_one
     delta = abs(x - y)
@@ -447,6 +440,9 @@ def ensure_superset(superset, subset):
             raise ValueError("subset_or_slice {!r} is not a subset of all_items {!r}"
                              .format(subset, superset))
         return subset
+
+def identity(x):
+    return x
 
 def true(*args, **kwargs):
     return True

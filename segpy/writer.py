@@ -7,7 +7,7 @@ from segpy.toolkit import (write_textual_reel_header, write_binary_reel_header,
 
 
 def write_segy(fh,
-               seg_y_data,
+               dataset,
                encoding=None,
                trace_header_format=TraceHeaderRev1,
                endian='>',
@@ -16,19 +16,7 @@ def write_segy(fh,
     Args:
         fh: A file-like object open for binary write, positioned to write the textual reel header.
 
-        seg_y_data:  An object from which the headers and trace_samples data can be retrieved. Requires the following
-            properties and methods:
-              seg_y_data.textual_reel_header
-              seg_y_data.binary_reel_header
-              seg_y_data.extended_textual_header
-              seg_y_data.trace_indexes
-              seg_y_data.trace_header(trace_index)
-              seg_y_data.trace_samples(trace_index)
-
-              seg_y_data.encoding
-              seg_y_data.endian
-
-              One such legitimate object would be a SegYReader instance.
+        dataset: An object implementing the interface of segpy.dataset.Dataset, such as a SegYReader.
 
         trace_header_format: The class which defines the layout of the trace header. Defaults to TraceHeaderRev1.
 
@@ -44,17 +32,17 @@ def write_segy(fh,
         UnicodeError: If textual data provided cannot be encoded into the required encoding.
     """
 
-    encoding = encoding or (hasattr(seg_y_data, 'encoding') and seg_y_data.encoding) or ASCII
+    encoding = encoding or (hasattr(dataset, 'encoding') and dataset.encoding) or ASCII
 
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing SEG Y", encoding)
 
-    write_textual_reel_header(fh, seg_y_data.textual_reel_header, encoding)
-    write_binary_reel_header(fh, seg_y_data.binary_reel_header, endian)
-    write_extended_textual_headers(fh, seg_y_data.extended_textual_header, encoding)
+    write_textual_reel_header(fh, dataset.textual_reel_header, encoding)
+    write_binary_reel_header(fh, dataset.binary_reel_header, endian)
+    write_extended_textual_headers(fh, dataset.extended_textual_header, encoding)
 
     trace_header_packer = make_header_packer(trace_header_format, endian)
 
-    for trace_index in seg_y_data.trace_indexes():
-        write_trace_header(fh, seg_y_data.trace_header(trace_index), trace_header_packer)
-        write_trace_samples(fh, seg_y_data.trace_samples(trace_index), seg_y_data.data_sample_format, endian=endian)
+    for trace_index in dataset.trace_indexes():
+        write_trace_header(fh, dataset.trace_header(trace_index), trace_header_packer)
+        write_trace_samples(fh, dataset.trace_samples(trace_index), dataset.data_sample_format, endian=endian)

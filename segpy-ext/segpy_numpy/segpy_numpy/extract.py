@@ -400,3 +400,7 @@ def _extract_field_name(field):
         return field.name
     except AttributeError:
         raise TypeError("{!r} neither is a string nor has a 'name' attribute".format(field))
+
+def extract_array_dataset_3d(DataSet3d):
+    """"""
+    raise NotImplementedError

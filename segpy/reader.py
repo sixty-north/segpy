@@ -479,7 +479,6 @@ class SegYReader(Dataset):
         """
         return self._extended_textual_headers
 
-
     @property
     def filename(self):
         """The filename if it could be determined, otherwise '<unknown>'

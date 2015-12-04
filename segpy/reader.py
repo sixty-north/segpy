@@ -191,7 +191,6 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
         try:
             reader = pickle.load(pickle_file)
         except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
-            reader = None
             # TODO: Use logging here
             print("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
             try:

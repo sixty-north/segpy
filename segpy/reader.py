@@ -336,8 +336,8 @@ class SegYReader(Dataset):
         try:
             fh = open(state['_file_name'], state['_file_mode'])
         except OSError as e:
-            raise TypeError("Cannot unpickle {} because file {} could not be opened"
-                            .format(self.__class__.__name__, state['_filename']))
+            raise TypeError("Cannot unpickle {} as file {} could not be opened because {}"
+                            .format(self.__class__.__name__, state['_filename'], str(e)))
         else:
             self._fh = fh
             del state['_file_name']

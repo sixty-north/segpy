@@ -1,3 +1,10 @@
+"""A module of high-level tools for reading SEG Y data.
+
+The main function in this module is create_reader() with will return
+a SegYReader object.  The properties and methods of the SegYReader
+instance can be used to extract SEG Y data.
+"""
+
 import os
 import pickle
 from pathlib import Path
@@ -22,8 +29,7 @@ from segpy.toolkit import (extract_revision,
 
 
 def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None, cache_directory=".segpy"):
-    """Create a SegYReader (or one of its subclasses) based on performing
-    a scan of SEG Y data.
+    """Create a SegYReader based on performing a scan of SEG Y data.
 
     This function is the preferred method for creating SegYReader
     objects. It reads basic header information and attempts to build
@@ -58,9 +64,7 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             cache_directory is None, caching is disabled.
 
     Raises:
-        ValueError: ``fh`` is unsuitable for some reason, such as not
-                    being open, not being seekable, not being in
-                    binary mode, or being too short.
+        ValueError: ``fh`` is unsuitable for some reason, such as not being open, not being seekable, not being in binary mode, or being too short.
 
     Returns:
         A SegYReader object. Depending on the exact type of the
@@ -71,13 +75,6 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
         file-like object must remain open for the duration of use of
         the returned reader object. It is the caller's responsibility
         to close the underlying file.
-
-    Example:
-
-        with open('my_seismic_data.sgy', 'rb') as fh:
-            reader = create_reader(fh)
-            print(reader.num_traces())
-
     """
     if hasattr(fh, 'encoding') and fh.encoding is not None:
         raise TypeError(
@@ -247,13 +244,13 @@ class SegYReader(object):
                  endian='>'):
         """Initialize a SegYReader around a file-like-object.
 
-                Note:
+        Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
         Args:
             fh: A file-like object, which must support seeking and
-            support binary reading.
+                support binary reading.
 
             textual_reel_header: A sequence of forty 80-character Unicode strings
                 containing header data.
@@ -432,10 +429,6 @@ class SegYReader(object):
 
         Returns:
             A TraceHeader corresponding to the requested trace_samples.
-
-        Example:
-
-            first_trace_header, first_trace_samples = segy_reader.trace_samples(0)
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
@@ -446,20 +439,14 @@ class SegYReader(object):
 
     @property
     def trace_header_format_class(self):
-        """The trace header format class.
-
-        Instances of this class are what is returned from trace_header() unless the
+        """The trace header format class. Instances of this class are returned from trace_header() unless the
         header_packer has been overridden."""
         return self._trace_header_packer.header_format_class
 
     @property
     def dimensionality(self):
-        """The spatial dimensionality of the data.
-
-        Returns:
-            3 for 3D seismic volumes, 2 for 2D seismic lines, 1 for a
-            single trace_samples, otherwise 0.
-
+        """The spatial dimensionality of the data: 3 for 3D seismic volumes, 2 for 2D seismic lines, 1 for a
+        single trace_samples, otherwise 0.
         """
         return self._dimensionality()
 
@@ -468,44 +455,32 @@ class SegYReader(object):
 
     @property
     def textual_reel_header(self):
-        """The textual real header.
-
-        An immutable sequence of forty Unicode strings each 80 characters long.
+        """The textual real header as an immutable sequence of forty Unicode strings each 80 characters long.
         """
         return self._textual_reel_header
 
     @property
     def binary_reel_header(self):
         """The binary reel header.
-
-        A dictionary containing data from the reel header.
         """
         return self._binary_reel_header
 
     @property
     def extended_textual_header(self):
-        """A sequence of sequences of Unicode strings.
-
-        If there were no headers, the sequence will be empty.
+        """A sequence of sequences of Unicode strings. If there were no headers, the sequence will be empty.
         """
         return self._extended_textual_headers
 
 
     @property
     def filename(self):
-        """The filename.
-
-        Returns:
-            The filename if it could be determined, otherwise '<unknown>'
+        """The filename if it could be determined, otherwise '<unknown>'
         """
         return filename_from_handle(self._fh)
 
     @property
     def revision(self):
-        """The SEG Y revision.
-
-        Returns:
-            Either datatypes.SEGY_REVISION_0 or datatypes.SEGY_REVISION_1
+        """The SEG Y revision. Either datatypes.SEGY_REVISION_0 or datatypes.SEGY_REVISION_1
         """
         return self._revision
 
@@ -517,10 +492,7 @@ class SegYReader(object):
 
     @property
     def data_sample_format(self):
-        """The data type of the samples in machine-readable form.
-
-        Returns:
-            One of the values from datatypes.DATA_SAMPLE_FORMAT
+        """The data type of the samples in machine-readable form. One of the values from datatypes.DATA_SAMPLE_FORMAT.
         """
         return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self._binary_reel_header.data_sample_format]
 
@@ -564,7 +536,7 @@ class SegYReader3D(SegYReader):
                  endian='>'):
         """Initialize a SegYReader3D around a file-like-object.
 
-                Note:
+        Note:
             Usually a SegYReader is most easily constructed using the
             create_reader() function.
 
@@ -692,6 +664,8 @@ class SegYReader3D(SegYReader):
 
 
 class SegYReader2D(SegYReader):
+    """A reader for 2D seismic data."""
+
     def __init__(self,
                  fh,
                  textual_reel_header,

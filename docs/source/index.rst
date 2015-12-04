@@ -34,6 +34,10 @@ Reference Documentation
 
 Descriptions and examples for every public function, class and method in *Segpy*.
 
+.. toctree::
+   :maxdepth: 2
+
+   reference/reader
 
 Change History
 --------------

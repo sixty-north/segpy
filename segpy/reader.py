@@ -369,7 +369,14 @@ class SegYReader(Dataset):
         return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):
-        """The number of samples in the specified trace_samples."""
+        """The number of samples in the specified trace_samples.
+
+        Args:
+            trace_index: : An integer in the range zero to num_traces() - 1
+
+        Returns:
+            The number of trace samples in the trace.
+        """
         return self._trace_length_catalog[trace_index]
 
     def trace_samples(self, trace_index, start=None, stop=None):

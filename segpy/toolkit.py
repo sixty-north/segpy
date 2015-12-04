@@ -511,7 +511,8 @@ def format_standard_textual_header(revision, **kwargs):
             If the end_marker argument is not supplied, an appropriate end
             marker will be selected based on the SEG Y revision. For standard
             end markers consider using textual_reel_header.END_TEXTUAL_HEADER
-            or textual_reel_header.END_EBCDIC.
+            or textual_reel_header.END_EBCDIC.  Any values which are longer
+            than their placeholder will be truncated to the placeholder length.
 
     Returns:
         A list of forty Unicode strings.
@@ -556,10 +557,9 @@ def format_standard_textual_header(revision, **kwargs):
                         .format(list(kwargs.keys())))
 
     concatenation = ''.join(chunks)
-    lines = concatenation.splitlines(keepends=False)
+    lines = list(''.join(s) for s in batched(concatenation, CARD_LENGTH))
 
-    return lines[1:]  # Omit the first and last lines, which are artifacts of the multi-line string template
-
+    return lines
 
 _TEMPLATE_PATTERN = r'\{\s*(\w*)\s*\}'
 _TEMPLATE_REGEX = re.compile(_TEMPLATE_PATTERN)
@@ -595,7 +595,7 @@ def parse_standard_textual_header(header_lines):
         header: A sequence of forty Unicode strings.
 
     Returns:
-        A and ordered mapping of field names to Unicode strings.
+        An ordered mapping of field names to Unicode strings.
     """
     # TODO: Consider making the template (or the template module) an argument with a default.
 
@@ -651,7 +651,7 @@ def write_textual_reel_header(fh, lines, encoding):
     padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
     joined_header = EMPTY_BYTE_STRING.join(padded_lines)
-    assert len(joined_header) == 3200
+    assert len(joined_header) == TEXTUAL_HEADER_NUM_BYTES
     fh.write(joined_header)
 
 

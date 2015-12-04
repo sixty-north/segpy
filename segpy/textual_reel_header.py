@@ -1,6 +1,8 @@
 from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
 
-TEMPLATE = """
+# Do not use _TEMPLATE directly. Prefer to use TEMPLATE defined below which is
+# stripped of line endings.
+_TEMPLATE = """
 C 1 CLIENT { client             } COMPANY { company           } CREW NO {crew  }
 C 2 LINE { line   } AREA { area               } MAP ID { map_id                }
 C 3 REEL NO {reelnum} DAY-START OF REEL {d} YEAR {yr} OBSERVER {observer       }
@@ -43,6 +45,7 @@ C39 { unassigned17                                                             }
 C40 { end_marker                                                               }
 """
 
+TEMPLATE = ''.join(_TEMPLATE.splitlines(keepends=False)[1:])
 
 END_TEXTUAL_HEADER = 'END TEXTUAL HEADER'
 END_EBCDIC = 'END EBCDIC'

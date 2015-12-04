@@ -29,7 +29,13 @@ from segpy.toolkit import (extract_revision,
                            guess_textual_header_encoding)
 
 
-def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian='>', progress=None, cache_directory=".segpy"):
+def create_reader(
+        fh,
+        encoding=None,
+        trace_header_format=TraceHeaderRev1,
+        endian='>',
+        progress=None,
+        cache_directory=".segpy"):
     """Create a SegYReader based on performing a scan of SEG Y data.
 
     This function is the preferred method for creating SegYReader
@@ -65,7 +71,8 @@ def create_reader(fh, encoding=None, trace_header_format=TraceHeaderRev1, endian
             cache_directory is None, caching is disabled.
 
     Raises:
-        ValueError: ``fh`` is unsuitable for some reason, such as not being open, not being seekable, not being in binary mode, or being too short.
+        ValueError: ``fh`` is unsuitable for some reason, such as not being open, not being seekable, not being in
+        binary mode, or being too short.
 
     Returns:
         A SegYReader object. Depending on the exact type of the

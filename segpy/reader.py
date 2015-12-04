@@ -698,7 +698,7 @@ class SegYReader2D(SegYReader):
 
             binary_reel_header: A dictionary containing reel header data.
 
-            trace_catalog_offset: A mapping from zero-based trace_samples index to
+            trace_offset_catalog: A mapping from zero-based trace_samples index to
                 the byte-offset to individual traces within the file.
 
             trace_length_catalog: A mapping from zero-based trace_samples indexes to

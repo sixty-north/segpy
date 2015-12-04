@@ -1,8 +1,8 @@
 from itertools import zip_longest
 import unittest
 from io import BytesIO
+from hypothesis.strategies import sampled_from
 from hypothesis import given, example
-from hypothesis.specifiers import sampled_from
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC

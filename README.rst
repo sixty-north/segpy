@@ -15,9 +15,9 @@ Build status:
 
 .. image:: https://travis-ci.org/sixty-north/segpy.svg?branch=master
     :target: https://travis-ci.org/sixty-north/segpy
-
+    
 .. image:: https://readthedocs.org/projects/segpy/badge/?version=latest
-    :target: https://readthedocs.org/projects/segpy/?badge=latest
+    :target: http://segpy.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
 
 Segpy is alpha software but is usable in its current form.  That said you should expect minor breaking API changes

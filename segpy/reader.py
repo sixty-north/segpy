@@ -71,8 +71,9 @@ def create_reader(
             cache_directory is None, caching is disabled.
 
     Raises:
-        ValueError: ``fh`` is unsuitable for some reason, such as not being open, not being seekable, not being in
-        binary mode, or being too short.
+        ValueError: The file-like object``fh`` is unsuitable for some reason,
+            such as not being open, not being seekable, not being in
+            binary mode, or being too short.
 
     Returns:
         A SegYReader object. Depending on the exact type of the

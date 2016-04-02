@@ -768,7 +768,7 @@ class SegYReader2D(SegYReader):
         Returns:
             True if the trace_samples exists, otherwise False.
         """
-        return self._cdp_catalog[cdp_number]
+        return cdp_number in self._cdp_catalog
 
     def trace_index(self, cdp_number):
         """Obtain the trace_samples index given an xline and a inline.

@@ -177,19 +177,19 @@ class TestSequenceProtocol(unittest.TestCase):
 
     def test_repetition_zero_lhs(self):
         s = SortedFrozenSet([4, 5, 6])
-        self.assertEquals(0 * s, SortedFrozenSet())
+        self.assertEqual(0 * s, SortedFrozenSet())
 
     def test_repetition_zero_rhs(self):
         s = SortedFrozenSet([4, 5, 6])
-        self.assertEquals(s * 0, SortedFrozenSet())
+        self.assertEqual(s * 0, SortedFrozenSet())
 
     def test_repetition_nonzero_lhs(self):
         s = SortedFrozenSet([4, 5, 6])
-        self.assertEquals(100 * s, s)
+        self.assertEqual(100 * s, s)
 
     def test_repetition_nonzero_rhs(self):
         s = SortedFrozenSet([4, 5, 6])
-        self.assertEquals(s * 100, s)
+        self.assertEqual(s * 100, s)
 
 class TestReprProtocol(unittest.TestCase):
 

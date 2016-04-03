@@ -9,6 +9,7 @@ from hypothesis.strategies import integers, floats, one_of, just
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT,
                              MAX_EXACT_INTEGER_IBM_FLOAT, MIN_EXACT_INTEGER_IBM_FLOAT, EXPONENT_BIAS)
+
 from segpy.util import almost_equal
 
 ibm_compatible_negative_floats = floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)
@@ -62,34 +63,43 @@ class Ibm2Ieee(unittest.TestCase):
 
     def test_negative_118_625(self):
         # Example taken from Wikipedia http://en.wikipedia.org/wiki/IBM_Floating_Point_Architecture
-        self.assertEqual(ibm2ieee(bytes((0b11000010, 0b01110110, 0b10100000, 0b00000000))), -118.625)
+        self.assertEqual(ibm2ieee(bytes((0b11000010, 0b01110110, 0b10100000, 0b00000000))),
+                         -118.625)
 
     def test_largest_representable_number(self):
-        self.assertEqual(ibm2ieee(bytes((0b01111111, 0b11111111, 0b11111111, 0b11111111))), MAX_IBM_FLOAT)
+        self.assertEqual(ibm2ieee(bytes((0b01111111, 0b11111111, 0b11111111, 0b11111111))),
+                         MAX_IBM_FLOAT)
 
     def test_smallest_positive_normalised_number(self):
-        self.assertEqual(ibm2ieee(bytes((0b00000000, 0b00010000, 0b00000000, 0b00000000))), SMALLEST_POSITIVE_NORMAL_IBM_FLOAT)
+        self.assertEqual(ibm2ieee(bytes((0b00000000, 0b00010000, 0b00000000, 0b00000000))),
+                         SMALLEST_POSITIVE_NORMAL_IBM_FLOAT)
 
     def test_largest_negative_normalised_number(self):
-        self.assertEqual(ibm2ieee(bytes((0b10000000, 0b00010000, 0b00000000, 0b00000000))), LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)
+        self.assertEqual(ibm2ieee(bytes((0b10000000, 0b00010000, 0b00000000, 0b00000000))),
+                         LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)
 
     def test_smallest_representable_number(self):
-        self.assertEqual(ibm2ieee(bytes((0b11111111, 0b11111111, 0b11111111, 0b11111111))), MIN_IBM_FLOAT)
+        self.assertEqual(ibm2ieee(bytes((0b11111111, 0b11111111, 0b11111111, 0b11111111))),
+                         MIN_IBM_FLOAT)
 
     def test_error_1(self):
-        self.assertEqual(ibm2ieee(bytes((196, 74, 194, 143))), -19138.55859375)
+        self.assertEqual(ibm2ieee(bytes((196, 74, 194, 143))),
+                         -19138.55859375)
 
     def test_error_2(self):
-        self.assertEqual(ibm2ieee(bytes((191, 128, 0, 0))), -0.03125)
+        self.assertEqual(ibm2ieee(bytes((191, 128, 0, 0))),
+                         -0.03125)
 
     def test_subnormal(self):
-        self.assertEqual(ibm2ieee(bytes((0x00, 0x00, 0x00, 0x20))), 1.6472184286297693e-83)
+        self.assertEqual(ibm2ieee(bytes((0x00, 0x00, 0x00, 0x20))),
+                         1.6472184286297693e-83)
 
     def test_subnormal_is_subnormal(self):
         self.assertTrue(0 < ibm2ieee(bytes((0x00, 0x00, 0x00, 0x20))) < SMALLEST_POSITIVE_NORMAL_IBM_FLOAT)
 
     def test_subnormal_smallest_subnormal(self):
-        self.assertEqual(ibm2ieee(bytes((0x00, 0x00, 0x00, 0x01))), 5.147557589468029e-85)
+        self.assertEqual(ibm2ieee(bytes((0x00, 0x00, 0x00, 0x01))),
+                         5.147557589468029e-85)
 
 
 class Ieee2Ibm(unittest.TestCase):

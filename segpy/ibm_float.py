@@ -379,7 +379,7 @@ class IBMFloat(Real):
         preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
 
         truncated_mantissa = mantissa & preserve_mask
-        magnitude = truncated_mantissa * pow(16, exponent_16) >> MAX_BITS_PRECISION_IBM_FLOAT
+        magnitude = int(truncated_mantissa * pow(16, exponent_16)) >> MAX_BITS_PRECISION_IBM_FLOAT
         return sign * magnitude
 
     def normalize(self):

@@ -3,12 +3,47 @@ from math import trunc
 import unittest
 
 from hypothesis import given, assume
-from hypothesis.strategies import integers, floats
+from hypothesis.errors import UnsatisfiedAssumption
+from hypothesis.strategies import integers, floats, one_of, just
 
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT,
                              MAX_EXACT_INTEGER_IBM_FLOAT, MIN_EXACT_INTEGER_IBM_FLOAT, EXPONENT_BIAS)
 from segpy.util import almost_equal
+
+ibm_compatible_negative_floats = floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)
+ibm_compatible_positive_floats = floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT)
+
+ibm_compatible_non_negative_floats = one_of(
+    just(0.0),
+    floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT))
+
+ibm_compatible_non_positive_floats = one_of(
+    just(0.0),
+    floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT))
+
+
+def ibm_compatible_floats(min_f, max_f):
+    truncated_min_f = max(min_f, MIN_IBM_FLOAT)
+    truncated_max_f = min(max_f, MAX_IBM_FLOAT)
+
+    strategies = []
+    if truncated_min_f <= LARGEST_NEGATIVE_NORMAL_IBM_FLOAT <= truncated_max_f:
+        strategies.append(floats(truncated_min_f, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT))
+
+    if truncated_min_f <= SMALLEST_POSITIVE_NORMAL_IBM_FLOAT <= truncated_max_f:
+        strategies.append(floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, truncated_max_f))
+
+    if truncated_min_f <= 0 <= truncated_max_f:
+        strategies.append(just(0.0))
+
+    if len(strategies) == 0:
+        strategies.append(floats(truncated_min_f, truncated_max_f))
+
+    return one_of(*strategies)
+
+
+any_ibm_compatible_floats = ibm_compatible_floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT)
 
 
 class Ibm2Ieee(unittest.TestCase):
@@ -178,7 +213,7 @@ class TestIBMFloat(unittest.TestCase):
         with self.assertRaises(OverflowError):
             IBMFloat.from_float(MIN_IBM_FLOAT * 10)
 
-    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(any_ibm_compatible_floats)
     def test_bool(self, f):
         self.assertEqual(bool(IBMFloat.from_float(f)), bool(f))
 
@@ -191,13 +226,13 @@ class TestIBMFloat(unittest.TestCase):
         ibm = IBMFloat.from_bytes(b)
         self.assertEqual(bytes(ibm), b)
 
-    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(any_ibm_compatible_floats)
     def test_floats_roundtrip(self, f):
         ibm = IBMFloat.from_float(f)
         self.assertTrue(almost_equal(f, float(ibm), epsilon=EPSILON_IBM_FLOAT))
 
     @given(integers(0, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats(0.0, 1.0))
+           ibm_compatible_floats(0.0, 1.0))
     def test_trunc_above_zero(self, i, f):
         assume(f != 1.0)
         ieee = i + f
@@ -205,7 +240,7 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(trunc(ibm), i)
 
     @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT + 1, 0),
-           floats(0.0, 1.0))
+           ibm_compatible_floats(0.0, 1.0))
     def test_trunc_below_zero(self, i, f):
         assume(f != 1.0)
         ieee = i - f
@@ -213,14 +248,14 @@ class TestIBMFloat(unittest.TestCase):
         self.assertEqual(trunc(ibm), i)
 
     @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
+           ibm_compatible_floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_ceil(self, i, f):
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         self.assertEqual(math.ceil(ibm), i + 1)
 
     @given(integers(MIN_EXACT_INTEGER_IBM_FLOAT, MAX_EXACT_INTEGER_IBM_FLOAT - 1),
-           floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
+           ibm_compatible_floats(EPSILON_IBM_FLOAT, 1 - EPSILON_IBM_FLOAT))
     def test_floor(self, i, f):
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
@@ -309,32 +344,35 @@ class TestIBMFloat(unittest.TestCase):
         negated = -zero
         self.assertTrue(negated.is_zero())
 
-    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT))
+    @given(any_ibm_compatible_floats)
     def test_signbit(self, f):
         ltz = f < 0
         ibm = IBMFloat.from_float(f)
         self.assertEqual(ltz, ibm.signbit)
 
-    @given(floats(-1.0, +1.0),
+    @given(ibm_compatible_floats(-1.0, +1.0),
            integers(-256, 255))
     def test_ldexp_frexp(self, fraction, exponent):
         try:
             ibm = IBMFloat.ldexp(fraction, exponent)
-        except OverflowError:
-            assume(False)
+        except (OverflowError, FloatingPointError):
+            raise UnsatisfiedAssumption
         else:
             f, e = ibm.frexp()
             self.assertTrue(almost_equal(fraction * 2**exponent, f * 2**e, epsilon=EPSILON_IBM_FLOAT))
 
-    @given(floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
-           floats(0.0, 1.0))
+    @given(any_ibm_compatible_floats,
+           ibm_compatible_floats(0.0, 1.0))
     def test_add(self, f, p):
         a = f * p
         b = f - a
 
-        ibm_a = IBMFloat.from_float(a)
-        ibm_b = IBMFloat.from_float(b)
-        ibm_c = ibm_a + ibm_b
+        try:
+            ibm_a = IBMFloat.from_float(a)
+            ibm_b = IBMFloat.from_float(b)
+            ibm_c = ibm_a + ibm_b
+        except FloatingPointError:
+            raise UnsatisfiedAssumption
 
         ieee_a = float(ibm_a)
         ieee_b = float(ibm_b)
@@ -342,19 +380,21 @@ class TestIBMFloat(unittest.TestCase):
 
         self.assertTrue(almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT * 4))
 
-    @given(floats(0, MAX_IBM_FLOAT),
-           floats(0, MAX_IBM_FLOAT))
+    @given(ibm_compatible_non_negative_floats,
+           ibm_compatible_non_negative_floats)
     def test_sub(self, a, b):
-        ibm_a = IBMFloat.from_float(a)
-        ibm_b = IBMFloat.from_float(b)
-        ibm_c = ibm_a - ibm_b
+        try:
+            ibm_a = IBMFloat.from_float(a)
+            ibm_b = IBMFloat.from_float(b)
+            ibm_c = ibm_a - ibm_b
+        except FloatingPointError:
+            raise UnsatisfiedAssumption
 
         ieee_a = float(ibm_a)
         ieee_b = float(ibm_b)
         ieee_c = ieee_a - ieee_b
 
         self.assertTrue(almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT))
-
 
 
 if __name__ == '__main__':

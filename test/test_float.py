@@ -13,8 +13,9 @@ from segpy.util import almost_equal
 
 class Ibm2Ieee(unittest.TestCase):
 
-    def test_zero(self):
-        self.assertEqual(ibm2ieee(b'\0\0\0\0'), 0.0)
+    @given(integers(0, 255))
+    def test_zero(self, a):
+        self.assertEqual(ibm2ieee(bytes([a, 0, 0, 0])), 0.0)
 
     def test_positive_half(self):
         self.assertEqual(ibm2ieee(bytes((0b11000000, 0x80, 0x00, 0x00))), -0.5)

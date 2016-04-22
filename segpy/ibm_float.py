@@ -39,7 +39,7 @@ def ibm2ieee(big_endian_bytes):
     """
     a, b, c, d = four_bytes(big_endian_bytes)
 
-    if a == b == c == d == 0:
+    if b == c == d == 0:
         return 0.0
 
     sign = -1 if (a & 0x80) else 1
@@ -436,6 +436,3 @@ class IBMFloat(Real):
 
 
 IBM_FLOAT_ZERO = IBMFloat.from_bytes(IBM_ZERO_BYTES)
-
-
-

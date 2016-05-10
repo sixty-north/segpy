@@ -30,7 +30,7 @@ The SEG Y file format is one of several standards developed by the Society of Ex
 geophysical seismic data. It is an open standard, and is controlled by the SEG Technical Standards Committee, a
 non-profit organization.
 
-This project aims to implement an open SEG Y module in Python for transporting seismic data between SEG Y files and
+This project aims to implement an open SEG Y module in Python 3 for transporting seismic data between SEG Y files and
 Python data structures in pure Python.
 
 
@@ -41,10 +41,20 @@ The easiest way to contribute is to use Segpy submit reports for defects or any 
 see `CONTRIBUTING.rst <https://github.com/sixty-north/segpy/blob/master/CONTRIBUTING.rst>`_ for more details.
 
 
+Development
+===========
+
+Segpy was created by – and to meet the needs of – Sixty North.  If you require additional features, improved
+performance, portability to earlier versions of Python, or specific defects fixed (such defects are marked 'unfunded'
+in the GitHub issue tracker) Sixty North's experienced *Segpy* maintainers may be available to perform
+funded development work.  Enquire with Sixty North at http://sixty-north.com.
+
+
 Segpy Versions
 ==============
 
-Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python and represents a complete break from any and all older
+Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python 3 and represents a complete break from any and all older
 versions of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is
 shared across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.
 Earlier versions of Segpy are deprecated and completely unsupported.
+

@@ -114,5 +114,5 @@ setup(
         'console_scripts': [
             'segpy = segpy.cli:main',
         ],
-    },
+    }
 )

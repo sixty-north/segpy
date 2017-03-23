@@ -1,8 +1,7 @@
 from itertools import zip_longest
-import unittest
 from io import BytesIO
 from hypothesis.strategies import sampled_from
-from hypothesis import given, example
+from hypothesis import given
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC
@@ -14,7 +13,7 @@ from segpy.toolkit import write_binary_reel_header, read_binary_reel_header, wri
 from test.strategies import header, multiline_ascii_encodable_text, fixed_dict_of_printable_strings
 
 
-class TestBinaryReelHeader(unittest.TestCase):
+class TestBinaryReelHeader:
     @given(header(BinaryReelHeader),
            sampled_from(['<', '>']))
     def test_roundtrip(self, write_header, endian):
@@ -25,10 +24,10 @@ class TestBinaryReelHeader(unittest.TestCase):
         with BytesIO(written_stream) as read_stream:
             read_header = read_binary_reel_header(read_stream, endian)
 
-        self.assertTrue(are_equal(write_header, read_header))
+        assert are_equal(write_header, read_header)
 
 
-class TestTextualReelHeader(unittest.TestCase):
+class TestTextualReelHeader:
     @given(multiline_ascii_encodable_text(0, CARDS_PER_HEADER),
            sampled_from([ASCII, EBCDIC]))
     def test_roundtrip(self, write_header_text, encoding):
@@ -43,8 +42,7 @@ class TestTextualReelHeader(unittest.TestCase):
         for written_line, read_line in zip_longest(write_header_lines[:CARDS_PER_HEADER],
                                                    read_header_lines,
                                                    fillvalue=""):
-            self.assertEqual(written_line[:CARD_LENGTH].rstrip().ljust(CARD_LENGTH),
-                             read_line)
+            assert written_line[:CARD_LENGTH].rstrip().ljust(CARD_LENGTH) == read_line
 
     @given(multiline_ascii_encodable_text(0, CARDS_PER_HEADER),
            sampled_from([ASCII, EBCDIC]))
@@ -57,7 +55,7 @@ class TestTextualReelHeader(unittest.TestCase):
         with BytesIO(written_stream) as read_stream:
             read_header_lines = read_textual_reel_header(read_stream, encoding)
 
-        self.assertEqual(len(read_header_lines), CARDS_PER_HEADER)
+        assert len(read_header_lines) == CARDS_PER_HEADER
 
     @given(multiline_ascii_encodable_text(0, CARDS_PER_HEADER),
            sampled_from([ASCII, EBCDIC]))
@@ -70,7 +68,7 @@ class TestTextualReelHeader(unittest.TestCase):
         with BytesIO(written_stream) as read_stream:
             read_header_lines = read_textual_reel_header(read_stream, encoding)
 
-        self.assertTrue(all(len(line) == CARD_LENGTH for line in read_header_lines))
+        assert all(len(line) == CARD_LENGTH for line in read_header_lines)
 
     @given(write_header_fields=fixed_dict_of_printable_strings(textual_reel_header.TEMPLATE_FIELD_NAMES.values()),
            revision=sampled_from([SEGY_REVISION_0, SEGY_REVISION_1]),
@@ -87,15 +85,15 @@ class TestTextualReelHeader(unittest.TestCase):
         with BytesIO(written_stream) as read_stream:
             read_header_lines = read_textual_reel_header(read_stream, encoding)
 
-        self.assertListEqual(write_header_lines, list(read_header_lines))
+        assert write_header_lines == list(read_header_lines)
 
         read_header_fields = parse_standard_textual_header(read_header_lines)
 
-        self.assertEqual(write_header_fields.keys(), read_header_fields.keys())
+        assert write_header_fields.keys() == read_header_fields.keys()
 
         # When checking for equality, we need to take account of the fact that
         # the header values will have been stripped and may have been trunctated
         for field_name in write_header_fields:
             written_field_value = write_header_fields[field_name]
             read_field_value = read_header_fields[field_name]
-            self.assertTrue(written_field_value.strip().startswith(read_field_value.strip()))
+            assert written_field_value.strip().startswith(read_field_value.strip())

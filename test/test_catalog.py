@@ -1,25 +1,24 @@
-import unittest
-
-from hypothesis import given, example, assume
-from hypothesis.strategies import dictionaries, just, integers, streaming, tuples
+from hypothesis import given, assume
+from hypothesis.strategies import (dictionaries, just,
+                                   integers, streaming, tuples)
 from segpy.catalog import CatalogBuilder
 
 
-class TestCatalogBuilder(unittest.TestCase):
+class TestCatalogBuilder:
 
     @given(dictionaries(integers(), integers()))
     def test_arbitrary_mapping(self, mapping):
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(dictionaries(integers(), just(42)))
     def test_constant_mapping(self, mapping):
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
            num=integers(0, 10000),
@@ -27,11 +26,12 @@ class TestCatalogBuilder(unittest.TestCase):
            value=integers())
     def test_regular_constant_mapping(self, start, num, step, value):
         assume(step != 0)
-        mapping = {key: value for key in range(start, start + num*step, step)}
+        mapping = {key: value for key in range(
+            start, start + num * step, step)}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
            num=integers(0, 10000),
@@ -39,11 +39,12 @@ class TestCatalogBuilder(unittest.TestCase):
            values=streaming(integers()))
     def test_regular_mapping(self, start, num, step, values):
         assume(step != 0)
-        mapping = {key: value for key, value in zip(range(start, start + num*step, step), values)}
+        mapping = {key: value for key, value in zip(
+            range(start, start + num * step, step), values)}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(num=integers(0, 10000),
            key_start=integers(),
@@ -53,19 +54,19 @@ class TestCatalogBuilder(unittest.TestCase):
     def test_linear_regular_mapping(self, num, key_start, key_step, value_start, value_step):
         assume(key_step != 0)
         assume(value_step != 0)
-        mapping = {key: value for key, value in zip(range(key_start, key_start + num*key_step, key_step),
-                                                    range(value_start, value_start + num*value_step, value_step))}
+        mapping = {key: value for key, value in zip(range(key_start, key_start + num * key_step, key_step),
+                                                    range(value_start, value_start + num * value_step, value_step))}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(dictionaries(tuples(integers(), integers()), integers()))
     def test_arbitrary_mapping(self, mapping):
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)
 
     @given(i_start=integers(0, 10),
            i_num=integers(1, 10),
@@ -79,13 +80,13 @@ class TestCatalogBuilder(unittest.TestCase):
         assume(j_step != 0)
 
         def v(i, j):
-            return (i - i_start) * ((j_start + j_num*j_step) - j_start) + (j - j_start) + c
+            return (i - i_start) * ((j_start + j_num * j_step) - j_start) + (j - j_start) + c
 
         mapping = {(i, j): v(i, j)
-                   for i in range(i_start, i_start + i_num*i_step, i_step)
-                   for j in range(j_start, j_start + j_num*j_step, j_step)}
+                   for i in range(i_start, i_start + i_num * i_step, i_step)
+                   for j in range(j_start, j_start + j_num * j_step, j_step)}
 
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
-        self.assertEqual(len(shared_items), len(mapping))
+        assert len(shared_items) == len(mapping)

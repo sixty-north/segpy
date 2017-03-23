@@ -1,19 +1,17 @@
-import unittest
-
 from hypothesis import given, assume, example
 from hypothesis.strategies import integers, lists
 from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin
 from test.strategies import spaced_ranges
 
 
-class TestBatched(unittest.TestCase):
+class TestBatched:
 
     @given(lists(integers()),
            integers(1, 1000))
     def test_batch_sizes_unpadded(self, items, batch_size):
         assume(batch_size > 0)
         batches = list(batched(items, batch_size))
-        self.assertTrue(all(len(batch) == batch_size for batch in batches[:-1]))
+        assert all(len(batch) == batch_size for batch in batches[:-1])
 
     @given(lists(integers()),
            integers(1, 1000))
@@ -21,7 +19,7 @@ class TestBatched(unittest.TestCase):
         assume(len(items) > 0)
         assume(batch_size > 0)
         batches = list(batched(items, batch_size))
-        self.assertTrue(len(batches[-1]) <= batch_size)
+        assert len(batches[-1]) <= batch_size
 
     @given(lists(integers()),
            integers(1, 1000),
@@ -29,7 +27,7 @@ class TestBatched(unittest.TestCase):
     def test_batch_sizes_padded(self, items, batch_size, pad):
         assume(batch_size > 0)
         batches = list(batched(items, batch_size, padding=pad))
-        self.assertTrue(all(len(batch) == batch_size for batch in batches))
+        assert all(len(batch) == batch_size for batch in batches)
 
     @given(lists(integers()),
            integers(1, 1000),
@@ -41,21 +39,21 @@ class TestBatched(unittest.TestCase):
         pad_length = batch_size - num_left_over if num_left_over != 0 else 0
         assume(pad_length != 0)
         batches = list(batched(items, batch_size, padding=pad))
-        self.assertEqual(batches[-1][batch_size - pad_length:], [pad] * pad_length)
+        assert batches[-1][batch_size - pad_length:] == [pad] * pad_length
 
     def test_pad(self):
         batches = list(batched([0, 0], 3, 42))
-        self.assertEqual(batches[-1], [0, 0, 42])
+        assert batches[-1] == [0, 0, 42]
 
 
-class TestComplementaryIntervals(unittest.TestCase):
+class TestComplementaryIntervals:
 
     @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
                          min_interval=0, max_interval=10))
     def test_contiguous(self, intervals):
         complements = complementary_intervals(intervals)
         interleaved = list(roundrobin(complements, intervals))
-        self.assertTrue(intervals_are_contiguous(interleaved))
+        assert intervals_are_contiguous(interleaved)
 
     @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
                          min_interval=0, max_interval=10),
@@ -64,7 +62,7 @@ class TestComplementaryIntervals(unittest.TestCase):
         first_interval_start = intervals[0].start
         start_index = first_interval_start - start_offset
         complements = list(complementary_intervals(intervals, start=start_index))
-        self.assertEqual(complements[0], range(start_index, first_interval_start))
+        assert complements[0] == range(start_index, first_interval_start)
 
     @given(spaced_ranges(min_num_ranges=1, max_num_ranges=10,
                          min_interval=0, max_interval=10),
@@ -74,7 +72,4 @@ class TestComplementaryIntervals(unittest.TestCase):
         last_interval_end = intervals[-1].stop
         end_index = last_interval_end + end_offset
         complements = list(complementary_intervals(intervals, stop=end_index))
-        self.assertEqual(complements[-1], range(last_interval_end, end_index))
-
-if __name__ == '__main__':
-    unittest.main()
+        assert complements[-1] == range(last_interval_end, end_index)

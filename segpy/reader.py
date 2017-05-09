@@ -172,10 +172,10 @@ def _save_reader_to_cache(reader, cache_file_path):
             try:
                 pickle.dump(reader, cache_file)
             except (pickle.PicklingError, TypeError) as pickling_error:
-                print("Could not pickle {} because {}".format(reader, pickling_error))
+                log.warn("Could not pickle {} because {}".format(reader, pickling_error))
                 pass
     except OSError as os_error:
-        print("Could not cache {} because {}".format(reader, os_error))
+        log.warn("Could not cache {} because {}".format(reader, os_error))
 
 
 def _load_reader_from_cache(cache_file_path, seg_y_path):
@@ -783,62 +783,6 @@ class SegYReader2D(SegYReader):
             A trace_samples index which can be used with trace_samples().
         """
         return self._cdp_catalog[cdp_number]
-
-
-def main(argv=None):
-    import sys
-
-    if argv is None:
-        argv = sys.argv[1:]
-
-    class ProgressBar(object):
-
-        def __init__(self, num_chars, character='.'):
-            self._num_chars = num_chars
-            self._character = character
-            self._ratchet = 0
-
-        def __call__(self, proportion):
-            existing = self._num_marks(self._ratchet)
-            required = self._num_marks(proportion)
-            print(self._character * (required - existing), end='')
-            self._ratchet = proportion
-
-        def _num_marks(self, p):
-            return int(round(p * self._num_chars))
-
-    filename = argv[0]
-
-    with open(filename, 'rb') as segy_file:
-        segy_reader = create_reader(segy_file, progress=ProgressBar(30))
-        print()
-        print("Filename:             ", segy_reader.filename)
-        print("SEG Y revision:       ", segy_reader.revision)
-        print("Number of traces:     ", segy_reader.num_traces())
-        print("Data format:          ",
-              segy_reader.data_sample_format_description)
-        print("Dimensionality:       ", segy_reader.dimensionality)
-
-        try:
-            print("Number of CDPs:       ", segy_reader.num_cdps())
-        except AttributeError:
-            pass
-
-        try:
-            print("Number of inlines:    ", segy_reader.num_inlines())
-            print("Number of crosslines: ", segy_reader.num_xlines())
-        except AttributeError:
-            pass
-
-        print("=== BEGIN TEXTUAL REEL HEADER ===")
-        for line in segy_reader.textual_reel_header:
-            print(line[3:])
-        print("=== END TEXTUAL REEL HEADER ===")
-        print()
-        print("=== BEGIN EXTENDED TEXTUAL HEADER ===")
-        print(segy_reader.extended_textual_header)
-        print("=== END EXTENDED TEXTUAL_HEADER ===")
-
 
 if __name__ == '__main__':
     main()

@@ -2,7 +2,7 @@
 
 from segpy.reader import create_reader
 from segpy.trace_header import TraceHeaderRev1
-from segpy.types import Int16
+from segpy.field_types import Int16
 from segpy.writer import write_segy
 from segpy.header import are_equal, field
 

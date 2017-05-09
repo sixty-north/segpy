@@ -322,8 +322,9 @@ class DictionaryCatalog2D(Catalog2D):
 
     def __repr__(self):
         return '{}(i_range={}, j_range={}, items={})'.format(
+            self.__class__.__name__,
             self.i_range, self.j_range,
-            self.__class__.__name__, reprlib.repr(self._items.items()))
+            reprlib.repr(self._items.items()))
 
 
 class RegularConstantCatalog(Mapping):

@@ -1,5 +1,5 @@
 from segpy.header import FormatMeta, field
-from segpy.types import Int32, Int16
+from segpy.field_types import Int32, Int16
 
 
 class BinaryReelHeader(metaclass=FormatMeta):

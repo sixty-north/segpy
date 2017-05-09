@@ -1,7 +1,11 @@
+import logging
+import os
+
 from docopt import docopt
 import json
 import sys
 
+import segpy
 from segpy.reader import create_reader
 
 
@@ -75,7 +79,20 @@ class Subcommands:
             argv,
             version=self.version)
 
-        # run the command
+        log_level = args['--log-level'].upper()
+
+        try:
+            segpy.log.setLevel(log_level)
+        except ValueError:
+            print("Unknown log-level {!r}".format(log_level))
+            return os.EX_USAGE
+
+        log_handler = logging.StreamHandler(stream=sys.stderr)
+        log_handler.setLevel(log_level)
+        log_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+        segpy.log.addHandler(log_handler)
+
         return handler(args)
 
     def _handle_help(self, config):
@@ -100,7 +117,7 @@ class Subcommands:
 
 
 def handle_metadata(args):
-    """usage: {program} {command} <filename>
+    """usage: {program} {command} <filename> [--log-level=<level>]
 
     Print metadata for a SEGY file.
     """
@@ -132,7 +149,9 @@ Use segpy to read data about SEGY files.
 Usage: {program} [options] <command> [<args> ...]
 
 Options:
-  -h --help     Show this screen.
+  -h --help          Show this screen.
+  --log-level=LEVEL  One of DEBUG, INFO, WARNING,
+                     ERROR, CRITICAL. [default: WARNING]
 
 Available commands:
   {available_commands}
@@ -146,7 +165,7 @@ def main(argv=None):
         OPTIONS,
         COMMAND_MAP,
         'segpy',
-        'segpy v1.0')
+        segpy.__version__)
 
     if argv is None:
         argv = sys.argv[1:]

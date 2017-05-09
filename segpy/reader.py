@@ -8,6 +8,7 @@ instance can be used to extract SEG Y data.
 import os
 import pickle
 from pathlib import Path
+import logging
 
 from segpy import __version__
 from segpy.dataset import Dataset
@@ -28,6 +29,9 @@ from segpy.toolkit import (extract_revision,
                            read_extended_textual_headers,
                            guess_textual_header_encoding)
 
+
+log = logging.getLogger(__name__)
+log.setLevel('INFO')
 
 def create_reader(
         fh,
@@ -199,18 +203,17 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
         try:
             reader = pickle.load(pickle_file)
         except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
-            # TODO: Use logging here
-            print("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
+            log.info("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
             try:
                 cache_file_path.unlink()
             except OSError as os_error:
-                # TODO: Use logging here
-                print("Could not remove stale cache entry {} for {} because {}"
+                log.warn("Could not remove stale cache entry {} for {} because {}"
                       .format(cache_file_path, seg_y_path, os_error))
             else:
-                # TODO: Use logging here
-                print("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
+                log.info("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
             return None
+        else:
+            log.info("Successfully unpickled reader for {}".format(seg_y_path))
     if not isinstance(reader, SegYReader):
         raise TypeError("Pickle at {} does not contain a {} instance.".format(cache_file_path, SegYReader.__name__))
     return reader

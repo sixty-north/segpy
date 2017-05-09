@@ -202,7 +202,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     with cache_file_path.open('rb') as pickle_file:
         try:
             reader = pickle.load(pickle_file)
-        except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
+        except Exception as unpickling_error:
             log.info("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
             try:
                 cache_file_path.unlink()

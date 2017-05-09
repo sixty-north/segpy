@@ -4,8 +4,10 @@ import pytest
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
 import segpy.toolkit as toolkit
 from segpy.util import almost_equal
+from unittest.mock import patch
 
 from test.test_float import any_ibm_compatible_floats
+import test.util
 
 
 @st.composite
@@ -39,6 +41,36 @@ class TestPackIBMFloat:
                 epsilon=EPSILON_IBM_FLOAT)
 
 
+class TestPackImplementationSelection:
+    @given(st.data())
+    def test_python_pack_used_when_forced(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.pack_ibm_floats_py') as mock,\
+             test.util.force_python_ibm_float(True):
+            toolkit.pack_ibm_floats(data)
+            assert mock.called
+
+    @pytest.mark.skipif(toolkit.pack_ibm_floats_cpp is None,
+                        reason="C++ IBM float not installed")
+    @given(st.data())
+    def test_cpp_pack_used_when_available(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.pack_ibm_floats_cpp') as mock,\
+             test.util.force_python_ibm_float(False):
+            toolkit.pack_ibm_floats(data)
+            assert mock.called
+
+    @pytest.mark.skipif(toolkit.pack_ibm_floats_cpp is not None,
+                        reason="C++ IBM float is installed")
+    @given(st.data())
+    def test_python_pack_used_as_fallback(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.pack_ibm_floats_py') as mock,\
+             test.util.force_python_ibm_float(False):
+            toolkit.pack_ibm_floats(data)
+            assert mock.called
+
+
 @pytest.mark.usefixtures("ibm_floating_point_impls")
 class TestUnpackIBMFloat:
     def test_unpack_empty(self):
@@ -51,3 +83,33 @@ class TestUnpackIBMFloat:
         unpacked = toolkit.unpack_ibm_floats(byte_data, num_items)
         packed = toolkit.pack_ibm_floats(unpacked)
         assert bytes(byte_data) == bytes(packed)
+
+
+class TestUnpackImplementationSelection:
+    @given(st.data())
+    def test_python_unpack_used_when_forced(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.unpack_ibm_floats_py') as mock,\
+             test.util.force_python_ibm_float(True):
+            toolkit.unpack_ibm_floats(*data)
+            assert mock.called
+
+    @pytest.mark.skipif(toolkit.unpack_ibm_floats_cpp is None,
+                        reason="C++ IBM float not installed")
+    @given(st.data())
+    def test_cpp_unpack_used_when_available(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.unpack_ibm_floats_cpp') as mock,\
+             test.util.force_python_ibm_float(False):
+            toolkit.unpack_ibm_floats(*data)
+            assert mock.called
+
+    @pytest.mark.skipif(toolkit.unpack_ibm_floats_cpp is not None,
+                        reason="C++ IBM float is installed")
+    @given(st.data())
+    def test_python_unpack_used_as_fallback(self, data):
+        data = data.draw(byte_arrays_of_floats())
+        with patch('segpy.toolkit.unpack_ibm_floats_py') as mock,\
+             test.util.force_python_ibm_float(False):
+            toolkit.unpack_ibm_floats(*data)
+            assert mock.called

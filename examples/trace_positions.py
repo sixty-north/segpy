@@ -1,27 +1,18 @@
 #!/usr/bin/env python3
 
-"""Extract a timeslice from a 3D seismic volume to a Numpy array.
-
-This utility assumes the inline and crossline numbers are evenly spaced.
-Each inline of the source data will be represented as a single row, and
-each crossline as a single column in the resulting 2D array.
+"""Print the position coordinates of every trace.
 
 Usage: trace_positions.py [-h] segy-file
 
 Positional arguments:
   segy-file      Path to an existing SEG Y file of 3D seismic data
-  npy-file       Path to the Numpy array file to be created for the timeslice
-  slice-index    Zero based index of the time slice to be extracted
 
 Optional arguments:
   -h, --help     show this help message and exit
-  --dtype DTYPE  Numpy data type. If not provided a dtype compatible with the
-                 SEG Y data will be used.
-  --null NULL    Sample value to use for missing or short traces.
 
 Example:
 
-  timeslice.py stack_final_int8.sgy slice_800.npy 800 --null=42.0 --dtype=f
+  trace_positions.py stack_final_int8.sgy
 """
 
 import argparse

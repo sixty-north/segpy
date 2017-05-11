@@ -98,7 +98,7 @@ class ArrayDataset3d(Dataset, metaclass=ABCMeta):
     def trace_header(self, trace_index):
         pass
 
-    def trace_samples(self, trace_index):
+    def trace_samples(self, trace_index, **kwargs):
         self._completion_strategy.inline_xline_index(trace_index)
 
     def __repr__(self):

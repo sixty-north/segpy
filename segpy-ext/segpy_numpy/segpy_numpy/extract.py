@@ -1,11 +1,52 @@
 """Tools for interoperability between Segpy and Numpy arrays."""
 from collections import namedtuple
 import numpy as np
-from segpy.header import Header, SubFormatMeta
+from segpy.header import SubFormatMeta
 from segpy.packer import make_header_packer
 
 from segpy.util import ensure_superset
 from segpy_numpy.dtypes import make_dtype
+
+
+def extract_trace_headers(reader, fields, trace_indexes=None):
+    """Extract trace header fields from the specified trace headers as separate arrays.
+
+    Args:
+        reader: A SegYReader
+
+        fields: A an iterable series where each item is either the name of a field as a string
+            or an object such as a NamedField with a 'name' attribute which in turn is the name
+            of a field as a string, such as a NamedField.
+
+        trace_indexes: An optional iterable series of trace_indexes. If not provided or None,
+            the headers for all trace indexes will be returned.
+
+    Returns:
+        A namedtuple with attributes which are one-dimensionsal Numpy arrays.
+    """
+    if trace_indexes is None:
+        trace_indexes = reader.trace_indexes()
+
+    field_names = [_extract_field_name(field) for field in fields]
+
+    class SubFormat(metaclass=SubFormatMeta,
+                    parent_format=reader.trace_header_format_class,
+                    parent_field_names=field_names):
+        pass
+
+    sub_header_packer = make_header_packer(SubFormat, reader.endian)
+    trace_header_arrays_cls = namedtuple('trace_header_arrays_cls', field_names)
+
+    trace_headers = [reader.trace_header(trace_index, sub_header_packer)
+                     for trace_index in trace_indexes]
+
+    trace_header_arrays = trace_header_arrays_cls(
+        *(np.fromiter((getattr(trace_header, field_name) for trace_header in trace_headers),
+                      dtype=make_dtype(getattr(SubFormat, field_name).value_type.SEG_Y_TYPE))
+          for field_name in field_names)
+    )
+
+    return trace_header_arrays
 
 
 def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_numbers=None, null=None):
@@ -96,7 +137,7 @@ def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_
 
 
 def extract_trace(reader, trace_index, sample_numbers):
-    """Extract an single trace as a one-dimensional array.
+    """Extract a single trace as a one-dimensional array.
 
     Args:
         reader: A SegYReader3D object.
@@ -128,7 +169,7 @@ def extract_trace(reader, trace_index, sample_numbers):
 
     trace_sample_start = sample_numbers[0]
     trace_sample_stop = min(sample_numbers[-1] + 1, reader.num_trace_samples(trace_index))
-    trace_samples = reader.trace_samples(trace_index, trace_sample_start, trace_sample_stop)
+    trace_samples = reader.trace_samples(trace_index)
     arr = np.fromiter((trace_samples[sample_number - trace_sample_start] for sample_number in sample_numbers),
                       make_dtype(reader.data_sample_format))
     return arr
@@ -206,7 +247,7 @@ def _populate_inline_array_numbered_samples(reader_3d, inline_number, xline_numb
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_start = sample_numbers[0]
             trace_sample_stop = min(sample_numbers[-1] + 1, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index, trace_sample_start, trace_sample_stop)
+            trace_samples = reader_3d.trace_samples(trace_index)
             for sample_index, sample_number in enumerate(sample_numbers):
                 array[xline_index, sample_index] = trace_samples[sample_number - trace_sample_start]
 
@@ -218,7 +259,7 @@ def _populate_inline_array_over_sample_range(reader_3d, inline_number, xline_num
             trace_index = reader_3d.trace_index(inline_xline_number)
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_stop = min(sample_numbers.stop, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index, sample_numbers.start, trace_sample_stop)
+            trace_samples = reader_3d.trace_samples(trace_index)
             source_slice = slice(sample_numbers.start, trace_sample_stop, sample_numbers.step)
             array[xline_index, :] = trace_samples[source_slice]
 
@@ -295,7 +336,7 @@ def _populate_xline_array_numbered_samples(reader_3d, xline_number, inline_numbe
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_start = sample_numbers[0]
             trace_sample_stop = min(sample_numbers[-1] + 1, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index, trace_sample_start, trace_sample_stop)
+            trace_samples = reader_3d.trace_samples(trace_index)
             for sample_index, sample_number in enumerate(sample_numbers):
                 array[inline_index, sample_index] = trace_samples[sample_number - trace_sample_start]
 
@@ -307,7 +348,7 @@ def _populate_xline_array_over_sample_range(reader_3d, xline_number, inline_numb
             trace_index = reader_3d.trace_index(inline_xline_number)
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_stop = min(sample_numbers.stop, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index, sample_numbers.start, trace_sample_stop)
+            trace_samples = reader_3d.trace_samples(trace_index)
             source_slice = slice(sample_numbers.start, trace_sample_stop, sample_numbers.step)
             array[inline_index, :] = trace_samples[source_slice]
 
@@ -375,9 +416,10 @@ def extract_timeslice_3d(reader_3d, sample_number, inline_numbers=None, xline_nu
             inline_xline_number = (inline_number, xline_number)
             if reader_3d.has_trace_index(inline_xline_number):
                 trace_index = reader_3d.trace_index((inline_number, xline_number))
-                trace_samples = reader_3d.trace_samples(trace_index, sample_number, sample_number_stop)
+                trace_samples = reader_3d.trace_samples(trace_index)
                 array[inline_index, xline_index] = trace_samples[0]
     return array
+
 
 def _make_array(shape, dtype, null=None):
     """Make an array"""
@@ -386,6 +428,7 @@ def _make_array(shape, dtype, null=None):
     array = np.empty(shape, dtype)
     array.fill(null)
     return array
+
 
 def _extract_field_name(field):
     """Args:
@@ -401,6 +444,22 @@ def _extract_field_name(field):
     except AttributeError:
         raise TypeError("{!r} neither is a string nor has a 'name' attribute".format(field))
 
+
 def extract_array_dataset_3d(DataSet3d):
     """"""
     raise NotImplementedError
+
+
+if __name__ == '__main__':
+    from segpy.reader import create_reader
+    from segpy.trace_header import TraceHeaderRev1
+    with open('/Users/rjs/Dropbox (Sixty North)/Sixty North Team Folder/products/segpy/data/seismic.segy', 'rb') as segy_file:
+        reader = create_reader(segy_file)
+        headers = extract_trace_headers(
+            reader,
+            (TraceHeaderRev1.xy_scalar,
+             TraceHeaderRev1.cdp_x,
+             TraceHeaderRev1.cdp_y))
+        print(headers)
+        cdp_x_array = headers.cdp_x
+        print(cdp_x_array)

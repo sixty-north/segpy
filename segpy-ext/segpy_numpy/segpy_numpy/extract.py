@@ -42,7 +42,8 @@ def extract_trace_headers(reader, fields, trace_indexes=None):
 
     trace_header_arrays = trace_header_arrays_cls(
         *(np.fromiter((getattr(trace_header, field_name) for trace_header in trace_headers),
-                      dtype=make_dtype(getattr(SubFormat, field_name).value_type.SEG_Y_TYPE))
+                      dtype=make_dtype(getattr(SubFormat, field_name).value_type.SEG_Y_TYPE),
+                      count=len(trace_headers))
           for field_name in field_names)
     )
 

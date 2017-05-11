@@ -137,7 +137,6 @@ class HeaderPacker:
         self._field_name_allocations = field_name_allocations
 
     def __getstate__(self):
-
         state = self.__dict__.copy()
         state['__version__'] = __version__
         state['_structure_format'] = self._structure.format

@@ -41,14 +41,11 @@ class Dataset(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def trace_header(self, trace_index, header_packer_override=None):
+    def trace_header(self, trace_index):
         """The trace header for a given trace index.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1
-
-            header_packer_override: Override the default header packer (for example
-               to more efficiently extract only a few fields)
 
         Returns:
             A TraceHeader corresponding to the requested trace_samples.

@@ -784,5 +784,3 @@ class SegYReader2D(SegYReader):
         """
         return self._cdp_catalog[cdp_number]
 
-if __name__ == '__main__':
-    main()

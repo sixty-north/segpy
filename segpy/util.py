@@ -421,13 +421,13 @@ def ensure_superset(superset, subset):
     """Ensure that one collection is a subset of another.
 
     Args:
-        all_items: A sequence containing all items.
+        superset: A sequence containing all items.
 
         subset: Subset must either be a collection the elements of which are a subset of
-            all_items, or a slice object, in which case the subset items will be sliced
-            from all_items.
+            superset, or a slice object, in which case the subset items will be sliced
+            from superset.
     Returns:
-        A sorted, distinct collection which is a subset of all_items.
+        A sorted, distinct collection which is a subset of superset.
 
     Raises:
         ValueError: If the items in subset are not a subset of the items in all_items.

@@ -352,11 +352,14 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
             an argument equal to 1
 
     Returns:
-        A 4-tuple of the form (trace_samples-offset-catalog,
-                               trace_samples-length-catalog,
-                               cdp-catalog,
-                               line-catalog)` where
-        each catalog is an instance of ``collections.Mapping`` or None
+        A 4-tuple of the form::
+
+            (trace_samples-offset-catalog,
+             trace_samples-length-catalog,
+             cdp-catalog,
+             line-catalog)
+
+        where each catalog is an instance of ``collections.Mapping`` or None
         if no catalog could be built.
     """
     progress_callback = progress if progress is not None else lambda p: None

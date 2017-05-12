@@ -34,6 +34,8 @@ def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, en
         to an element of the tuple of data values returned by struct.unpack(); each name associated with that index is a
         field to which the unpacked value should be assigned.
 
+    Usage:
+
         format, allocations = compile_struct(TraceHeaderFormat)
         values = struct.unpack(format)
         field_names_to_values = {}

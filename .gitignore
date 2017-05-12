@@ -59,6 +59,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/build/
+/docs/source/apidocs/
 
 # Event stores
 *.events

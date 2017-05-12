@@ -14,23 +14,22 @@ See the documentation for `docstring_property` for an example.
 def docstring_property(class_doc):
     """Property attribute for docstrings.
 
-    Usage
-    -----
+    Example:
 
-    >>> class A(object):
-    ...     '''Main docstring'''
-    ...     def __init__(self, x):
-    ...         self.x = x
-    ...     @docstring_property(__doc__)
-    ...     def __doc__(self):
-    ...         return "My value of x is %s." % self.x
+        >>> class A(object):
+        ...     '''Main docstring'''
+        ...     def __init__(self, x):
+        ...         self.x = x
+        ...     @docstring_property(__doc__)
+        ...     def __doc__(self):
+        ...         return "My value of x is %s." % self.x
 
-    >>> A.__doc__
-    'Main docstring'
+        >>> A.__doc__
+        'Main docstring'
 
-    >>> a = A(10)
-    >>> a.__doc__
-    'My value of x is 10.'
+        >>> a = A(10)
+        >>> a.__doc__
+        'My value of x is 10.'
     """
     def wrapper(fget):
         return DocstringProperty(class_doc, fget)

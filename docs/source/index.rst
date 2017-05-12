@@ -20,8 +20,8 @@ Contents
 Front Matter
 ------------
 
-.. toctree::
-   :maxdepth: 2
+..  toctree::
+    :maxdepth: 2
 
 Narrative Documentation
 -----------------------
@@ -34,10 +34,11 @@ Reference Documentation
 
 Descriptions and examples for every public function, class and method in *Segpy*.
 
-.. toctree::
-   :maxdepth: 2
+..  toctree::
+    :maxdepth: 2
 
-   reference/reader
+    apidocs/segpy/modules
+
 
 Change History
 --------------

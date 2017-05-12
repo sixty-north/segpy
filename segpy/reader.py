@@ -1,6 +1,6 @@
 """A module of high-level tools for reading SEG Y data.
 
-The main function in this module is create_reader() with will return
+The main function in this module is create_reader() which will return
 a SegYReader object.  The properties and methods of the SegYReader
 instance can be used to extract SEG Y data.
 """
@@ -408,7 +408,7 @@ class SegYReader(Dataset):
         Returns:
             A sequence of numeric trace_samples samples.
 
-        Example:
+        Usage:
 
             first_trace_samples = segy_reader.trace_samples(0)
             part_of_second_trace_samples = segy_reader.trace_samples(1, 1000, 2000)
@@ -510,18 +510,6 @@ class SegYReader(Dataset):
         """The number of bytes per trace_samples sample.
         """
         return self._bytes_per_sample
-
-    @property
-    def data_sample_format(self):
-        """The data type of the samples in machine-readable form. One of the values from datatypes.DATA_SAMPLE_FORMAT.
-        """
-        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self._binary_reel_header.data_sample_format]
-
-    @property
-    def data_sample_format_description(self):
-        """A descriptive human-readable description of the data sample format
-        """
-        return SEG_Y_TYPE_DESCRIPTION[self.data_sample_format]
 
     @property
     def encoding(self):

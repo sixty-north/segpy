@@ -54,8 +54,8 @@ def integer_to_decimal_revision(revision):
     """Convert a SEG Y revision integer into decimal form.
 
     Args:
-        revision: An canonical revision integer (e.g. as produced by
-        a call to canonicalize_revision().
+        revision: An canonical revision integer e.g. as produced by
+            a call to canonicalize_revision().
 
     Returns:
         A decimal real number.

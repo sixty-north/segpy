@@ -795,8 +795,8 @@ def write_extended_textual_headers(fh, pages, encoding):
         num_encoded_lines = len(encoded_page)
         if num_encoded_lines != CARDS_PER_HEADER:
             raise ValueError("Extended textual header page {} number of "
-                             "lines {} is not {}".format(num_encoded_lines, CARDS_PER_HEADER))
-        encoded_pages.append(encoded_page)
+                             "lines {} is not {}".format(page_index, num_encoded_lines, CARDS_PER_HEADER))
+        encoded_pages.append(encoded_page),
 
     for encoded_page in encoded_pages:
         concatenated_page = EMPTY_BYTE_STRING.join(encoded_page)

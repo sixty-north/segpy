@@ -144,7 +144,7 @@ class SubFormatMeta(FormatMeta):
     SubFormat classes can be used to reduce storage requirements and increase performance, since they can be
     used to generate simpler HeaderPackers.
 
-    SubFormat classes must be declared as:
+    Usage:
 
         class MySubFormat(metaclass=SubFormatMeta,
                           parent_format=MyFormatClass,

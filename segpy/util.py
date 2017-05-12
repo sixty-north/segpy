@@ -365,6 +365,7 @@ def hash_for_file(fh, *args):
     The resulting hash is based on both the contents and length of the supplied file-
     like object.
 
+    Args:
         fh: A file-like object opened in binary mode.
 
         *args: The stringified values of ny additional arguments with be combined

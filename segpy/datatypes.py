@@ -2,6 +2,10 @@
 """
 
 # A mapping from data sample format codes to SEG Y types.
+from collections import namedtuple
+
+from segpy.ibm_float import MIN_IBM_FLOAT, MAX_IBM_FLOAT
+
 DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
     1: 'ibm',
     2: 'int32',
@@ -49,3 +53,21 @@ def size_in_bytes(ctype):
     """The size in bytes of a ctype.
     """
     return CTYPE_TO_SIZE[ctype]
+
+Limits = namedtuple('Limits', ['min', 'max'])
+
+LIMITS = {
+    'ibm:': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
+    'int32': Limits(-2147483648, 2147483647),
+    'int16': Limits(-32768, 32767),
+    'float32': Limits(-3.402823e38, 3.402823e38),
+    'int8': Limits(-128, 127)
+}
+
+PY_TYPES = {
+    'ibm:': float,
+    'int32': int,
+    'int16': int,
+    'float32': float,
+    'int8': int
+}

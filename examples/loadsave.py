@@ -34,14 +34,6 @@ def make_progress_indicator(name):
     return progress
 
 
-def catalog_progress(p):
-    print("Cataloging {:.0f}%".format(p * 100.0))
-
-
-def copy_progress(p):
-    print("Copying {:.0f}%".format(p * 100.0))
-
-
 def load_save(in_filename, out_filename):
     with open(in_filename, 'rb') as in_file, \
          open(out_filename, 'wb') as out_file:

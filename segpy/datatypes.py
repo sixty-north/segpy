@@ -57,7 +57,7 @@ def size_in_bytes(ctype):
 Limits = namedtuple('Limits', ['min', 'max'])
 
 LIMITS = {
-    'ibm:': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
+    'ibm': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
     'int32': Limits(-2147483648, 2147483647),
     'int16': Limits(-32768, 32767),
     'float32': Limits(-3.402823e38, 3.402823e38),
@@ -65,7 +65,7 @@ LIMITS = {
 }
 
 PY_TYPES = {
-    'ibm:': float,
+    'ibm': float,
     'int32': int,
     'int16': int,
     'float32': float,

@@ -25,12 +25,20 @@ def write_segy(fh,
 
         endian: Big endian by default. If omitted, the seg_y_data object will be queried for an encoding property.
 
-        progress: An optional progress bar object.
+        progress: A unary callable which will be passed a number
+            between zero and one indicating the progress made. If
+            provided, this callback will be invoked at least once with
+            an argument equal to one.
 
     Raises:
         UnsupportedEncodingError: If the specified encoding is neither ASCII nor EBCDIC
         UnicodeError: If textual data provided cannot be encoded into the required encoding.
     """
+
+    progress_callback = progress if progress is not None else lambda p: None
+
+    if not callable(progress_callback):
+        raise TypeError("write_segy(): progress callback must be callable")
 
     encoding = encoding or (hasattr(dataset, 'encoding') and dataset.encoding) or ASCII
 
@@ -43,6 +51,11 @@ def write_segy(fh,
 
     trace_header_packer = make_header_packer(trace_header_format, endian)
 
+    num_traces = dataset.num_traces()
+
     for trace_index in dataset.trace_indexes():
         write_trace_header(fh, dataset.trace_header(trace_index), trace_header_packer)
         write_trace_samples(fh, dataset.trace_samples(trace_index), dataset.data_sample_format, endian=endian)
+        progress_callback(trace_index / num_traces)
+
+    progress_callback(1)

@@ -19,12 +19,35 @@ from segpy.reader import create_reader
 from segpy.writer import write_segy
 
 
+def make_progress_indicator(name):
+
+    previous_integer_progress = -1
+
+    def progress(p):
+        nonlocal previous_integer_progress
+        percent = p * 100.0
+        current_integer_progress = int(percent)
+        if current_integer_progress != previous_integer_progress:
+            print("{} : {}%".format(name, current_integer_progress))
+        previous_integer_progress = current_integer_progress
+
+    return progress
+
+
+def catalog_progress(p):
+    print("Cataloging {:.0f}%".format(p * 100.0))
+
+
+def copy_progress(p):
+    print("Copying {:.0f}%".format(p * 100.0))
+
+
 def load_save(in_filename, out_filename):
     with open(in_filename, 'rb') as in_file, \
          open(out_filename, 'wb') as out_file:
 
-        segy_reader = create_reader(in_file)
-        write_segy(out_file, segy_reader)
+        segy_reader = create_reader(in_file, progress=make_progress_indicator("Cataloging"))
+        write_segy(out_file, segy_reader, progress=make_progress_indicator("Copying"))
 
 
 def main(argv=None):

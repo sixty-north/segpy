@@ -42,6 +42,11 @@ class Dataset(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def num_traces(self):
+        """The number of traces."""
+        raise NotImplementedError
+
+    @abstractmethod
     def trace_header(self, trace_index):
         """The trace header for a given trace index.
 
@@ -114,6 +119,10 @@ class DelegatingDataset(Dataset):
 
     def trace_indexes(self):
         return self._source.trace_indexes()
+
+    def num_traces(self):
+        """The number of traces."""
+        raise self._source.num_traces()
 
     @property
     def dimensionality(self):

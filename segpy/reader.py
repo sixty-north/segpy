@@ -111,6 +111,11 @@ def create_reader(
     if endian not in ('<', '>'):
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
+    progress_callback = progress if progress is not None else lambda p: None
+
+    if not callable(progress_callback):
+        raise TypeError("create_reader(): progress callback must be callable")
+
     reader = None
     cache_file_path = None
 
@@ -122,9 +127,11 @@ def create_reader(
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, trace_header_format, endian, progress)
+        reader = _make_reader(fh, encoding, trace_header_format, endian, progress_callback)
         if cache_directory is not None:
             _save_reader_to_cache(reader, cache_file_path)
+
+    progress_callback(1)
 
     return reader
 

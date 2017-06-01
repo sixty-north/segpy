@@ -122,7 +122,7 @@ class DelegatingDataset(Dataset):
 
     def num_traces(self):
         """The number of traces."""
-        raise self._source.num_traces()
+        return self._source.num_traces()
 
     @property
     def dimensionality(self):

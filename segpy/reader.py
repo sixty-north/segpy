@@ -39,7 +39,8 @@ def create_reader(
         trace_header_format=TraceHeaderRev1,
         endian='>',
         progress=None,
-        cache_directory=".segpy"):
+        cache_directory=".segpy",
+        dimensionality=None):
     """Create a SegYReader based on performing a scan of SEG Y data.
 
     This function is the preferred method for creating SegYReader
@@ -73,6 +74,11 @@ def create_reader(
             are interpreted as being relative to the directory containing
             the SEG Y file. Absolute paths are used as is. If
             cache_directory is None, caching is disabled.
+
+        dimensionality: An optional integer to force the dimensionality of
+            the created reader. Accepted values are None, 1, 2 and 3. If None
+            (the default) various heuristics will be used to guess the
+            dimensionality of the data.
 
     Raises:
         ValueError: The file-like object``fh`` is unsuitable for some reason,
@@ -116,6 +122,9 @@ def create_reader(
     if not callable(progress_callback):
         raise TypeError("create_reader(): progress callback must be callable")
 
+    if dimensionality not in (None, 1, 2, 3):
+        raise ValueError("dimensionality {!r} is not an of 1, 2, 3 or None.".format(dimensionality))
+
     reader = None
     cache_file_path = None
 
@@ -127,7 +136,7 @@ def create_reader(
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, trace_header_format, endian, progress_callback)
+        reader = _make_reader(fh, encoding, trace_header_format, endian, progress_callback, dimensionality)
         if cache_directory is not None:
             _save_reader_to_cache(reader, cache_file_path)
 
@@ -226,7 +235,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     return reader
 
 
-def _make_reader(fh, encoding, trace_header_format, endian, progress):
+def _make_reader(fh, encoding, trace_header_format, endian, progress, dimensionality):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
     if encoding is None:
@@ -238,14 +247,28 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
 
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
                                                                                            endian, progress)
-    if cdp_catalog is not None and line_catalog is None:
+
+    if dimensionality is None:
+        if cdp_catalog is not None and line_catalog is None:
+            dimensionality = 2
+        elif line_catalog is not None:
+            dimensionality = 3
+        else:
+            dimensionality = 1
+
+    assert 1 <= dimensionality <= 3
+
+    if dimensionality == 1:
+        return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                          trace_length_catalog, trace_header_format, encoding, endian)
+    elif dimensionality == 2:
         return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
-    if line_catalog is not None:
+    elif dimensionality == 3:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
-    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                      trace_length_catalog, trace_header_format, encoding, endian)
+    else:
+        assert False, "dimensionality out of range 1-3 inclusive."
 
 
 class SegYReader(Dataset):

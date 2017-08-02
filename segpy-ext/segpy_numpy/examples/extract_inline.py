@@ -6,13 +6,13 @@ This utility assumes the inline and crossline numbers are evenly spaced.
 Each inline of the source data will be represented as a single row, and
 each crossline as a single column in the resulting 2D array.
 
-Usage: inline.py [-h] [--dtype DTYPE] [--null NULL]
+Usage: extract_inline.py [-h] [--dtype DTYPE] [--null NULL]
                     segy-file npy-file inline-number
 
 Positional arguments:
   segy-file      Path to an existing SEG Y file of 3D seismic data
   npy-file       Path to the Numpy array file to be created for the timeslice
-  slice-index    Zero based index of the time slice to be extracted
+  inline-index   Zero based index of the inline to be extracted
 
 Optional arguments:
   -h, --help     show this help message and exit
@@ -22,7 +22,7 @@ Optional arguments:
 
 Example:
 
-  inline.py stack_final_int8.sgy slice_800.npy 800 --null=42.0 --dtype=f
+  extract_inline.py stack_final_int8.sgy inline_10.npy 10 --null=0 --dtype=f
 """
 
 import argparse
@@ -43,7 +43,7 @@ class DimensionalityError(Exception):
     pass
 
 
-def extract_inline(segy_filename, out_filename, inline_number, null=None):
+def extract_inline(segy_filename, inline_number, null=None):
     """Extract a timeslice from a 3D SEG Y file to a Numpy NPY file.
 
     Args:
@@ -86,11 +86,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
-        extract_inline(
+        inline_array = extract_inline(
             segy_filename=args.segy_file,
-            out_filename=args.npy_file,
             inline_number=args.inline_number,
             null=args.null)
+        inline_array.tofile(args.npy_file)
     except (FileNotFoundError, IsADirectoryError) as e:
         print(e, file=sys.stderr)
         return os.EX_NOINPUT

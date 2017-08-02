@@ -26,11 +26,11 @@ between now and official release of a Segpy 2.
 What is Segpy?
 ==============
 
-The SEG Y file format is one of several standards developed by the Society of Exploration Geophysicists for storing
+The SEG-Y file format is one of several standards developed by the Society of Exploration Geophysicists for storing
 geophysical seismic data. It is an open standard, and is controlled by the SEG Technical Standards Committee, a
 non-profit organization.
 
-This project aims to implement an open SEG Y module in Python 3 for transporting seismic data between SEG Y files and
+This project aims to implement an open SEG-Y module in Python 3 for transporting seismic data between SEG-Y files and
 Python data structures in pure Python.
 
 
@@ -53,7 +53,7 @@ funded development work.  Enquire with Sixty North at http://sixty-north.com.
 Segpy Versions
 ==============
 
-Segpy 2.0 is a complete re-imagining of a SEG Y reader in Python 3 and represents a complete break from any and all older
+Segpy 2.0 is a complete re-imagining of a SEG-Y reader in Python 3 and represents a complete break from any and all older
 versions of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is
 shared across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.
 Earlier versions of Segpy are deprecated and completely unsupported.

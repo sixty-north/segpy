@@ -71,3 +71,8 @@ PY_TYPES = {
     'float32': float,
     'int8': int
 }
+
+ENDIAN = {
+    '<': 'little',
+    '>': 'big'
+}

@@ -27,7 +27,7 @@ from segpy.toolkit import (extract_revision,
                            TRACE_HEADER_NUM_BYTES,
                            read_textual_reel_header,
                            read_extended_textual_headers,
-                           guess_textual_header_encoding)
+                           guess_textual_header_encoding, validate_binary_reel_header)
 
 
 log = logging.getLogger(__name__)
@@ -242,6 +242,7 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress, dimensiona
         encoding = ASCII
     textual_reel_header = read_textual_reel_header(fh, encoding)
     binary_reel_header = read_binary_reel_header(fh, endian)
+    validate_binary_reel_header(binary_reel_header, endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     bps = bytes_per_sample(binary_reel_header)
 

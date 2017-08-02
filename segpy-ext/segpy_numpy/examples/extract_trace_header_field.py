@@ -77,7 +77,7 @@ def main(argv=None):
                         help="Path to an existing SEG Y file of 3D seismic data")
 
     parser.add_argument("npy_file", metavar="npy-file",
-                        help="Path to the Numpy array file to be created for the timeslice")
+                        help="Path to the Numpy array file to be created for the header")
 
     parser.add_argument("field_name", metavar="field-name", type=str,
                         help="Name of the trace header field to be extracted", )

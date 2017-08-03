@@ -170,7 +170,7 @@ def extract_trace(reader, trace_index, sample_numbers):
 
     trace_sample_start = sample_numbers[0]
     trace_sample_stop = min(sample_numbers[-1] + 1, reader.num_trace_samples(trace_index))
-    trace_samples = reader.trace_samples(trace_index)
+    trace_samples = reader.trace_samples(trace_index, start=trace_sample_start, stop=trace_sample_stop)
     arr = np.fromiter((trace_samples[sample_number - trace_sample_start] for sample_number in sample_numbers),
                       make_dtype(reader.data_sample_format))
     return arr
@@ -248,7 +248,7 @@ def _populate_inline_array_numbered_samples(reader_3d, inline_number, xline_numb
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_start = sample_numbers[0]
             trace_sample_stop = min(sample_numbers[-1] + 1, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index)
+            trace_samples = reader_3d.trace_samples(trace_index, start=trace_sample_start, stop=trace_sample_stop)
             for sample_index, sample_number in enumerate(sample_numbers):
                 array[xline_index, sample_index] = trace_samples[sample_number - trace_sample_start]
 
@@ -337,7 +337,7 @@ def _populate_xline_array_numbered_samples(reader_3d, xline_number, inline_numbe
             num_trace_samples = reader_3d.num_trace_samples(trace_index)
             trace_sample_start = sample_numbers[0]
             trace_sample_stop = min(sample_numbers[-1] + 1, num_trace_samples)
-            trace_samples = reader_3d.trace_samples(trace_index)
+            trace_samples = reader_3d.trace_samples(trace_index, start=trace_sample_start, stop=trace_sample_stop)
             for sample_index, sample_number in enumerate(sample_numbers):
                 array[inline_index, sample_index] = trace_samples[sample_number - trace_sample_start]
 
@@ -417,7 +417,7 @@ def extract_timeslice_3d(reader_3d, sample_number, inline_numbers=None, xline_nu
             inline_xline_number = (inline_number, xline_number)
             if reader_3d.has_trace_index(inline_xline_number):
                 trace_index = reader_3d.trace_index((inline_number, xline_number))
-                trace_samples = reader_3d.trace_samples(trace_index)
+                trace_samples = reader_3d.trace_samples(trace_index, start=sample_number, stop=sample_number_stop)
                 array[inline_index, xline_index] = trace_samples[0]
     return array
 
@@ -444,11 +444,6 @@ def _extract_field_name(field):
         return field.name
     except AttributeError:
         raise TypeError("{!r} neither is a string nor has a 'name' attribute".format(field))
-
-
-def extract_array_dataset_3d(DataSet3d):
-    """"""
-    raise NotImplementedError
 
 
 if __name__ == '__main__':

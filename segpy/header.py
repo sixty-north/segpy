@@ -53,6 +53,16 @@ class Header:
             return cls._ordered_field_names
         return super_class(cls).ordered_field_names() + cls._ordered_field_names
 
+    def copy(self, **updates):
+        fields = {name: getattr(self, name) for name in self.ordered_field_names()}
+        fields.update(updates)
+        obj = type(self)(**fields)
+        return obj
+
+
+    def __copy__(self):
+        return self.copy()
+
     def __getattr__(self, name):
         raise AttributeError("Object of type {!r} has no attribute {!r}".format(self.__class__.__name__, name))
 

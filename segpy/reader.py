@@ -460,8 +460,7 @@ class SegYReader(Dataset):
             raise ValueError("trace_samples(): start value {} out of range 0 to {}"
                              .format(start, stop_sample))
 
-        dsf = self._binary_reel_header.data_sample_format
-        seg_y_type = DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[dsf]
+        seg_y_type = self.data_sample_format
         start_pos = (self._trace_offset_catalog[trace_index]
                      + TRACE_HEADER_NUM_BYTES
                      + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type]))

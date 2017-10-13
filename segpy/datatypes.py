@@ -13,6 +13,8 @@ DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
     5: 'float32',
     8: 'int8'}
 
+SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT = {v: k for k, v in DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE.items()}
+
 # A mapping from SEG Y data types to format characters used by the
 # Python Standard Library struct module
 SEG_Y_TYPE_TO_CTYPE = {

@@ -37,9 +37,9 @@ def read_traces(in_filename):
     time_to_read_traces = (t2 - t1).total_seconds()
     time_to_read_both = (t2 - t0).total_seconds()
 
-    print("Time to read headers : {} seconds", time_to_read_header)
-    print("Time to read traces  : {} seconds", time_to_read_traces)
-    print("Total time           : {} seconds", time_to_read_both)
+    print("Time to read headers : {} seconds".format(time_to_read_header))
+    print("Time to read traces  : {} seconds".format(time_to_read_traces))
+    print("Total time           : {} seconds".format(time_to_read_both))
 
 
 def main(argv=None):

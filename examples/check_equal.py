@@ -32,7 +32,7 @@ with open(out_filename, 'wb') as out_file:
     write_segy(out_file, segy_reader_in, trace_header_format=CustomTraceHeader)
 
 out_file = open(out_filename, 'rb')
-segy_reader_out = create_reader(in_file, trace_header_format=CustomTraceHeader)
+segy_reader_out = create_reader(out_file, trace_header_format=CustomTraceHeader)
 
 for trace_index in segy_reader_in.trace_indexes():
     trace_offset = segy_reader_in._trace_offset_catalog[trace_index]
@@ -43,4 +43,4 @@ for trace_index in segy_reader_in.trace_indexes():
 
     data0 = segy_reader_in.trace_samples(trace_index)
     data1 = segy_reader_out.trace_samples(trace_index)
-    assert data0==data1
+    assert data0 == data1

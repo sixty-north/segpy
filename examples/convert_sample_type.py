@@ -29,30 +29,27 @@ class ConvertingDataset(DelegatingDataset):
         """
         Args:
             source_dataset: A Dataset containing the source data.
-            data_sample_format: One of 'ibm', 'int32', 'int16', 'float32', 'int8'
+            data_sample_format: One of 'ibm', 'float32', 'int32', 'int16', 'int8'
         """
         super().__init__(source_dataset)
-        self._limits = LIMITS[data_sample_format]
-
         self._binary_reel_header = self._source.binary_reel_header.copy(
             data_sample_format=SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT[data_sample_format])
 
-        self._py_type = PY_TYPES[data_sample_format]
+        _low, _high = LIMITS[data_sample_format]
+        _target_type = PY_TYPES[data_sample_format]
+
+        if data_sample_format in {'int8', 'int16', 'int32'}:
+            self._transform = lambda sample: max(_low, min(_high, _target_type(sample)))
+        else:
+            self._transform = _target_type
+
+    def trace_samples(self, trace_index, start=None, stop=None):
+        return [self._transform(sample)
+                for sample in self.source.trace_samples(trace_index, start, stop)]
 
     @property
     def binary_reel_header(self):
         return self._binary_reel_header
-
-    def _transform(self, sample):
-        # Ensure that we use a Python type compatible with the data sample format
-        typed_sample = self._py_type(sample)
-
-        # Clip to the range supported by the data sample format
-        clipped_sample = max(self._limits.min, min(self._limits.max, typed_sample))
-        return clipped_sample
-
-    def trace_samples(self, trace_index, start=None, stop=None):
-        return [self._transform(sample) for sample in self.source.trace_samples(trace_index, start, stop)]
 
 
 def transform(data_sample_format, in_filename, out_filename):

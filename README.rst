@@ -20,9 +20,6 @@ Build status:
     :target: http://segpy.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
 
-Segpy is alpha software but is usable in its current form.  That said you should expect minor breaking API changes
-between now and official release of a Segpy 2.
-
 What is Segpy?
 ==============
 

@@ -32,7 +32,7 @@ def ibm2ieee(big_endian_bytes):
     """Interpret a byte string as a big-endian IBM float.
 
     Args:
-        big_endian_bytes (str): A string containing at least four bytes.
+        big_endian_bytes (bytes): A byte-string containing at least four bytes.
 
     Returns:
         The floating point value.

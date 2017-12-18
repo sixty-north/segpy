@@ -82,9 +82,13 @@ def create_reader(
             dimensionality of the data.
 
     Raises:
+        TypeError: ``fh`` has an encoding which is not ``None``, or ``fh`` is
+            not seekable.
+        TypeError: ``progress_callback`` is not callable.
         ValueError: The file-like object``fh`` is unsuitable for some reason,
-            such as not being open, not being seekable, not being in
-            binary mode, or being too short.
+            such as not being open, or being too short.
+        ValueError: ``endian`` is not one of '<' or '>'.
+        ValueError: ``dimensionality`` is not one of ``None``, 1, 2, or 3.
 
     Returns:
         A SegYReader object. Depending on the exact type of the
@@ -96,6 +100,10 @@ def create_reader(
         the returned reader object. It is the caller's responsibility
         to close the underlying file.
     """
+    if fh.closed:
+        raise ValueError(
+            "SegYReader must be provided with an open file object")
+
     if hasattr(fh, 'encoding') and fh.encoding is not None:
         raise TypeError(
             "SegYReader must be provided with a binary mode file object")
@@ -103,10 +111,6 @@ def create_reader(
     if not fh.seekable():
         raise TypeError(
             "SegYReader must be provided with a seekable file object")
-
-    if fh.closed:
-        raise ValueError(
-            "SegYReader must be provided with an open file object")
 
     num_file_bytes = file_length(fh)
     if num_file_bytes < REEL_HEADER_NUM_BYTES:

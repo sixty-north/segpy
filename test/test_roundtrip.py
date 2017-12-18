@@ -1,7 +1,7 @@
 from itertools import zip_longest
 from io import BytesIO
 from hypothesis.strategies import sampled_from
-from hypothesis import given
+from hypothesis import given, HealthCheck, settings
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC
@@ -73,6 +73,7 @@ class TestTextualReelHeader:
     @given(write_header_fields=fixed_dict_of_printable_strings(textual_reel_header.TEMPLATE_FIELD_NAMES.values()),
            revision=sampled_from([SEGY_REVISION_0, SEGY_REVISION_1]),
            encoding=sampled_from([ASCII, EBCDIC]))
+    @settings(suppress_health_check=(HealthCheck.too_slow,))
     def test_header_template(self, write_header_fields, revision, encoding):
         self.maxDiff = None
 

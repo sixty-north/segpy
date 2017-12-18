@@ -1,6 +1,6 @@
 from hypothesis import given, assume
-from hypothesis.strategies import (dictionaries, just,
-                                   integers, streaming, tuples)
+from hypothesis.strategies import (data, dictionaries, just,
+                                   integers, tuples)
 from segpy.catalog import CatalogBuilder
 
 
@@ -34,23 +34,24 @@ class TestCatalogBuilder:
         assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
-           num=integers(0, 10000),
-           step=integers(-10000, 10000),
-           values=streaming(integers()))
+           num=integers(0, 1000),
+           step=integers(-1000, 1000),
+           values=data())
     def test_regular_mapping(self, start, num, step, values):
         assume(step != 0)
-        mapping = {key: value for key, value in zip(
-            range(start, start + num * step, step), values)}
+        mapping = {key: values.draw(integers())
+                   for key
+                   in range(start, start + num * step, step)}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())
         assert len(shared_items) == len(mapping)
 
-    @given(num=integers(0, 10000),
+    @given(num=integers(0, 1000),
            key_start=integers(),
-           key_step=integers(-10000, 10000),
+           key_step=integers(-1000, 1000),
            value_start=integers(),
-           value_step=integers(-10000, 10000))
+           value_step=integers(-1000, 1000))
     def test_linear_regular_mapping(self, num, key_start, key_step, value_start, value_step):
         assume(key_step != 0)
         assume(value_step != 0)

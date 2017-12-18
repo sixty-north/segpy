@@ -47,11 +47,11 @@ class TestCatalogBuilder:
         shared_items = set(mapping.items()) & set(catalog.items())
         assert len(shared_items) == len(mapping)
 
-    @given(num=integers(0, 10000),
+    @given(num=integers(0, 1000),
            key_start=integers(),
-           key_step=integers(-10000, 10000),
+           key_step=integers(-1000, 1000),
            value_start=integers(),
-           value_step=integers(-10000, 10000))
+           value_step=integers(-1000, 1000))
     def test_linear_regular_mapping(self, num, key_start, key_step, value_start, value_step):
         assume(key_step != 0)
         assume(value_step != 0)

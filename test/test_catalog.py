@@ -1,6 +1,6 @@
 from hypothesis import given, assume
-from hypothesis.strategies import (dictionaries, just,
-                                   integers, streaming, tuples)
+from hypothesis.strategies import (data, dictionaries, just,
+                                   integers, tuples)
 from segpy.catalog import CatalogBuilder
 
 
@@ -36,11 +36,12 @@ class TestCatalogBuilder:
     @given(start=integers(),
            num=integers(0, 10000),
            step=integers(-10000, 10000),
-           values=streaming(integers()))
+           values=data())
     def test_regular_mapping(self, start, num, step, values):
         assume(step != 0)
-        mapping = {key: value for key, value in zip(
-            range(start, start + num * step, step), values)}
+        mapping = {key: values.draw(integers())
+                   for key
+                   in range(start, start + num * step, step)}
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())

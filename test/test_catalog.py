@@ -63,7 +63,7 @@ class TestCatalogBuilder:
         assert len(shared_items) == len(mapping)
 
     @given(dictionaries(tuples(integers(), integers()), integers()))
-    def test_arbitrary_mapping(self, mapping):
+    def test_arbitrary_mapping_2d(self, mapping):
         builder = CatalogBuilder(mapping)
         catalog = builder.create()
         shared_items = set(mapping.items()) & set(catalog.items())

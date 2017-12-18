@@ -82,9 +82,13 @@ def create_reader(
             dimensionality of the data.
 
     Raises:
+        TypeError: ``fh`` has an encoding which is not ``None``, or ``fh`` is
+            not seekable.
+        TypeError: ``progress_callback`` is not callable.
         ValueError: The file-like object``fh`` is unsuitable for some reason,
-            such as not being open, not being seekable, not being in
-            binary mode, or being too short.
+            such as not being open, or being too short.
+        ValueError: ``endian`` is not one of '<' or '>'.
+        ValueError: ``dimensionality`` is not one of ``None``, 1, 2, or 3.
 
     Returns:
         A SegYReader object. Depending on the exact type of the

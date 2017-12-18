@@ -1,5 +1,7 @@
 from itertools import accumulate, starmap
-from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text
+
+from hypothesis import assume
+from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite
 from segpy.trace_header import TraceHeaderRev0
 from segpy.util import batched
 
@@ -85,3 +87,22 @@ def fixed_dict_of_printable_strings(keys, **overrides):
     for keyword in overrides:
         d[keyword] = just(overrides[keyword])
     return fixed_dictionaries(d)
+
+
+@composite
+def ranges(draw,
+           min_start_value=None, max_start_value=None,
+           min_size=None, max_size=None,
+           min_step_value=None, max_step_value=None):
+    if min_size is None:
+        min_size = 0
+    if min_size < 0:
+        raise ValueError("Value of {} as min_size for ranges() is negative.".format(min_size))
+    if (max_size is not None) and (max_size < min_size):
+        raise ValueError("Value of {} as max_size for ranges() is less than min_size={}".format(max_size, min_size))
+    start = draw(integers(min_value=min_start_value, max_value=max_start_value))
+    length = draw(integers(min_value=min_size, max_value=max_size))
+    step = draw(integers(min_value=min_step_value, max_value=max_step_value))
+    assume(step != 0)
+    stop = start + step * length
+    return range(start, stop, step)

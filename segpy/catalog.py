@@ -9,7 +9,7 @@ the CatalogBuilder class which will analyse the contents of the
 mapping to find a space and time efficient representation.
 """
 
-from collections import Mapping, Sequence, OrderedDict
+from collections import Mapping, Sequence, OrderedDict, Iterable
 from fractions import Fraction
 import reprlib
 from segpy.sorted_set import SortedFrozenSet
@@ -32,12 +32,27 @@ class CatalogBuilder(object):
         """Initialize a Catalog Builder.
 
         Args:
-            mapping: An optional mapping (such as a dictionary) of items.
+            mapping: An optional mapping (such as a dictionary) of items, or an
+                iterable series of 2-tuples containing keys and values.
+
+        Raises:
+            TypeError: If mapping is not None and is neither of mapping nor iterable type.
+            ValueError: If mapping is an iterable of tuples, and the tuples are not pairs.
         """
-        self._catalog = []
-        if mapping is not None:
-            for key, value in mapping.items():
-                self.add(key, value)
+        if mapping is None:
+            self._catalog = []
+        elif isinstance(mapping, Mapping):
+            self._catalog = list(mapping.items())
+        elif isinstance(mapping, Iterable):
+            self._catalog = []
+            for pair in mapping:
+                if len(pair) != 2:
+                    raise ValueError("{!r} is not a pair. Catalogs can only be constructed "
+                                     "from iterable series of 2-tuples.")
+                self._catalog.append(pair)
+        else:
+            raise TypeError("Mapping must be either a mapping (e.g. dict), or an iterable "
+                            "series of 2-tuples. {!r} does not qualify.")
 
     def add(self, index, value):
         """Add an item.
@@ -65,7 +80,7 @@ class CatalogBuilder(object):
         # This method examines the contents of the mapping using
         # various heuristics to come up with a better representation.
 
-        if len(self._catalog) < 2:
+        if len(self._catalog) <= 1:
             return DictionaryCatalog(self._catalog)
 
         # In-place sort by index
@@ -91,10 +106,6 @@ class CatalogBuilder(object):
         value_start = self._catalog[0][1]
         value_stop = self._catalog[-1][1]
         value_stride = measure_stride(value for index, value in self._catalog)
-
-        if index_stride is None and value_stride is None:
-            # Dictionary strategy - arbitrary keys and values
-            return DictionaryCatalog(self._catalog)
 
         if index_stride is not None and value_stride == 0:
             assert value_start == value_stop
@@ -229,7 +240,7 @@ class RowMajorCatalog2D(Catalog2D):
     A RowMajorCatalog predicts the value v from the key (i, j) according to the
     following formula:
 
-        v = (i - i_min) * j_max + (j - j_min) + c
+        v = (i - i_min) * (j_max - j_min) + (j - j_min) + c
 
     for
         i_min <= i <= i_max
@@ -271,7 +282,7 @@ class RowMajorCatalog2D(Catalog2D):
         yield from ((i, j) for i in self._i_range for j in self._j_range)
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, c={})'.format(
+        return '{}(i_range={}, j_range={}, constant={})'.format(
             self.__class__.__name__,
             self.i_range, self.j_range, self._c)
 

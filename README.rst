@@ -15,10 +15,14 @@ Build status:
 
 .. image:: https://travis-ci.org/sixty-north/segpy.svg?branch=master
     :target: https://travis-ci.org/sixty-north/segpy
-    
+
 .. image:: https://readthedocs.org/projects/segpy/badge/?version=latest
     :target: http://segpy.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
+
+.. image:: https://coveralls.io/repos/github/sixty-north/segpy/badge.svg?branch=coverage
+    :target: https://coveralls.io/github/sixty-north/segpy?branch=coverage
+
 
 What is Segpy?
 ==============
@@ -54,4 +58,3 @@ Segpy 2.0 is a complete re-imagining of a SEG-Y reader in Python 3 and represent
 versions of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is
 shared across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.
 Earlier versions of Segpy are deprecated and completely unsupported.
-

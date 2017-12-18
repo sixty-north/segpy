@@ -20,8 +20,8 @@ Build status:
     :target: http://segpy.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/sixty-north/segpy/badge.svg?branch=coverage
-    :target: https://coveralls.io/github/sixty-north/segpy?branch=coverage
+.. image:: https://coveralls.io/repos/github/sixty-north/segpy/badge.svg?branch=master
+    :target: https://coveralls.io/github/sixty-north/segpy?branch=master
 
 
 What is Segpy?

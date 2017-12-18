@@ -1,4 +1,5 @@
-from itertools import accumulate, starmap
+from collections import namedtuple
+from itertools import accumulate, starmap, product
 
 from hypothesis import assume
 from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite
@@ -106,3 +107,15 @@ def ranges(draw,
     assume(step != 0)
     stop = start + step * length
     return range(start, stop, step)
+
+
+Items2D = namedtuple('Items2D', ['i_range', 'j_range', 'items'])
+
+@composite
+def items2d(draw, i_size, j_size):
+    i_range = draw(ranges(min_size=1, max_size=i_size, min_step_value=1))
+    j_range = draw(ranges(min_size=1, max_size=j_size, min_step_value=1))
+    size = len(i_range) * len(j_range)
+    values = draw(lists(integers(), min_size=size, max_size=size))
+    items = {(i, j): v for (i, j), v in zip(product(i_range, j_range), values)}
+    return Items2D(i_range, j_range, items)

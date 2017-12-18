@@ -3,9 +3,10 @@ from hypothesis.strategies import (data, dictionaries, just,
                                    integers, tuples, lists)
 from pytest import raises
 
-from segpy.catalog import CatalogBuilder, RowMajorCatalog2D
+from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D
+from segpy.util import is_totally_sorted
 from test.predicates import check_balanced
-from test.strategies import ranges
+from test.strategies import ranges, items2d
 
 
 class TestCatalogBuilder:
@@ -149,79 +150,79 @@ class TestCatalogBuilder:
 
 class TestRowMajorCatalog2D:
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_irange_preserved(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.i_range == i_range
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_jrange_preserved(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.j_range == j_range
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_constant_preserved(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.constant == constant
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_i_min(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.i_min == i_range.start
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_i_max(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.i_max == i_range.stop - i_range.step
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_j_min(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.j_min == j_range.start
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_j_max(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.j_max == j_range.stop - j_range.step
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_key_min(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.key_min() == (i_range.start, j_range.start)
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_key_max(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.key_max() == (i_range.stop - i_range.step,
                                      j_range.stop - j_range.step)
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_value_start(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
         assert catalog.value_start() == constant
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_value_stop(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
@@ -234,8 +235,8 @@ class TestRowMajorCatalog2D:
         j_max = j_range.stop - j_range.step
         assert catalog.value_stop() == (i_max - i_min) * (j_max + 1 - j_min) + (j_max - j_min) + constant
 
-    @given(i_range=ranges(min_size=1),
-           j_range=ranges(min_size=1),
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
            constant=integers())
     def test_repr(self, i_range, j_range, constant):
         catalog = RowMajorCatalog2D(i_range, j_range, constant)
@@ -274,3 +275,71 @@ class TestRowMajorCatalog2D:
 
         with raises(KeyError):
             catalog[(0, 0)]
+
+
+class TestDictionaryCatalog:
+
+    @given(dictionaries(integers(), integers()))
+    def test_items_keys_are_present(self, items):
+        catalog = DictionaryCatalog(items)
+        assert all(key in catalog for key in items.keys())
+
+    @given(dictionaries(integers(), integers()))
+    def test_items_keys_are_preserved(self, items):
+        catalog = DictionaryCatalog(items)
+        assert all(catalog[key] == value for key, value in items.items())
+
+    @given(dictionaries(integers(), integers()))
+    def test_length(self, items):
+        catalog = DictionaryCatalog(items)
+        assert len(catalog) == len(items)
+
+    @given(dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+    def test_repr(self, items):
+        catalog = DictionaryCatalog(items)
+        r = repr(catalog)
+        assert r.startswith('DictionaryCatalog')
+        assert check_balanced(r)
+
+
+class TestDictionaryCatalog2D:
+
+    @given(items2d(100, 100))
+    def test_irange_preserved(self, items):
+        catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
+        assert catalog.i_range == items.i_range
+
+    @given(items2d(100, 100))
+    def test_jrange_preserved(self, items):
+        catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
+        assert catalog.j_range == items.j_range
+
+    @given(i_range=lists(integers(), min_size=2),
+           j_range=ranges(min_size=1, max_size=100, min_step_value=1),
+           items=dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+    def test_unsorted_irange_raises_value_error(self, i_range, j_range, items):
+        assume(not is_totally_sorted(i_range))
+        with raises(ValueError):
+            DictionaryCatalog2D(i_range, j_range, items)
+
+    @given(i_range=ranges(min_size=1, max_size=100, min_step_value=1),
+           j_range=lists(integers(), min_size=2),
+           items=dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+    def test_unsorted_jrange_raises_value_error(self, i_range, j_range, items):
+        assume(not is_totally_sorted(j_range))
+        with raises(ValueError):
+            DictionaryCatalog2D(i_range, j_range, items)
+
+    @given(items2d(100, 100))
+    def test_length(self, items):
+        catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
+        assert len(catalog) == len(items.items)
+
+    @given(items2d(100, 100))
+    def test_repr(self, items):
+        catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
+        r = repr(catalog)
+        assert r.startswith('DictionaryCatalog')
+        assert 'i_range={!r}'.format(items.i_range) in r
+        assert 'j_range={!r}'.format(items.j_range) in r
+        assert check_balanced(r)

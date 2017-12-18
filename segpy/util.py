@@ -24,8 +24,6 @@ def pairwise(iterable):
     yield from zip(a, b)
 
 
-
-
 def batched(iterable, batch_size, padding=UNSET):
     """Batch an iterable series into equal sized batches.
 
@@ -170,7 +168,7 @@ def roundrobin(*iterables):
 
 
 def contains_duplicates(sorted_iterable):
-    """Determine in an iterable series contains duplicates.
+    """Determine if an iterable series contains duplicates.
 
     Args:
         sorted_iterable: Any iterable series which must be sorted in either
@@ -183,6 +181,16 @@ def contains_duplicates(sorted_iterable):
         if a == b:
             return True
     return False
+
+
+def is_totally_sorted(iterable):
+    """Determine whether an iterable series is totally sorted in ascending order with no duplicates.
+    """
+    if isinstance(iterable, range) and iterable.step > 0:
+        return True
+    if isinstance(iterable, SortedFrozenSet):
+        return True
+    return all(a < b for a, b in pairwise(iterable))
 
 
 def measure_stride(iterable):

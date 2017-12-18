@@ -14,7 +14,7 @@ from fractions import Fraction
 import reprlib
 from segpy.sorted_set import SortedFrozenSet
 
-from segpy.util import contains_duplicates, measure_stride, make_sorted_distinct_sequence
+from segpy.util import contains_duplicates, measure_stride, make_sorted_distinct_sequence, is_totally_sorted
 
 
 class CatalogBuilder(object):
@@ -181,16 +181,25 @@ class Catalog2D(Mapping):
         Args:
             i_range: A range which can generate all and only valid i indexes.
             j_range: A range which can generate all and only valid j indexes.
+
+        Raises:
+            ValueError: If either i_range or j_range are not totally sorted.
         """
+        if not is_totally_sorted(i_range):
+            raise ValueError("i indexes must be sorted and unique")
+        if not is_totally_sorted(j_range):
+            raise ValueError("j indexes must be sorted and unique")
         self._i_range = i_range
         self._j_range = j_range
 
     @property
     def i_range(self):
+        # TODO: This should be renamed, as it's not necessarily a range - just a sorted container (sequence?)
         return self._i_range
 
     @property
     def j_range(self):
+        # TODO: This should be renamed, as it's not necessarily a range - just a sorted container (sequence?)
         return self._j_range
 
     @property
@@ -307,8 +316,8 @@ class DictionaryCatalog(Mapping):
         return item in self._items
 
     def __repr__(self):
-        return '{}(items={})'.format(
-            self.__class__.__name__, reprlib.repr(self._items.items()))
+        return '{}(items=[<{} items>])'.format(
+            self.__class__.__name__, len(self._items))
 
 
 class DictionaryCatalog2D(Catalog2D):
@@ -317,7 +326,22 @@ class DictionaryCatalog2D(Catalog2D):
 
     def __init__(self, i_range, j_range, items):
         super().__init__(i_range, j_range)
-        self._items = OrderedDict(items)
+        self._items = OrderedDict()
+        if isinstance(items, Mapping):
+            mapping = items.items()
+        elif isinstance(items, Iterable):
+            mapping = items
+        else:
+            raise TypeError("{} must be constructed from a mapping or an iterable of ((i, j), v) tuples, "
+                            "not {}".format(self.__class__.__name__, items))
+
+        for key, value in mapping:
+            i, j = key
+            if i not in i_range:
+                raise ValueError("i={} not in i_range".format(i))
+            if j not in j_range:
+                raise ValueError("j={} not in j_range".format(j))
+            self._items[key] = value
 
     def __getitem__(self, key):
         return self._items[key]
@@ -332,10 +356,10 @@ class DictionaryCatalog2D(Catalog2D):
         return item in self._items
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, items={})'.format(
+        return '{}(i_range={}, j_range={}, items=[<{} items>])'.format(
             self.__class__.__name__,
             self.i_range, self.j_range,
-            reprlib.repr(self._items.items()))
+            len(self._items))
 
 
 class RegularConstantCatalog(Mapping):

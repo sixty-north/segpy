@@ -100,6 +100,10 @@ def create_reader(
         the returned reader object. It is the caller's responsibility
         to close the underlying file.
     """
+    if fh.closed:
+        raise ValueError(
+            "SegYReader must be provided with an open file object")
+
     if hasattr(fh, 'encoding') and fh.encoding is not None:
         raise TypeError(
             "SegYReader must be provided with a binary mode file object")
@@ -107,10 +111,6 @@ def create_reader(
     if not fh.seekable():
         raise TypeError(
             "SegYReader must be provided with a seekable file object")
-
-    if fh.closed:
-        raise ValueError(
-            "SegYReader must be provided with an open file object")
 
     num_file_bytes = file_length(fh)
     if num_file_bytes < REEL_HEADER_NUM_BYTES:

@@ -34,8 +34,8 @@ class TestCatalogBuilder:
         assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
-           num=integers(0, 10000),
-           step=integers(-10000, 10000),
+           num=integers(0, 1000),
+           step=integers(-1000, 1000),
            values=data())
     def test_regular_mapping(self, start, num, step, values):
         assume(step != 0)

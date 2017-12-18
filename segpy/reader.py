@@ -16,7 +16,7 @@ from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence, hash_for_file, UNKNOWN_FILENAME
-from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIPTION, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
+from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 from segpy.toolkit import (extract_revision,
                            bytes_per_sample,
                            read_binary_reel_header,
@@ -32,6 +32,7 @@ from segpy.toolkit import (extract_revision,
 
 log = logging.getLogger(__name__)
 log.setLevel('INFO')
+
 
 def create_reader(
         fh,
@@ -224,7 +225,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
                 cache_file_path.unlink()
             except OSError as os_error:
                 log.warn("Could not remove stale cache entry {} for {} because {}"
-                      .format(cache_file_path, seg_y_path, os_error))
+                         .format(cache_file_path, seg_y_path, os_error))
             else:
                 log.info("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
             return None
@@ -507,7 +508,7 @@ class SegYReader(Dataset):
 
     @property
     def textual_reel_header(self):
-        """The textual real header as an immutable sequence of forty Unicode strings each 80 characters long.
+        """The textual reel header as an immutable sequence of forty Unicode strings each 80 characters long.
         """
         return self._textual_reel_header
 
@@ -801,4 +802,3 @@ class SegYReader2D(SegYReader):
             A trace_samples index which can be used with trace_samples().
         """
         return self._cdp_catalog[cdp_number]
-

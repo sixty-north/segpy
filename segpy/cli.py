@@ -24,6 +24,7 @@ from docopt_subcommands import Subcommands
 
 from segpy.reader import create_reader
 
+
 def common_option_handler(config):
     log_level = config['--log-level']
     try:
@@ -35,7 +36,6 @@ def common_option_handler(config):
     handler.setLevel(log_level)
     handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     segpy.log.addHandler(handler)
-
 
 
 commands = Subcommands(program='segpy',
@@ -107,5 +107,6 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     commands(argv)
+
 
 __doc__ = commands.top_level_doc

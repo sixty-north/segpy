@@ -59,7 +59,6 @@ class Header:
         obj = type(self)(**fields)
         return obj
 
-
     def __copy__(self):
         return self.copy()
 
@@ -89,6 +88,7 @@ class Header:
             setattr(self, name, value)
         del state['_all_attributes']
         self.__dict__.update(state)
+
 
 def are_equal(self, other):
     """Compare two headers for equality.

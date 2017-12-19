@@ -3,7 +3,8 @@ from hypothesis.strategies import (data, dictionaries, just,
                                    integers, tuples, lists)
 from pytest import raises
 
-from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D
+from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D, \
+    RegularConstantCatalog
 from segpy.util import is_totally_sorted
 from test.predicates import check_balanced
 from test.strategies import ranges, items2d
@@ -342,4 +343,42 @@ class TestDictionaryCatalog2D:
         assert r.startswith('DictionaryCatalog')
         assert 'i_range={!r}'.format(items.i_range) in r
         assert 'j_range={!r}'.format(items.j_range) in r
+        assert check_balanced(r)
+
+
+class TestRegularConstantCatalog:
+
+    @given(r=ranges(max_size=100),
+           c=integers())
+    def mapping_is_preserved(self, r, c):
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        assert all(catalog[key] == c for key in r)
+
+    @given(r=ranges(max_size=100),
+           c=integers())
+    def length(self, r, c):
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        assert len(catalog) == len(r)
+
+    @given(r=ranges(max_size=100),
+           c=integers())
+    def containment(self, r, c):
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        assert all(key in catalog for key in r)
+
+    @given(r=ranges(max_size=100),
+           c=integers())
+    def iteration(self, r, c):
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        assert all(k == m for k, m in zip(iter(catalog), r))
+
+    @given(r=ranges(max_size=100),
+           c=integers())
+    def test_repr(self, r, c):
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        r = repr(catalog)
+        assert r.startswith('RegularConstantCatalog')
+        assert 'key_min={}'.format(catalog._key_min) in r
+        assert 'key_max={}'.format(catalog._key_max) in r
+        assert 'key_stride={}'.format(catalog._key_stride) in r
         assert check_balanced(r)

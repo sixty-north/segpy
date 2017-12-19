@@ -423,15 +423,13 @@ class ConstantCatalog(Mapping):
     """
 
     def __init__(self, keys, value):
-        """Initialize a RegularConstantCatalog.
+        """Initialize a ConstantCatalog.
 
         The catalog is initialized by a description with an iterable series of
         keys and a constant value to be associated with all the keys.
 
         Args:
             keys: An iterable series of distinct keys.
-            key_max: The maximum key.
-            key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
         self._keys = SortedFrozenSet(keys)

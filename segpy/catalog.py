@@ -325,6 +325,22 @@ class DictionaryCatalog2D(Catalog2D):
     """
 
     def __init__(self, i_range, j_range, items):
+        """Initialize a DictionaryCatalog2D.
+
+        Args:
+            i_range: An ordered collection of integers which can be used to generate valid i values.
+
+            j_range: An ordered collection of integers which can be used to generate valid j values.
+
+            items: Either a) a mapping (dict) where the keys are 2-tuples containing i and j values
+                contained within the respective ranges, and the value is an integer, or b) an
+                iterable series of tuple structures ((i, j), v).
+
+        Raises:
+            TypeError: If items is not a dictionary or iterable of tuples.
+            ValueError: If the i and j components of the keys in items are not contained within
+                the respective i_range and j_range collections.
+        """
         super().__init__(i_range, j_range)
         self._items = OrderedDict()
         if isinstance(items, Mapping):
@@ -549,6 +565,8 @@ class LinearRegularCatalog(Mapping):
                  value_stride):
         """Initialize a LinearRegularCatalog.
 
+        The catalog must contain at least two items.
+
         Args:
             key_min: The minimum key.
             key_max: The maximum key.
@@ -561,6 +579,13 @@ class LinearRegularCatalog(Mapping):
             ValueError: There is any inconsistency in the keys, strides,
                 and/or values.
         """
+        if key_min >= key_max:
+            raise ValueError("key_min {} is greater-than or equal-to key_max {}, but key_min must be less-than key_max."
+                             .format(key_min, key_max))
+
+        if key_stride <= 0:
+            raise ValueError("key_stride {} is not positive".format(key_stride))
+
         key_range = key_max - key_min
         if key_range % key_stride != 0:
             raise ValueError("{} key range {!r} is not "
@@ -569,6 +594,9 @@ class LinearRegularCatalog(Mapping):
                                  key_stride,
                                  key_range))
         self._key_stride = key_stride
+
+        if value_stride == 0:
+            raise ValueError("value_stride {} cannot be zero".format(value_stride))
 
         value_range = value_stop - value_start
         if value_range % value_stride != 0:

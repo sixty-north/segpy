@@ -4,7 +4,7 @@ from hypothesis.strategies import (data, dictionaries, just,
 from pytest import raises
 
 from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D, \
-    RegularConstantCatalog, ConstantCatalog, RegularCatalog
+    RegularConstantCatalog, ConstantCatalog, RegularCatalog, LinearRegularCatalog
 from segpy.sorted_set import SortedFrozenSet
 from segpy.util import is_totally_sorted
 from test.predicates import check_balanced
@@ -307,6 +307,11 @@ class TestDictionaryCatalog:
 class TestDictionaryCatalog2D:
 
     @given(items2d(10, 10))
+    def test_contruction_from_incorrect_type_raises_type_error(self, items):
+        with raises(TypeError):
+            DictionaryCatalog2D(items.i_range, items.j_range, 42)
+
+    @given(items2d(10, 10))
     def test_irange_preserved(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         assert catalog.i_range == items.i_range
@@ -338,6 +343,11 @@ class TestDictionaryCatalog2D:
         assert len(catalog) == len(items.items)
 
     @given(items2d(10, 10))
+    def test_containment(self, items):
+        catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
+        assert all(k in catalog for k in items.items.keys())
+
+    @given(items2d(10, 10))
     def test_repr(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         r = repr(catalog)
@@ -345,6 +355,18 @@ class TestDictionaryCatalog2D:
         assert 'i_range={!r}'.format(items.i_range) in r
         assert 'j_range={!r}'.format(items.j_range) in r
         assert check_balanced(r)
+
+    def test_illegal_i_key_raises_value_error(self):
+        with raises(ValueError):
+            DictionaryCatalog2D(range(0, 10, 2),
+                                range(0, 10, 1),
+                                {(1, 0): 42})
+
+    def test_illegal_j_key_raises_value_error(self):
+        with raises(ValueError):
+            DictionaryCatalog2D(range(0, 10, 1),
+                                range(0, 10, 2),
+                                {(0, 1): 42})
 
 
 class TestRegularConstantCatalog:
@@ -521,4 +543,103 @@ class TestRegularCatalog:
         assert 'key_max={}'.format(catalog._key_max) in r
         assert 'key_stride={}'.format(catalog._key_stride) in r
         assert 'values=[{} items]'.format(len(catalog._values)) in r
+        assert check_balanced(r)
+
+
+class TestLinearRegularCatalog:
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_mapping_preserved(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        assert all(catalog[k] == v for k, v in zip(key_range, value_range))
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_mismatched_value_length_raises_value_error(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range) + 1, max_size=len(key_range) + 1))
+        with raises(ValueError):
+            LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                           value_range.start, value_range[-1], value_range.step)
+
+    def test_min_key_less_than_max_key_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(11, 10, 1, 0, 10, 10)
+
+    def test_min_key_equal_to_max_key_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(10, 10, 1, 0, 10, 10)
+
+    def test_zero_key_stride_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(0, 10, 0, 0, 10, 10)
+
+    def test_zero_value_stride_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(0, 10, 1, 0, 10, 0)
+
+    def test_non_multiple_key_stride_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(0, 10, 3, 0, 10, 2)
+
+    def test_non_multiple_value_stride_raises_value_error(self):
+        with raises(ValueError):
+            LinearRegularCatalog(0, 10, 2, 0, 10, 3)
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_out_of_range_key_raises_value_error(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        key = data.draw(integers())
+        assume(not (key_range.start <= key <= key_range[-1]))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        with raises(KeyError):
+            catalog[key]
+
+    def test_key_off_stride_raises_value_error(self):
+        catalog = LinearRegularCatalog(0, 10, 2, 0, 20, 4)
+        with raises(KeyError):
+            catalog[1]
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_length(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        assert len(catalog) == len(key_range)
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_containment(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        assert all(k in catalog for k in key_range)
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_iteration(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        assert all(k == m for k, m in zip(key_range, iter(catalog)))
+
+    @given(key_range=ranges(min_size=2, max_size=100, min_step_value=1),
+           data=data())
+    def test_repr(self, key_range, data):
+        value_range = data.draw(ranges(min_size=len(key_range), max_size=len(key_range)))
+        catalog = LinearRegularCatalog(key_range.start, key_range[-1], key_range.step,
+                                       value_range.start, value_range[-1], value_range.step)
+        r = repr(catalog)
+        assert r.startswith('LinearRegularCatalog')
+        assert 'key_min={}'.format(catalog._key_min) in r
+        assert 'key_max={}'.format(catalog._key_max) in r
+        assert 'key_stride={}'.format(catalog._key_stride) in r
+        assert 'value_start={}'.format(catalog._value_start) in r
+        assert 'value_stop={}'.format(catalog._value_stop) in r
+        assert 'value_stride={}'.format(catalog._value_stride) in r
         assert check_balanced(r)

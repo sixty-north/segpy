@@ -304,12 +304,12 @@ class TestDictionaryCatalog:
 
 class TestDictionaryCatalog2D:
 
-    @given(items2d(100, 100))
+    @given(items2d(10, 10))
     def test_irange_preserved(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         assert catalog.i_range == items.i_range
 
-    @given(items2d(100, 100))
+    @given(items2d(10, 10))
     def test_jrange_preserved(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         assert catalog.j_range == items.j_range
@@ -330,12 +330,12 @@ class TestDictionaryCatalog2D:
         with raises(ValueError):
             DictionaryCatalog2D(i_range, j_range, items)
 
-    @given(items2d(100, 100))
+    @given(items2d(10, 10))
     def test_length(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         assert len(catalog) == len(items.items)
 
-    @given(items2d(100, 100))
+    @given(items2d(10, 10))
     def test_repr(self, items):
         catalog = DictionaryCatalog2D(items.i_range, items.j_range, items.items)
         r = repr(catalog)

@@ -381,6 +381,10 @@ class RegularConstantCatalog(Mapping):
             key_stride: The difference between successive keys.
             value: A value associated with all keys.
         """
+        if key_min > key_max:
+            raise ValueError("key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max."
+                             .format(key_min, key_max))
+
         key_range = key_max - key_min
         if key_range % key_stride != 0:
             raise ValueError("RegularIndex key range {!r} is not "
@@ -479,6 +483,10 @@ class RegularCatalog(Mapping):
             ValueError: There is any inconsistency in the keys, stride,
                 and/or values.
         """
+        if key_min > key_max:
+            raise ValueError("key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max."
+                             .format(key_min, key_max))
+
         key_range = key_max - key_min
         if key_range % key_stride != 0:
             raise ValueError("{} key range {!r} is not "
@@ -514,12 +522,12 @@ class RegularCatalog(Mapping):
                           self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max={}, key_stride={}, values={})'.format(
+        return '{}(key_min={}, key_max={}, key_stride={}, values=[{} items])'.format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,
             self._key_stride,
-            reprlib.repr(self._values))
+            len(self._values))
 
 
 class LinearRegularCatalog(Mapping):

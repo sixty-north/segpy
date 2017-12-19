@@ -4,7 +4,7 @@ from hypothesis.strategies import (data, dictionaries, just,
 from pytest import raises
 
 from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D, \
-    RegularConstantCatalog, ConstantCatalog
+    RegularConstantCatalog, ConstantCatalog, RegularCatalog
 from segpy.sorted_set import SortedFrozenSet
 from segpy.util import is_totally_sorted
 from test.predicates import check_balanced
@@ -349,47 +349,51 @@ class TestDictionaryCatalog2D:
 
 class TestRegularConstantCatalog:
 
+    def test_key_min_greater_than_key_max_raises_value_error(self):
+        with raises(ValueError):
+            RegularConstantCatalog(11, 10, 3, 0)
+
     def test_illegal_stride_raises_value_error(self):
         with raises(ValueError):
             RegularConstantCatalog(0, 10, 3, 0)
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers(),
            k=integers())
     def test_missing_key_raises_key_error(self, r, c, k):
         assume(k not in r)
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         with raises(KeyError):
             catalog[k]
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers())
     def test_mapping_is_preserved(self, r, c):
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         assert all(catalog[key] == c for key in r)
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers())
     def test_length(self, r, c):
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         assert len(catalog) == len(r)
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers())
     def test_containment(self, r, c):
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         assert all(key in catalog for key in r)
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers())
     def test_iteration(self, r, c):
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         assert all(k == m for k, m in zip(iter(catalog), r))
 
-    @given(r=ranges(max_size=100, min_step_value=1),
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            c=integers())
     def test_repr(self, r, c):
-        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        catalog = RegularConstantCatalog(r.start, r[-1], r.step, c)
         r = repr(catalog)
         assert r.startswith('RegularConstantCatalog')
         assert 'key_min={}'.format(catalog._key_min) in r
@@ -436,10 +440,80 @@ class TestConstantCatalog:
 
     @given(keys=lists(integers()),
            value=integers())
-    def test_iteration(self, keys, value):
+    def test_repr(self, keys, value):
         catalog = ConstantCatalog(keys, value)
         r = repr(catalog)
         assert r.startswith('ConstantCatalog')
         assert 'keys=[{} items]'.format(len(catalog._keys)) in r
         assert 'value={}'.format(catalog._value) in r
+        assert check_balanced(r)
+
+
+class TestRegularCatalog:
+
+    def test_key_min_greater_than_key_max_raises_value_error(self):
+        with raises(ValueError):
+            RegularCatalog(11, 10, 2, [0])
+
+    def test_illegal_stride_raises_value_error(self):
+        with raises(ValueError):
+            RegularCatalog(0, 10, 3, [0])
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_mismatched_values_length_raises_value_error(self, r, d):
+        values = d.draw(lists(integers()))
+        assume(len(values) != len(r))
+        with raises(ValueError):
+            RegularCatalog(r.start, r[-1], r.step, values)
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_missing_key_raises_key_error(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        k = d.draw(integers())
+        assume(k not in r)
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        with raises(KeyError):
+            catalog[k]
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_mapping_is_preserved(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        assert all(catalog[k] == v for k, v in zip(r, values))
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_length(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        assert len(catalog) == len(r)
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_containment(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        assert all(key in catalog for key in r)
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_iteration(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        assert all(k == m for k, m in zip(iter(catalog), r))
+
+    @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
+           d=data())
+    def test_repr(self, r, d):
+        values = d.draw(lists(integers(), min_size=len(r), max_size=len(r)))
+        catalog = RegularCatalog(r.start, r[-1], r.step, values)
+        r = repr(catalog)
+        assert r.startswith('RegularCatalog')
+        assert 'key_min={}'.format(catalog._key_min) in r
+        assert 'key_max={}'.format(catalog._key_max) in r
+        assert 'key_stride={}'.format(catalog._key_stride) in r
+        assert 'values=[{} items]'.format(len(catalog._values)) in r
         assert check_balanced(r)

@@ -348,31 +348,44 @@ class TestDictionaryCatalog2D:
 
 class TestRegularConstantCatalog:
 
-    @given(r=ranges(max_size=100),
+    def test_illegal_stride_raises_value_error(self):
+        with raises(ValueError):
+            RegularConstantCatalog(0, 10, 3, 0)
+
+    @given(r=ranges(max_size=100, min_step_value=1),
+           c=integers(),
+           k=integers())
+    def test_missing_key_raises_key_error(self, r, c, k):
+        assume(k not in r)
+        catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
+        with raises(KeyError):
+            catalog[k]
+
+    @given(r=ranges(max_size=100, min_step_value=1),
            c=integers())
-    def mapping_is_preserved(self, r, c):
+    def test_mapping_is_preserved(self, r, c):
         catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
         assert all(catalog[key] == c for key in r)
 
-    @given(r=ranges(max_size=100),
+    @given(r=ranges(max_size=100, min_step_value=1),
            c=integers())
-    def length(self, r, c):
+    def test_length(self, r, c):
         catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
         assert len(catalog) == len(r)
 
-    @given(r=ranges(max_size=100),
+    @given(r=ranges(max_size=100, min_step_value=1),
            c=integers())
-    def containment(self, r, c):
+    def test_containment(self, r, c):
         catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
         assert all(key in catalog for key in r)
 
-    @given(r=ranges(max_size=100),
+    @given(r=ranges(max_size=100, min_step_value=1),
            c=integers())
-    def iteration(self, r, c):
+    def test_iteration(self, r, c):
         catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)
         assert all(k == m for k, m in zip(iter(catalog), r))
 
-    @given(r=ranges(max_size=100),
+    @given(r=ranges(max_size=100, min_step_value=1),
            c=integers())
     def test_repr(self, r, c):
         catalog = RegularConstantCatalog(r.start, r.stop - r.step, r.step, c)

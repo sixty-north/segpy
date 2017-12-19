@@ -398,7 +398,7 @@ class RegularConstantCatalog(Mapping):
         return self._value
 
     def __len__(self):
-        return 1 + (self._key_max - self._key_min) / self._key_stride
+        return 1 + (self._key_max - self._key_min) // self._key_stride
 
     def __contains__(self, key):
         return (self._key_min <= key <= self._key_max) and \

@@ -429,7 +429,7 @@ class ConstantCatalog(Mapping):
         keys and a constant value to be associated with all the keys.
 
         Args:
-            keys: An iterable series of distinct keys.
+            keys: An iterable series of keys.
             value: A value associated with all keys.
         """
         self._keys = SortedFrozenSet(keys)
@@ -450,9 +450,9 @@ class ConstantCatalog(Mapping):
         return iter(self._keys)
 
     def __repr__(self):
-        return '{}(keys={}, value={})'.format(
+        return '{}(keys=[{} items], value={})'.format(
             self.__class__.__name__,
-            reprlib.repr(self._keys),
+            len(self._keys),
             self._value)
 
 

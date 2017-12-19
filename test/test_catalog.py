@@ -1,10 +1,11 @@
 from hypothesis import given, assume
 from hypothesis.strategies import (data, dictionaries, just,
-                                   integers, tuples, lists)
+                                   integers, tuples, lists, sets)
 from pytest import raises
 
 from segpy.catalog import CatalogBuilder, RowMajorCatalog2D, DictionaryCatalog, DictionaryCatalog2D, \
-    RegularConstantCatalog
+    RegularConstantCatalog, ConstantCatalog
+from segpy.sorted_set import SortedFrozenSet
 from segpy.util import is_totally_sorted
 from test.predicates import check_balanced
 from test.strategies import ranges, items2d
@@ -394,4 +395,51 @@ class TestRegularConstantCatalog:
         assert 'key_min={}'.format(catalog._key_min) in r
         assert 'key_max={}'.format(catalog._key_max) in r
         assert 'key_stride={}'.format(catalog._key_stride) in r
+        assert check_balanced(r)
+
+
+class TestConstantCatalog:
+
+    @given(keys=lists(integers()),
+           value=integers(),
+           k=integers())
+    def test_missing_key_raises_key_error(self, keys, value, k):
+        assume(k not in keys)
+        catalog = ConstantCatalog(keys, value)
+        with raises(KeyError):
+            catalog[k]
+
+    @given(keys=lists(integers()),
+           value=integers())
+    def test_mapping_is_preserved(self, keys, value):
+        catalog = ConstantCatalog(keys, value)
+        assert all(catalog[key] == value for key in keys)
+
+    @given(keys=sets(integers()),
+           value=integers())
+    def test_length(self, keys, value):
+        catalog = ConstantCatalog(keys, value)
+        assert len(catalog) == len(keys)
+
+    @given(keys=lists(integers()),
+           value=integers())
+    def test_containment(self, keys, value):
+        catalog = ConstantCatalog(keys, value)
+        assert all(key in catalog for key in keys)
+
+    @given(keys=lists(integers()),
+           value=integers())
+    def test_iteration(self, keys, value):
+        s = SortedFrozenSet(keys)
+        catalog = ConstantCatalog(keys, value)
+        assert all(k == m for k, m in zip(iter(catalog), s))
+
+    @given(keys=lists(integers()),
+           value=integers())
+    def test_iteration(self, keys, value):
+        catalog = ConstantCatalog(keys, value)
+        r = repr(catalog)
+        assert r.startswith('ConstantCatalog')
+        assert 'keys=[{} items]'.format(len(catalog._keys)) in r
+        assert 'value={}'.format(catalog._value) in r
         assert check_balanced(r)

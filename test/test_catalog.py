@@ -477,6 +477,11 @@ class TestRegularCatalog:
         with raises(KeyError):
             catalog[k]
 
+    def test_missing_key_raises_key_error_2(self):
+        catalog = RegularCatalog(0, 6, 2, [0, 2, 4, 6])
+        with raises(KeyError):
+            catalog[1]
+
     @given(r=ranges(min_size=1, max_size=100, min_step_value=1),
            d=data())
     def test_mapping_is_preserved(self, r, d):

@@ -498,7 +498,8 @@ class RegularCatalog(Mapping):
         self._values = list(values)
         num_keys = 1 + key_range // key_stride
         if num_keys != len(self._values):
-            raise ValueError("{} key range and values inconsistent".format(self.__class__.__name__))
+            raise ValueError("{} key range with length {} and values with length {} are inconsistent"
+                             .format(self.__class__.__name__, num_keys, len(self._values)))
 
     def __getitem__(self, key):
         if not (self._key_min <= key <= self._key_max):

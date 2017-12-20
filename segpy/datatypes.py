@@ -54,7 +54,10 @@ CTYPE_TO_SIZE = dict(
 def size_in_bytes(ctype):
     """The size in bytes of a ctype.
     """
-    return CTYPE_TO_SIZE[ctype]
+    try:
+        return CTYPE_TO_SIZE[ctype]
+    except KeyError:
+        raise ValueError("No such C-type {!r}".format(ctype))
 
 Limits = namedtuple('Limits', ['min', 'max'])
 

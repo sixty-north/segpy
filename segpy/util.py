@@ -603,28 +603,3 @@ def restored_position_seek(fh, pos):
     fh.seek(pos)
     yield
     fh.seek(original)
-
-
-def index(sequence, x):
-    """Locate the leftmost value exactly equal to x"""
-    i = bisect_left(sequence, x)
-    if i != len(sequence) and sequence[i] == x:
-        return i
-    raise ValueError("No value {} in sequence".format(x))
-
-
-def find_le(sequence, x):
-    """Find rightmost value less than or equal to x"""
-    i = bisect_right(sequence, x)
-    if i:
-        return sequence[i - 1]
-    raise ValueError("No place for {} in sequence".format(x))
-
-
-def cmp(a, b):
-    return (a > b) - (a < b)
-
-
-def sign(a):
-    return cmp(a, 0)
-

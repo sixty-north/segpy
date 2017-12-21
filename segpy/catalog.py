@@ -189,23 +189,6 @@ class CatalogBuilder(object):
             return None
         return i_sorted, j_sorted, v_sorted
 
-    def _find_catalog_value(self, i, j, dummy_v=0):
-        """Find the catalog value corresponding to the given i and j indexes.
-
-        Args:
-            i: The first component of the index
-            j: The second component of the index
-            dummy_v: A dummy value which must be less than or equal to
-                the actual value associated with the index. This is
-                required to that it's not necessary to build a separate
-                collection of indexes for binary searching.
-        """
-        index = bisect_left(self._catalog, ((i, j), AlwaysEqual()))
-        ((search_i, search_j), search_v) = self._catalog[index]
-        if (search_i == i) and (search_j == j):
-            return search_v
-        raise ValueError("Index ({}, {}) not present in catalog".format(i, j))
-
 
 class Catalog2D(Mapping):
     """An abstract base class for 2D catalogs.

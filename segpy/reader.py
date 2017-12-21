@@ -685,7 +685,7 @@ class SegYReader3D(SegYReader):
         return inline_xline in self._line_catalog
 
     def trace_index(self, inline_xline):
-        """Obtain the trace_samples index given an xline and a inline.
+        """Obtain the trace_samples index given an inline and an xline.
 
         Note:
             Do not assume that all combinations of crossline and
@@ -797,7 +797,7 @@ class SegYReader2D(SegYReader):
         return cdp_number in self._cdp_catalog
 
     def trace_index(self, cdp_number):
-        """Obtain the trace_samples index given an xline and a inline.
+        """Obtain the trace_samples index given a CDP number.
 
         Args:
             cdp_number: A CDP number.

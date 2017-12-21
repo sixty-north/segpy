@@ -1,7 +1,7 @@
 from collections.abc import (Container, Sized, Iterable, Sequence)
 import pytest
 
-from segpy.sorted_set import SortedFrozenSet
+from segpy.sorted_frozen_set import SortedFrozenSet
 
 
 class TestConstruction:

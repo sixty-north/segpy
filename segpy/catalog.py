@@ -8,13 +8,15 @@ Rather than constructing Catalog subtypes directly, prefer to use
 the CatalogBuilder class which will analyse the contents of the
 mapping to find a space and time efficient representation.
 """
-
+from bisect import bisect_left
 from collections import Mapping, Sequence, OrderedDict, Iterable
 from fractions import Fraction
-import reprlib
-from segpy.sorted_set import SortedFrozenSet
+from itertools import product
 
-from segpy.util import contains_duplicates, measure_stride, make_sorted_distinct_sequence, is_totally_sorted
+from segpy.always_equal import AlwaysEqual
+from segpy.sorted_frozen_set import SortedFrozenSet
+from segpy.util import (contains_duplicates, measure_stride, make_sorted_distinct_sequence,
+                        is_sorted, first)
 
 
 class CatalogBuilder(object):
@@ -80,11 +82,8 @@ class CatalogBuilder(object):
         # This method examines the contents of the mapping using
         # various heuristics to come up with a better representation.
 
-        if len(self._catalog) <= 1:
-            return DictionaryCatalog(self._catalog)
-
         # In-place sort by index
-        self._catalog.sort(key=lambda index_value: index_value[0])
+        self._catalog.sort(key=first)
 
         if contains_duplicates(index for index, value in self._catalog):
             return None
@@ -98,6 +97,9 @@ class CatalogBuilder(object):
     def _create_catalog_1(self):
         """Create a catalog for one-dimensional integer keys (i.e. scalars)
         """
+        if len(self._catalog) <= 1:
+            return DictionaryCatalog(self._catalog)
+
         index_min = self._catalog[0][0]
         index_max = self._catalog[-1][0]
         index_stride = measure_stride(index for index, value in self._catalog)
@@ -143,32 +145,66 @@ class CatalogBuilder(object):
 
         Each key must be a two-element sequence.
         """
-        i_sorted = make_sorted_distinct_sequence(i for (i, j), value in self._catalog)
-        j_sorted = make_sorted_distinct_sequence(j for (i, j), value in self._catalog)
+        return (self.make_last_index_varies_quickest_catalog_2d()
+             or self.make_first_index_varies_quickest_catalog_2d()
+             or self.make_dictionary_catalog_2d())
 
-        i_is_regular = isinstance(i_sorted, range)
-        j_is_regular = isinstance(j_sorted, range)
+    def make_last_index_varies_quickest_catalog_2d(self):
+        self._catalog.sort(key=_first_then_second_index)
+        sorted_sequences = self.make_sorted_ranges()
+        if sorted_sequences is None:
+            return None
+        return LastIndexVariesQuickestCatalog2D(*sorted_sequences)
 
-        if i_is_regular and j_is_regular:
-            is_rm, diff = self._is_row_major(i_sorted, j_sorted)
-            if is_rm:
-                return RowMajorCatalog2D(i_sorted, j_sorted, diff)
+    def make_first_index_varies_quickest_catalog_2d(self):
+        self._catalog.sort(key=_second_then_first_index)
+        sorted_sequences = self.make_sorted_ranges()
+        if sorted_sequences is None:
+            return None
+        return FirstIndexVariesQuickestCatalog2D(*sorted_sequences)
 
+    def make_dictionary_catalog_2d(self):
+        self._catalog.sort(key=_first_then_second_index)
+        i_sorted = make_sorted_distinct_sequence(i for (i, _), _ in self._catalog)
+        j_sorted = make_sorted_distinct_sequence(j for (_, j), _ in self._catalog)
         return DictionaryCatalog2D(i_sorted, j_sorted, self._catalog)
 
-    def _is_row_major(self, i_sorted, j_sorted):
-        i_min = i_sorted[0]
-        j_min = j_sorted[0]
-        j_max = j_sorted[-1]
-        diff = None
-        for (i, j), actual_value in self._catalog:
-            proposed_value = (i - i_min) * (j_max + 1 - j_min) + (j - j_min)
-            current_diff = actual_value - proposed_value
-            if diff is None:
-                diff = current_diff
-            if current_diff != diff:
-                return False, None
-        return True, diff
+    def make_sorted_ranges(self):
+        i_sorted = make_sorted_distinct_sequence(i for (i, _), _ in self._catalog)
+        j_sorted = make_sorted_distinct_sequence(j for (_, j), _ in self._catalog)
+        if len(i_sorted) * len(j_sorted) != len(self._catalog):
+            # The do not match so use a dictionary-based mapping
+            return None
+        vs = [v for (_, _), v in self._catalog]
+        # Are the values unique and in ascending or descending order?
+        if not (is_sorted(vs, reverse=False, distinct=True) or is_sorted(vs, reverse=True, distinct=True)):
+            # The values are not both unique and sorted, so use a dictionary-based mapping
+            return None
+        v_sorted = make_sorted_distinct_sequence(vs, sense=None)
+        i_is_regular = isinstance(i_sorted, range)
+        j_is_regular = isinstance(j_sorted, range)
+        v_is_regular = isinstance(v_sorted, range)
+        if not (i_is_regular and j_is_regular and v_is_regular):
+            # The i, j and v values are not regularly spaced, so use a dictionary-based mapping
+            return None
+        return i_sorted, j_sorted, v_sorted
+
+    def _find_catalog_value(self, i, j, dummy_v=0):
+        """Find the catalog value corresponding to the given i and j indexes.
+
+        Args:
+            i: The first component of the index
+            j: The second component of the index
+            dummy_v: A dummy value which must be less than or equal to
+                the actual value associated with the index. This is
+                required to that it's not necessary to build a separate
+                collection of indexes for binary searching.
+        """
+        index = bisect_left(self._catalog, ((i, j), AlwaysEqual()))
+        ((search_i, search_j), search_v) = self._catalog[index]
+        if (search_i == i) and (search_j == j):
+            return search_v
+        raise ValueError("Index ({}, {}) not present in catalog".format(i, j))
 
 
 class Catalog2D(Mapping):
@@ -185,9 +221,9 @@ class Catalog2D(Mapping):
         Raises:
             ValueError: If either i_range or j_range are not totally sorted.
         """
-        if not is_totally_sorted(i_range):
+        if not is_sorted(i_range, distinct=True):
             raise ValueError("i indexes must be sorted and unique")
-        if not is_totally_sorted(j_range):
+        if not is_sorted(j_range, distinct=True):
             raise ValueError("j indexes must be sorted and unique")
         self._i_range = i_range
         self._j_range = j_range
@@ -230,70 +266,121 @@ class Catalog2D(Mapping):
         """Maximum (i, j) key"""
         return self.i_max, self.j_max
 
-    def value_start(self):
+    def value_first(self):
         """Minimum value at key_min"""
         return self[self.key_min()]
 
-    def value_stop(self):
+    def value_last(self):
         """Maximum value at key_max"""
         return self[self.key_max()]
 
 
-class RowMajorCatalog2D(Catalog2D):
-    """A mapping which assumes a row-major ordering of a two-dimensional matrix.
+class LastIndexVariesQuickestCatalog2D(Catalog2D):
 
-    This is the ordering of items in a two-dimensional matrix where in
-    the (i, j) key tuple the j value changes fastest when iterating
-    through the items in order.
-
-    A RowMajorCatalog predicts the value v from the key (i, j) according to the
-    following formula:
-
-        v = (i - i_min) * (j_max - j_min) + (j - j_min) + c
-
-    for
-        i_min <= i <= i_max
-        j_min <= j <= j_max
-
-    and where c is an integer constant to allow zero- or one-based indexing.
-    """
-
-    def __init__(self, i_range, j_range, constant):
-        """Initialize a RowMajorCatalog2D.
-
-        Args:
-            i_range: A range which can generate all and only valid i indexes.
-            j_range: A range which can generate all and only valid j indexes.
-            constant: The constant offset used to produce the value.
+    def __init__(self, i_range, j_range, v_range):
         """
+        Args:
+            i_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid i keys.
+
+            j_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid j keys.
+
+            v_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid values.
+        """
+        num_indices = len(i_range) * len(j_range)
+        if num_indices != len(v_range):
+            raise ValueError("i_range={} and j_range={} totalling {} indices are incompatible with "
+                             "v_range={} with length {}".format(i_range, j_range, num_indices, v_range, len(v_range)))
         super().__init__(i_range, j_range)
-        self._c = constant
+        self._v_range = v_range
 
     @property
-    def constant(self):
-        return self._c
+    def v_range(self):
+        return self._v_range
 
     def __getitem__(self, key):
-        if key not in self:
-            raise KeyError("{!r} key {!r} out of range".format(self, key))
         i, j = key
-        value = (i - self.i_min) * (self.j_max + 1 - self.j_min) + (j - self.j_min) + self._c
-        return value
+        if not self._contains(i, j):
+            raise KeyError("Key {!r} not in {!r}".format(key, self))
+        i_index = self.i_range.index(i)
+        j_index = self.j_range.index(j)
+        v_index = i_index * len(self.j_range) + j_index
+        v = self._v_range[v_index]
+        return v
 
     def __contains__(self, key):
-        return (key[0] in self._i_range) and \
-               (key[1] in self._j_range)
+        i, j = key
+        return self._contains(i, j)
+
+    def _contains(self, i, j):
+        return (i in self.i_range) and (j in self.j_range)
 
     def __len__(self):
-        return len(self._i_range) * len(self._j_range)
+        return len(self.i_range) * len(self.j_range)
 
     def __iter__(self):
-        yield from ((i, j) for i in self._i_range for j in self._j_range)
+        return product(self.i_range, self.j_range)
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, constant={})'.format(
+        return '{}(i_range={}, j_range={}, v_range={})'.format(
             self.__class__.__name__,
-            self.i_range, self.j_range, self._c)
+            self.i_range, self.j_range, self._v_range)
+
+
+class FirstIndexVariesQuickestCatalog2D(Catalog2D):
+
+    def __init__(self, i_range, j_range, v_range):
+        """
+        Args:
+            i_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid i keys.
+
+            j_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid j keys.
+
+            v_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid values.
+        """
+        num_indices = len(i_range) * len(j_range)
+        if num_indices != len(v_range):
+            raise ValueError("i_range={} and j_range={} totalling {} indices are incompatible with "
+                             "v_range={} with length {}".format(i_range, j_range, num_indices, v_range, len(v_range)))
+        super().__init__(i_range, j_range)
+        self._v_range = v_range
+
+    @property
+    def v_range(self):
+        return self._v_range
+
+    def __getitem__(self, key):
+        i, j = key
+        if not self._contains(i, j):
+            raise KeyError("Key {!r} not in {!r}".format(key, self))
+        i_index = self.i_range.index(i)
+        j_index = self.j_range.index(j)
+        v_index = j_index * len(self.i_range) + i_index
+        v = self._v_range[v_index]
+        return v
+
+    def __contains__(self, key):
+        i, j = key
+        return self._contains(i, j)
+
+    def _contains(self, i, j):
+        return (i in self.i_range) and (j in self.j_range)
+
+    def __len__(self):
+        return len(self.i_range) * len(self.j_range)
+
+    def __iter__(self):
+        return ((i, j) for (j, i) in product(self.j_range, self.i_range))
+
+    def __repr__(self):
+        return '{}(i_range={}, j_range={}, v_range={})'.format(
+            self.__class__.__name__,
+            self.i_range, self.j_range, self._v_range)
 
 
 class DictionaryCatalog(Mapping):
@@ -328,9 +415,11 @@ class DictionaryCatalog2D(Catalog2D):
         """Initialize a DictionaryCatalog2D.
 
         Args:
-            i_range: An ordered collection of integers which can be used to generate valid i values.
+            i_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid i values.
 
-            j_range: An ordered collection of integers which can be used to generate valid j values.
+            j_range: An ordered collection of evenly-spaced integers
+                which can be used to generate valid j values.
 
             items: Either a) a mapping (dict) where the keys are 2-tuples containing i and j values
                 contained within the respective ranges, and the value is an integer, or b) an
@@ -646,7 +735,7 @@ class LinearRegularCatalog(Mapping):
         return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max={}, key_stride={}, value_start={}, value_stop={}, value_stride={})'.format(
+        return '{}(key_min={}, key_max={}, key_stride={}, value_first={}, value_last={}, value_stride={})'.format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,
@@ -654,3 +743,11 @@ class LinearRegularCatalog(Mapping):
             self._value_start,
             self._value_stop,
             self._value_stride)
+
+
+def _first_then_second_index(key):
+    return (key[0][0], key[0][1])
+
+
+def _second_then_first_index(key):
+    return (key[0][1], key[0][0])

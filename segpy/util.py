@@ -1,13 +1,17 @@
 import hashlib
+import operator
 import time
 import os
 import sys
+from bisect import bisect_left, bisect_right
 
 from contextlib import contextmanager
 from collections.abc import Set
+from enum import Enum
 from itertools import (islice, cycle, tee, chain, repeat)
 
-from segpy.sorted_set import SortedFrozenSet
+from segpy.reversed_sequence_view import ReversedSequenceView
+from segpy.sorted_frozen_set import SortedFrozenSet
 
 UNKNOWN_FILENAME = '<unknown>'
 
@@ -183,16 +187,6 @@ def contains_duplicates(sorted_iterable):
     return False
 
 
-def is_totally_sorted(iterable):
-    """Determine whether an iterable series is totally sorted in ascending order with no duplicates.
-    """
-    if isinstance(iterable, range) and iterable.step > 0:
-        return True
-    if isinstance(iterable, SortedFrozenSet):
-        return True
-    return all(a < b for a, b in pairwise(iterable))
-
-
 def measure_stride(iterable):
     """Determine whether successive numeric items differ by a constant amount.
 
@@ -204,6 +198,9 @@ def measure_stride(iterable):
         that difference is the same between all successive pairs, otherwise
         None.
     """
+    if isinstance(iterable, range):
+        return iterable.step
+
     stride = None
     for a, b in pairwise(iterable):
         new_stride = b - a
@@ -335,36 +332,127 @@ def four_bytes(byte_str):
     return a, b, c, d
 
 
+def is_sorted(iterable, key=None, reverse=False, distinct=False):
+    if key is None:
+        key = identity
+    if reverse:
+        if distinct:
+            if isinstance(iterable, range) and iterable.step < 0:
+                return True
+            op = operator.gt
+        else:
+            op = operator.ge
+    else:
+        if distinct:
+            if isinstance(iterable, range) and iterable.step > 0:
+                return True
+            if isinstance(iterable, SortedFrozenSet):
+                return True
+            op = operator.lt
+        else:
+            op = operator.le
+    return all(op(a, b) for a, b in pairwise(map(key, iterable)))
+
+
 def single_item_range(item):
     """Construct a range object which generates a single value.
     """
     return range(item, item + 1)
 
 
-def make_sorted_distinct_sequence(iterable):
+class SortSense(Enum):
+    ascending = 0
+    descending = 1
+
+
+def make_sorted_distinct_sequence(iterable, sense=SortSense.ascending):
     """Create a sorted immutable sequence from an iterable series.
+
+    The resulting collected will be sorted ascending.
 
     Args:
         iterable: An iterable series of comparable values.
+
+        sense: If None, the any original sense of the data is preserved,
+            so ascending data remains ascending, and descending data
+            remains descending. If the original data was unsorted,
+            the result will be ascending. Force a particular sense
+            by specifying SortSense.ascending or SortSense.descending.
 
     Returns:
         An immutable collection which supports the Sized, Iterable,
         Container and Sequence protocols.
     """
     if isinstance(iterable, range):
-        if iterable.step > 0:
+        if sense is None:
             return iterable
+        elif sense == SortSense.ascending:
+            if iterable.step > 0:
+                return iterable
+            else:
+                return reversed_range(iterable)
+        elif sense == SortSense.descending:
+            if iterable.step < 0:
+                return iterable
+            else:
+                return reversed_range(iterable)
         else:
-            return reversed(iterable)
-    sorted_set = SortedFrozenSet(iterable)
-    if len(sorted_set) == 1:
-        return single_item_range(sorted_set[0])
-    stride = measure_stride(sorted_set)
+            raise TypeError("sense {} is neither a SortSense nor None".format(sense))
+
+    if sense == SortSense.ascending:
+        sorted_seq = SortedFrozenSet(iterable)
+    elif sense == SortSense.descending:
+        sorted_seq = ReversedSequenceView(SortedFrozenSet(iterable))
+    elif sense is None:
+        items = list(iterable)
+        if is_sorted(items, reverse=True, distinct=True):
+            sorted_seq = ReversedSequenceView(SortedFrozenSet(iterable))
+        else:
+            sorted_seq = SortedFrozenSet(iterable)
+    else:
+        raise TypeError("sense {} is neither a SortSense nor None".format(sense))
+
+    return compress_sorted_sequence_to_range(sorted_seq)
+
+
+def reversed_range(r):
+    """Given a range object produce the reversed range.
+
+    Args:
+        r: A range object.
+
+    Returns:
+        The reversed range.
+    """
+    q, remainder = divmod(r.stop - r.start, r.step)
+    num_steps = q - (remainder == 0)
+    s_start = r.start + num_steps * r.step
+    s_step = -r.step
+    s_stop = s_start + num_steps * s_step + (s_step + remainder)
+    return range(s_start, s_stop, s_step)
+
+
+def compress_sorted_sequence_to_range(sorted_sequence):
+    """Attempt to represent the supplied sequence as a range.
+
+    Useful for reducing the size of large stored integer sequences.
+
+    Args:
+        sorted_sequence: A sequence of integers which may be
+            ordered in an ascending or descending sense.
+
+    Returns:
+        An ordered sequence which may be a range or may be
+        the unaltered argument.
+    """
+    if len(sorted_sequence) == 1:
+        return single_item_range(sorted_sequence[0])
+    stride = measure_stride(sorted_sequence)
     if stride is not None:
-        start = sorted_set[0]
-        stop = sorted_set[-1] + stride
+        start = sorted_sequence[0]
+        stop = sorted_sequence[-1] + stride
         return range(start, stop, stride)
-    return sorted_set
+    return sorted_sequence
 
 
 def hash_for_file(fh, *args):
@@ -452,8 +540,35 @@ def ensure_superset(superset, subset):
                              .format(subset, superset))
         return subset
 
+
+def first(iterable):
+    i = iter(iterable)
+    try:
+        return next(i)
+    except StopIteration:
+        raise ValueError("Cannot return the first item from an empty iterable.")
+
+
+def last(iterable):
+    try:
+        return iterable[-1]
+    except (TypeError, IndexError):
+        try:
+            return iterable[len(iterable) - 1]
+        except (TypeError, IndexError):
+            i = iter(iterable)
+            try:
+                item = next(i)
+            except StopIteration:
+                raise ValueError("Cannot return the last item from an empty iterable")
+            for item in i:
+                pass
+            return item
+
+
 def identity(x):
     return x
+
 
 def true(*args, **kwargs):
     return True
@@ -488,3 +603,28 @@ def restored_position_seek(fh, pos):
     fh.seek(pos)
     yield
     fh.seek(original)
+
+
+def index(sequence, x):
+    """Locate the leftmost value exactly equal to x"""
+    i = bisect_left(sequence, x)
+    if i != len(sequence) and sequence[i] == x:
+        return i
+    raise ValueError("No value {} in sequence".format(x))
+
+
+def find_le(sequence, x):
+    """Find rightmost value less than or equal to x"""
+    i = bisect_right(sequence, x)
+    if i:
+        return sequence[i - 1]
+    raise ValueError("No place for {} in sequence".format(x))
+
+
+def cmp(a, b):
+    return (a > b) - (a < b)
+
+
+def sign(a):
+    return cmp(a, 0)
+

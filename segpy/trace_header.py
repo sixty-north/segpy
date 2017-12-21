@@ -10,7 +10,8 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     line_sequence_num = field(
         Int32, offset=1, default=0, documentation=
         "Trace sequence number within line — Numbers continue to increase if the same line "
-        "continues across multiple SEG Y files. Highly recommended for all types of data.")
+        "continues across multiple SEG Y files. Highly recommended for all types of data. "
+        "[Usually starts at one for each reel.]")
 
     file_sequence_num = field(
         Int32, offset=5, default=0, documentation=

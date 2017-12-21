@@ -39,6 +39,7 @@ class SortedFrozenSet(Sequence, Set):
         return self._items == rhs._items
 
     def index(self, item):
+        # TODO: Add support for start and stop
         index = bisect_left(self._items, item)
         if (index != len(self._items)) and self._items[index] == item:
             return index

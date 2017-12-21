@@ -1,7 +1,7 @@
 from hypothesis import given, assume, example
 from hypothesis.strategies import integers, lists
-from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin
-from test.strategies import spaced_ranges
+from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range
+from test.strategies import spaced_ranges, ranges
 
 
 class TestBatched:
@@ -73,3 +73,14 @@ class TestComplementaryIntervals:
         end_index = last_interval_end + end_offset
         complements = list(complementary_intervals(intervals, stop=end_index))
         assert complements[-1] == range(last_interval_end, end_index)
+
+
+class TestReversedRange:
+
+    @given(r=ranges(max_size=100))
+    def test_reversed_range_is_equivalent_to_reversed(self, r):
+        assert list(reversed_range(r)) == list(reversed(r))
+
+    @given(r=ranges())
+    def test_reversed_reversed_is_what_we_began_with(self, r):
+        assert reversed_range(reversed_range(r)) == r

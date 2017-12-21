@@ -8,12 +8,10 @@ Rather than constructing Catalog subtypes directly, prefer to use
 the CatalogBuilder class which will analyse the contents of the
 mapping to find a space and time efficient representation.
 """
-from bisect import bisect_left
 from collections import Mapping, Sequence, OrderedDict, Iterable
 from fractions import Fraction
 from itertools import product
 
-from segpy.always_equal import AlwaysEqual
 from segpy.sorted_frozen_set import SortedFrozenSet
 from segpy.util import (contains_duplicates, measure_stride, make_sorted_distinct_sequence,
                         is_sorted, first)

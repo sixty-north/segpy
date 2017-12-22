@@ -309,6 +309,28 @@ class LastIndexVariesQuickestCatalog2D(Catalog2D):
             self.__class__.__name__,
             self.i_range, self.j_range, self._v_range)
 
+    def key(self, value):
+        """Given a value, get the corresponding key.
+
+        Args:
+            value: The value for which to find the key.
+
+        Returns:
+            A 2-tuple containing the (i, j) values corresponding
+            to the given value.
+
+        Raises:
+            ValueError: If there is no corresponding key.
+        """
+
+        try:
+            v_index = self._v_range.index(value)
+        except ValueError:
+            raise ValueError("{!r} is not a value of {!r}".format(value, self))
+        i_index, j_index = divmod(v_index, len(self.j_range))
+        i = self.i_range[i_index]
+        j = self.j_range[j_index]
+        return (i, j)
 
 class FirstIndexVariesQuickestCatalog2D(Catalog2D):
 
@@ -362,6 +384,29 @@ class FirstIndexVariesQuickestCatalog2D(Catalog2D):
         return '{}(i_range={}, j_range={}, v_range={})'.format(
             self.__class__.__name__,
             self.i_range, self.j_range, self._v_range)
+
+    def key(self, value):
+        """Given a value, get the corresponding key.
+
+        Args:
+            value: The value for which to find the key.
+
+        Returns:
+            A 2-tuple containing the (i, j) values corresponding
+            to the given value.
+
+        Raises:
+            ValueError: If there is no corresponding key.
+        """
+
+        try:
+            v_index = self._v_range.index(value)
+        except ValueError:
+            raise ValueError("{!r} is not a value of {!r}".format(value, self))
+        j_index, i_index = divmod(v_index, len(self.i_range))
+        i = self.i_range[i_index]
+        j = self.j_range[j_index]
+        return (i, j)
 
 
 class DictionaryCatalog(Mapping):

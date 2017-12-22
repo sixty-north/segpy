@@ -443,6 +443,27 @@ class TestLastIndexVariesQuickestCatalog2D:
         assert len(catalog) == num_indices
         assert all(d[key] == catalog[key] for key in d)
 
+    @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           data=data())
+    def test_key(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all(catalog.key(value) == key for key, value in catalog.items())
+
+    @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           data=data())
+    def test_key_missing_raises_value_error(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        value = data.draw(integers())
+        assume(value not in v_range)
+        with raises(ValueError):
+            catalog.key(value)
+
 
 class TestFirstIndexVariesQuickestCatalog2D:
 
@@ -737,6 +758,26 @@ class TestFirstIndexVariesQuickestCatalog2D:
         assert len(catalog) == num_indices
         assert all(d[key] == catalog[key] for key in d)
 
+    @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           data=data())
+    def test_key(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all(catalog.key(value) == key for key, value in catalog.items())
+
+    @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           data=data())
+    def test_key_missing_raises_value_error(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        value = data.draw(integers())
+        assume(value not in v_range)
+        with raises(ValueError):
+            catalog.key(value)
 
 class TestDictionaryCatalog:
 

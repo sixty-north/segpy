@@ -1,6 +1,7 @@
 from collections import namedtuple, deque
 from itertools import accumulate, starmap, product
 
+import sys
 from hypothesis import assume
 from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite, sampled_from
 from segpy.trace_header import TraceHeaderRev0
@@ -121,6 +122,12 @@ def items2d(draw, i_size, j_size):
     items = {(i, j): v for (i, j), v in zip(product(i_range, j_range), values)}
     return Items2D(i_range, j_range, items)
 
+SEQUENCE_TYPES = [
+    list, tuple
+]
+
+if sys.version_info > (3, 5):
+    SEQUENCE_TYPES.append(deque)
 
 @composite
 def sequences(draw, elements=None, min_size=None, max_size=None, average_size=None, unique_by=None, unique=False):
@@ -128,7 +135,7 @@ def sequences(draw, elements=None, min_size=None, max_size=None, average_size=No
 
     Currently produces list, tuple or deque objects.
     """
-    seq_type = draw(sampled_from((list, tuple, deque)))  # Work ranges and string and bytes in here
+    seq_type = draw(sampled_from(SEQUENCE_TYPES))  # Work ranges and string and bytes in here
     elements = integers() if elements is None else elements
     items = draw(lists(elements=elements, min_size=min_size, max_size=max_size,
                        average_size=average_size, unique_by=unique_by, unique=unique))

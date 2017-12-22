@@ -3,7 +3,7 @@ from hypothesis.strategies import integers, lists, booleans
 from pytest import raises
 
 from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range, \
-    make_sorted_distinct_sequence, SortSense, sgn, is_sorted
+    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride
 from test.strategies import spaced_ranges, ranges, sequences
 
 
@@ -156,4 +156,105 @@ class TestMakeSortedDistinctSequence:
         ascending = is_sorted(seq, reverse=False, distinct=True)
         descending = is_sorted(seq, reverse=True, distinct=True)
         assert b == descending != ascending
+
+
+class TestIsSorted:
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_is_sequence_sorted_ascending_positive(self, r):
+        s = sorted(r)
+        assert is_sorted(s, reverse=False, distinct=True)
+
+    @given(r=sequences(min_size=2))
+    def test_is_sequence_sorted_ascending_negative(self, r):
+        s = sorted(r, reverse=True)
+        assert not is_sorted(s, reverse=False, distinct=True)
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_is_sequence_sorted_descending_positive(self, r):
+        s = sorted(r, reverse=True)
+        assert is_sorted(s, reverse=True, distinct=True)
+
+    @given(r=sequences(min_size=2))
+    def test_is_sequence_sorted_descending_negative(self, r):
+        s = sorted(r, reverse=False)
+        assert not is_sorted(s, reverse=True, distinct=True)
+
+    def test_empty_sequence_is_sorted_ascending(self):
+        assert is_sorted([], reverse=False, distinct=True)
+
+    def test_empty_sequence_is_sorted_descending(self):
+        assert is_sorted([], reverse=True, distinct=True)
+
+    @given(r=sequences(min_size=1, max_size=1))
+    def test_sequence_of_one_is_sorted_ascending(self, r):
+        assert is_sorted(r, reverse=False, distinct=True)
+
+    @given(r=sequences(min_size=1, max_size=1))
+    def test_sequence_of_one_is_sorted_descending(self, r):
+        assert is_sorted(r, reverse=True, distinct=True)
+
+    @given(r=ranges(min_size=2, min_step_value=1))
+    def test_is_range_sorted_ascending_positive(self, r):
+        assert is_sorted(r, reverse=False, distinct=True)
+
+    @given(r=ranges(min_size=2, max_step_value=-1))
+    def test_is_range_sorted_ascending_negative(self, r):
+        assert not is_sorted(r, reverse=False, distinct=True)
+
+    @given(r=ranges(min_size=2, max_step_value=-1))
+    def test_is_range_sorted_descending_positive(self, r):
+        assert is_sorted(r, reverse=True, distinct=True)
+
+    @given(r=ranges(min_size=2, min_step_value=1))
+    def test_is_range_sorted_descending_negative(self, r):
+        assert not is_sorted(r, reverse=True, distinct=True)
+
+    @given(r=ranges(max_size=0))
+    def test_empty_range_is_sorted_ascending(self, r):
+        assert is_sorted(r, reverse=False, distinct=True)
+
+    @given(r=ranges(max_size=0))
+    def test_empty_range_is_sorted_descending(self, r):
+        assert is_sorted(r, reverse=True, distinct=True)
+
+    @given(r=ranges(max_size=1, min_size=1))
+    def test_range_of_one_is_sorted_ascending(self, r):
+        assert is_sorted(r, reverse=False, distinct=True)
+
+    @given(r=ranges(max_size=1, min_size=1))
+    def test_range_of_one_is_sorted_descending(self, r):
+        assert is_sorted(r, reverse=True, distinct=True)
+
+
+class TestMeasureStride:
+
+    @given(r=ranges())
+    def test_measure_range_stride(self, r):
+        s = measure_stride(r)
+        assert s == r.step
+
+    @given(r=ranges(min_size=2, max_size=1000))
+    def test_measure_list_stride_regular(self, r):
+        t = list(r)
+        s = measure_stride(t)
+        assert s == r.step
+
+    @given(r=ranges(min_size=2, max_size=1000))
+    def test_measure_list_stride_irregular(self, r):
+        t = list(r) + list(r)
+        s = measure_stride(t)
+        assert s is None
+
+    @given(s=sequences(min_size=1, max_size=1))
+    def test_stride_of_sequence_of_one_is_none(self, s):
+        assert measure_stride(s) is None
+
+    @given(s=sequences(max_size=0))
+    def test_stride_of_empty_sequence_is_none(self, s):
+        assert measure_stride(s) is None
+
+
+
+
 

@@ -111,6 +111,7 @@ def ranges(draw,
 
 Items2D = namedtuple('Items2D', ['i_range', 'j_range', 'items'])
 
+
 @composite
 def items2d(draw, i_size, j_size):
     i_range = draw(ranges(min_size=1, max_size=i_size, min_step_value=1))
@@ -123,8 +124,12 @@ def items2d(draw, i_size, j_size):
 
 @composite
 def sequences(draw, elements=None, min_size=None, max_size=None, average_size=None, unique_by=None, unique=False):
-    seq_type = draw(sampled_from((list, tuple, deque)))  # Work ranges in here
+    """A Hypthesis strategy to produce arbitrary sequences.
+
+    Currently produces list, tuple or deque objects.
+    """
+    seq_type = draw(sampled_from((list, tuple, deque)))  # Work ranges and string and bytes in here
     elements = integers() if elements is None else elements
     items = draw(lists(elements=elements, min_size=min_size, max_size=max_size,
-                       average_size=None, unique_by=None, unique=False))
+                       average_size=average_size, unique_by=unique_by, unique=unique))
     return seq_type(items)

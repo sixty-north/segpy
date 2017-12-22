@@ -603,3 +603,28 @@ def restored_position_seek(fh, pos):
     fh.seek(pos)
     yield
     fh.seek(original)
+
+
+def cmp(x, y):
+    """Compare the two objects x and y and return an integer according to the outcome.
+
+    Args:
+        x: The first number to compare.
+        y: The second number to compare.
+
+    Returns:
+        A negative value if x < y, zero if x == y and  positive if x > y.
+    """
+    return (x > y) - (x < y)
+
+
+def sgn(x):
+    """The sign of a number.
+
+    Args:
+        x: The number for which to compute the sign.
+
+    Returns:
+        +1 is x is positive, -1 if x is negative, 0 if x is zero.
+    """
+    return cmp(x, 0)

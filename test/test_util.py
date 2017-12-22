@@ -1,7 +1,10 @@
 from hypothesis import given, assume, example
-from hypothesis.strategies import integers, lists
-from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range
-from test.strategies import spaced_ranges, ranges
+from hypothesis.strategies import integers, lists, booleans
+from pytest import raises
+
+from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range, \
+    make_sorted_distinct_sequence, SortSense, sgn, is_sorted
+from test.strategies import spaced_ranges, ranges, sequences
 
 
 class TestBatched:
@@ -84,3 +87,73 @@ class TestReversedRange:
     @given(r=ranges())
     def test_reversed_reversed_is_what_we_began_with(self, r):
         assert reversed_range(reversed_range(r)) == r
+
+
+class TestMakeSortedDistinctSequence:
+
+    @given(r=ranges(min_step_value=1))
+    def test_ascending_range_result_is_ascending(self, r):
+        seq = make_sorted_distinct_sequence(r, sense=SortSense.ascending)
+        assert seq.step > 0
+
+    @given(r=ranges(min_step_value=1))
+    def test_ascending_range_result_is_descending(self, r):
+        seq = make_sorted_distinct_sequence(r, sense=SortSense.descending)
+        assert seq.step < 0
+
+    @given(r=ranges(max_step_value=-1))
+    def test_descending_range_result_is_ascending(self, r):
+        seq = make_sorted_distinct_sequence(r, sense=SortSense.ascending)
+        assert seq.step > 0
+
+    @given(r=ranges(max_step_value=-1))
+    def test_descending_range_result_is_descending(self, r):
+        seq = make_sorted_distinct_sequence(r, sense=SortSense.descending)
+        assert seq.step < 0
+
+    @given(r=ranges())
+    def test_range_sense_is_preserved(self, r):
+        seq = make_sorted_distinct_sequence(r, sense=None)
+        assert sgn(r.step) == sgn(seq.step)
+
+    def test_range_with_invalid_sense_value_raises_type_error(self):
+        with raises(TypeError):
+            make_sorted_distinct_sequence(range(1, 2), 42)
+
+    def test_list_with_invalid_sense_value_raises_type_error(self):
+        with raises(TypeError):
+            make_sorted_distinct_sequence([1, 2], 42)
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_ascending_sequence_result_is_ascending(self, r):
+        s = sorted(r)
+        seq = make_sorted_distinct_sequence(s, sense=SortSense.ascending)
+        assert is_sorted(seq, reverse=False, distinct=True)
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_ascending_sequence_result_is_descending(self, r):
+        s = sorted(r)
+        seq = make_sorted_distinct_sequence(s, sense=SortSense.descending)
+        assert is_sorted(seq, reverse=True, distinct=True)
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_descending_sequence_result_is_ascending(self, r):
+        s = sorted(r, reverse=True)
+        seq = make_sorted_distinct_sequence(s, sense=SortSense.ascending)
+        assert is_sorted(seq, reverse=False, distinct=True)
+
+    @given(r=sequences(min_size=2, unique=True))
+    def test_descending_sequence_result_is_descending(self, r):
+        s = sorted(r, reverse=True)
+        seq = make_sorted_distinct_sequence(s, sense=SortSense.descending)
+        assert is_sorted(seq, reverse=True, distinct=True)
+
+    @given(r=sequences(min_size=2, unique=True),
+           b=booleans())
+    def test_sequence_sense_is_preserved(self, r, b):
+        s = sorted(r, reverse=b)
+        seq = make_sorted_distinct_sequence(s, sense=None)
+        ascending = is_sorted(seq, reverse=False, distinct=True)
+        descending = is_sorted(seq, reverse=True, distinct=True)
+        assert b == descending != ascending
+

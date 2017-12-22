@@ -185,6 +185,67 @@ class TestLastIndexVariesQuickestCatalog2D:
     @given(i_range=ranges(min_size=1, min_step_value=1),
            j_range=ranges(min_size=1, min_step_value=1),
            data=data())
+    def test_mismatched_ranges_raises_value_error(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges())
+        assume(len(v_range) != num_indices)
+        with raises(ValueError):
+            LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_positive(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all((i, j) in catalog for (i, j) in product(i_range, j_range))
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_negative_i_out_of_range(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        i = data.draw(integers())
+        j = data.draw(integers())
+        assume(i not in i_range)
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert (i, j) not in catalog
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_negative_j_out_of_range(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        i = data.draw(integers())
+        j = data.draw(integers())
+        assume(j not in j_range)
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert (i, j) not in catalog
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_length(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert len(catalog) == num_indices
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_iteration(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = LastIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all(a == b for a, b in zip(product(i_range, j_range), iter(catalog)))
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
     def test_i_min(self, i_range, j_range, data):
         num_indices = len(i_range) * len(j_range)
         v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
@@ -300,7 +361,6 @@ class TestLastIndexVariesQuickestCatalog2D:
         assert all(d[key] == catalog[key] for key in d)
 
     def test_complex_row_major_example(self):
-
         i_range = range(1, 31, 3)
         j_range = range(2, 24, 2)
         base = 100
@@ -333,7 +393,6 @@ class TestLastIndexVariesQuickestCatalog2D:
         assert catalog.j_min == 2
         assert catalog.j_max == 22
         assert len(catalog) == 110
-
         assert all(d[key] == catalog[key] for key in d)
 
     @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
@@ -384,6 +443,275 @@ class TestLastIndexVariesQuickestCatalog2D:
         assert len(catalog) == num_indices
         assert all(d[key] == catalog[key] for key in d)
 
+
+class TestFirstIndexVariesQuickestCatalog2D:
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_i_range_preserved(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.i_range == i_range
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_j_range_preserved(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.j_range == j_range
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_v_range_preserved(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.v_range == v_range
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_mismatched_ranges_raises_value_error(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges())
+        assume(len(v_range) != num_indices)
+        with raises(ValueError):
+            FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_positive(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all((i, j) in catalog for (i, j) in product(i_range, j_range))
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_negative_i_out_of_range(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        i = data.draw(integers())
+        j = data.draw(integers())
+        assume(i not in i_range)
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert (i, j) not in catalog
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_containment_negative_j_out_of_range(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        i = data.draw(integers())
+        j = data.draw(integers())
+        assume(j not in j_range)
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert (i, j) not in catalog
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_length(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert len(catalog) == num_indices
+
+    @given(i_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=10, min_step_value=1),
+           data=data())
+    def test_iteration(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert all(a == b for a, b in zip(((i, j) for (j, i) in product(j_range, i_range)), iter(catalog)))
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_i_min(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.i_min == i_range.start
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_i_max(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.i_max == i_range.stop - i_range.step
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_j_min(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.j_min == j_range.start
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_j_max(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.j_max == j_range.stop - j_range.step
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_key_min(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.key_min() == (i_range.start, j_range.start)
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_key_max(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.key_max() == (i_range.stop - i_range.step,
+                                     j_range.stop - j_range.step)
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_value_start(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.value_first() == first(v_range)
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_value_stop(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        assert catalog.value_last() == last(v_range)
+
+    @given(i_range=ranges(min_size=1, min_step_value=1),
+           j_range=ranges(min_size=1, min_step_value=1),
+           data=data())
+    def test_repr(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        catalog = FirstIndexVariesQuickestCatalog2D(i_range, j_range, v_range)
+        r = repr(catalog)
+        assert r.startswith('FirstIndexVariesQuickestCatalog2D')
+        assert 'i_range={!r}'.format(i_range) in r
+        assert 'j_range={!r}'.format(j_range) in r
+        assert 'v_range={!r}'.format(v_range) in r
+        assert check_balanced(r)
+
+    def test_column_major_example(self):
+        d = {
+            (11, 14): 5,
+            (13, 14): 10,
+            (15, 14): 15,
+            (11, 16): 20,
+            (13, 16): 25,
+            (15, 16): 30,
+            (11, 18): 35,
+            (13, 18): 40,
+            (15, 18): 45
+        }
+        catalog_builder = CatalogBuilder(d)
+        catalog = catalog_builder.create()
+        assert isinstance(catalog, FirstIndexVariesQuickestCatalog2D)
+        assert catalog.key_min() == (11, 14)
+        assert catalog.key_max() == (15, 18)
+        assert catalog.value_first() == 5
+        assert catalog.value_last() == 45
+        assert catalog.i_min == 11
+        assert catalog.i_max == 15
+        assert catalog.j_min == 14
+        assert catalog.j_max == 18
+        assert len(catalog) == 9
+
+        with raises(KeyError):
+            _ = catalog[(0, 0)]
+
+        assert all(d[key] == catalog[key] for key in d)
+
+    def test_complex_column_major_example(self):
+        i_range = range(1, 31, 3)
+        j_range = range(2, 24, 2)
+        base = 100
+        stride = 4
+        d = {k: v for k, v in zip(((i, j) for (j, i) in product(j_range, i_range)), count(start=base, step=stride))}
+        # The previous line produces a dictionary which looks like this (note that the value here are
+        # not consecutive, so while the dictionary is not displayed in column-major (first index varies
+        # quickest) order, when sorted by value, it would be:
+        # {(1, 2): 100,
+        #  (1, 4): 140,
+        #  (1, 6): 180,
+        #  (1, 8): 220,
+        #  (1, 10): 260,
+        #  ...
+        #  (28, 14): 376,
+        #  (28, 16): 416,
+        #  (28, 18): 456,
+        #  (28, 20): 496,
+        #  (28, 22): 536}
+
+
+        # The catalog builder needs to be smart enough to recover the i and j ranges, the base
+        # value, and the stride from this data.
+        catalog_builder = CatalogBuilder(d)
+        catalog = catalog_builder.create()
+        assert isinstance(catalog, FirstIndexVariesQuickestCatalog2D)
+        assert catalog.key_min() == (1, 2)
+        assert catalog.key_max() == (28, 22)
+        assert catalog.value_first() == 100
+        assert catalog.value_last() == 536
+        assert catalog.i_min == 1
+        assert catalog.i_max == 28
+        assert catalog.j_min == 2
+        assert catalog.j_max == 22
+        assert len(catalog) == 110
+        assert all(d[key] == catalog[key] for key in d)
+
+    @given(i_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           j_range=ranges(min_size=1, max_size=20, min_step_value=1),
+           data=data())
+    def test_complex_general(self, i_range, j_range, data):
+        num_indices = len(i_range) * len(j_range)
+        v_range = data.draw(ranges(min_size=num_indices, max_size=num_indices))
+        d = {k: v for k, v in zip(((i, j) for (j, i) in product(j_range, i_range)), v_range)}
+
+        # The catalog builder needs to be smart enough to recover the i and j ranges, the base
+        # value, and the stride from this data.
+        catalog_builder = CatalogBuilder(d)
+        catalog = catalog_builder.create()
+        assert isinstance(catalog, (LastIndexVariesQuickestCatalog2D, FirstIndexVariesQuickestCatalog2D))
+        assert catalog.key_min() == (i_range.start, j_range.start)
+        assert catalog.key_max() == (last(i_range), last(j_range))
+        assert catalog.value_first() == v_range.start
+        assert catalog.value_last() == last(v_range)
+        assert catalog.i_min == i_range.start
+        assert catalog.i_max == last(i_range)
+        assert catalog.j_min == j_range.start
+        assert catalog.j_max == last(j_range)
+        assert len(catalog) == num_indices
+        assert all(d[key] == catalog[key] for key in d)
 
     @given(i_range=ranges(min_size=2, max_size=20, min_step_value=1),
            j_range=ranges(min_size=2, max_size=20, min_step_value=1),

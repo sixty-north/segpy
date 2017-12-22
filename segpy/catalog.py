@@ -332,6 +332,7 @@ class LastIndexVariesQuickestCatalog2D(Catalog2D):
         j = self.j_range[j_index]
         return (i, j)
 
+
 class FirstIndexVariesQuickestCatalog2D(Catalog2D):
 
     def __init__(self, i_range, j_range, v_range):

@@ -122,12 +122,15 @@ def items2d(draw, i_size, j_size):
     items = {(i, j): v for (i, j), v in zip(product(i_range, j_range), values)}
     return Items2D(i_range, j_range, items)
 
+
 SEQUENCE_TYPES = [
     list, tuple
 ]
 
+
 if sys.version_info > (3, 5):
     SEQUENCE_TYPES.append(deque)
+
 
 @composite
 def sequences(draw, elements=None, min_size=None, max_size=None, average_size=None, unique_by=None, unique=False):

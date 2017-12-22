@@ -1,9 +1,9 @@
 from hypothesis import given, assume, example
-from hypothesis.strategies import integers, lists, booleans
+from hypothesis.strategies import integers, lists, booleans, tuples, dictionaries, text
 from pytest import raises
 
 from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range, \
-    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride
+    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride, true, last, first, minmax
 from test.strategies import spaced_ranges, ranges, sequences
 
 
@@ -180,6 +180,26 @@ class TestIsSorted:
         s = sorted(r, reverse=False)
         assert not is_sorted(s, reverse=True, distinct=True)
 
+    @given(r=sequences(min_size=2, max_size=100))
+    def test_is_sequence_sorted_ascending_positive_duplicates(self, r):
+        s = sorted(r + r, reverse=False)
+        assert is_sorted(s, reverse=False)
+
+    @given(r=sequences(min_size=2, max_size=100, unique=True))
+    def test_is_sequence_sorted_ascending_negative_duplicates(self, r):
+        s = sorted(r + r, reverse=True)
+        assert not is_sorted(s, reverse=False)
+
+    @given(r=sequences(min_size=2, max_size=100))
+    def test_is_sequence_sorted_descending_positive_duplicates(self, r):
+        s = sorted(r + r, reverse=True)
+        assert is_sorted(s, reverse=True)
+
+    @given(r=sequences(min_size=2, max_size=100, unique=True))
+    def test_is_sequence_sorted_descending_negative_duplicates(self, r):
+        s = sorted(r + r, reverse=False)
+        assert not is_sorted(s, reverse=True)
+
     def test_empty_sequence_is_sorted_ascending(self):
         assert is_sorted([], reverse=False, distinct=True)
 
@@ -255,6 +275,51 @@ class TestMeasureStride:
         assert measure_stride(s) is None
 
 
+class TestTrue:
+
+    @given(args=lists(integers()),
+           kwargs=dictionaries(keys=text(), values=integers()))
+    def test_true(self, args, kwargs):
+        assert true(*args, **kwargs)
 
 
+class TestFirst:
 
+    @given(s=sequences(min_size=1, max_size=100))
+    def test_first_sequences(self, s):
+        assert first(s) == s[0]
+
+    def test_empty_iterable_raises_value_error(self):
+        r = range(0, 0)
+        with raises(ValueError):
+            first(r)
+
+
+class TestLast:
+
+    @given(s=sequences(min_size=1, max_size=100))
+    def test_last_sequences(self, s):
+        assert last(s) == s[-1]
+
+    @given(s=sequences(min_size=1, max_size=100))
+    def test_last_iterable(self, s):
+        assert last(iter(s)) == s[-1]
+
+    def test_empty_iterable_raises_value_error(self):
+        r = range(0, 0)
+        with raises(ValueError):
+            last(r)
+
+
+class TestMinMax:
+
+    def test_empty_iterable_raises_value_error(self):
+        r = range(0, 0)
+        with raises(ValueError):
+            minmax(r)
+
+    @given(s=sequences(min_size=1, max_size=100))
+    def test_minmax_sequences(self, s):
+        a, b = minmax(s)
+        assert a == min(s)
+        assert b == max(s)

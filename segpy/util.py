@@ -551,19 +551,17 @@ def first(iterable):
 
 def last(iterable):
     try:
-        return iterable[-1]
+        # Don't rely on support for negative indexing
+        return iterable[len(iterable) - 1]
     except (TypeError, IndexError):
+        i = iter(iterable)
         try:
-            return iterable[len(iterable) - 1]
-        except (TypeError, IndexError):
-            i = iter(iterable)
-            try:
-                item = next(i)
-            except StopIteration:
-                raise ValueError("Cannot return the last item from an empty iterable")
-            for item in i:
-                pass
-            return item
+            item = next(i)
+        except StopIteration:
+            raise ValueError("Cannot return the last item from an empty iterable")
+        for item in i:
+            pass
+        return item
 
 
 def identity(x):

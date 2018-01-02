@@ -64,9 +64,12 @@ Limits = namedtuple('Limits', ['min', 'max'])
 LIMITS = {
     'ibm': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
     'int32': Limits(-2147483648, 2147483647),
+    'uint32': Limits(0, 4294967295),
     'int16': Limits(-32768, 32767),
+    'uint16': Limits(0, 65535),
     'float32': Limits(-3.402823e38, 3.402823e38),
-    'int8': Limits(-128, 127)
+    'int8': Limits(-128, 127),
+    'uint8': Limits(0, 255)
 }
 
 PY_TYPES = {

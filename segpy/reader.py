@@ -415,7 +415,7 @@ class SegYReader(Dataset):
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
         if self._max_num_trace_samples is None:
-            self._max_num_trace_samples = max(self._trace_length_catalog.values())
+            self._max_num_trace_samples = max(self._trace_length_catalog.values(), default=0)
         return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):

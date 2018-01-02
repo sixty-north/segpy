@@ -119,7 +119,7 @@ def create_reader(
                 filename_from_handle(fh),
                 num_file_bytes))
 
-    if endian not in ('<', '>'):
+    if endian not in {'<', '>'}:
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
     progress_callback = progress if progress is not None else lambda p: None
@@ -127,7 +127,7 @@ def create_reader(
     if not callable(progress_callback):
         raise TypeError("create_reader(): progress callback must be callable")
 
-    if dimensionality not in (None, 1, 2, 3):
+    if dimensionality not in {None, 1, 2, 3}:
         raise ValueError("dimensionality {!r} is not an of 1, 2, 3 or None.".format(dimensionality))
 
     reader = None

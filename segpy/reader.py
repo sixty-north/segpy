@@ -609,6 +609,11 @@ class SegYReader3D(SegYReader):
         super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
+
+        if line_catalog is None:
+            raise TypeError(
+                'SegYReader3D must be provided with a non-None line catalog.')
+
         self._line_catalog = line_catalog
         self._inline_numbers = None
         self._xline_numbers = None
@@ -750,6 +755,11 @@ class SegYReader2D(SegYReader):
         super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
+
+        if cdp_catalog is None:
+            raise TypeError(
+                'SegYReader2D must be provided with a non-None CDP catalog.')
+
         self._cdp_catalog = cdp_catalog
         self._cdp_numbers = None
 

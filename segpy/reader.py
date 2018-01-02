@@ -335,7 +335,16 @@ class SegYReader(Dataset):
 
         self._trace_header_packer = make_header_packer(trace_header_format, endian)
 
+        if trace_offset_catalog is None:
+            raise TypeError(
+                '{} must be provided with a non-None trace-offset catalog.'.format(self.__class__.__name__))
+
         self._trace_offset_catalog = trace_offset_catalog
+
+        if trace_length_catalog is None:
+            raise TypeError(
+                '{} must be provided with a non-None trace-length catalog.'.format(self.__class__.__name__))
+
         self._trace_length_catalog = trace_length_catalog
 
         self._revision = extract_revision(self._binary_reel_header)
@@ -612,7 +621,7 @@ class SegYReader3D(SegYReader):
 
         if line_catalog is None:
             raise TypeError(
-                'SegYReader3D must be provided with a non-None line catalog.')
+                '{} must be provided with a non-None line catalog.'.format(self.__class__.__name__))
 
         self._line_catalog = line_catalog
         self._inline_numbers = None
@@ -758,7 +767,7 @@ class SegYReader2D(SegYReader):
 
         if cdp_catalog is None:
             raise TypeError(
-                'SegYReader2D must be provided with a non-None CDP catalog.')
+                '{} must be provided with a non-None CDP catalog.'.format(self.__class__.__name__))
 
         self._cdp_catalog = cdp_catalog
         self._cdp_numbers = None

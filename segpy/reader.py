@@ -415,7 +415,7 @@ class SegYReader(Dataset):
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
         if self._max_num_trace_samples is None:
-            self._max_num_trace_samples = max(self._trace_length_catalog.values())
+            self._max_num_trace_samples = max(self._trace_length_catalog.values(), default=0)
         return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):
@@ -609,6 +609,11 @@ class SegYReader3D(SegYReader):
         super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
+
+        if line_catalog is None:
+            raise TypeError(
+                'SegYReader3D must be provided with a non-None line catalog.')
+
         self._line_catalog = line_catalog
         self._inline_numbers = None
         self._xline_numbers = None
@@ -750,6 +755,11 @@ class SegYReader2D(SegYReader):
         super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
                                            trace_offset_catalog, trace_length_catalog, trace_header_format,
                                            encoding, endian)
+
+        if cdp_catalog is None:
+            raise TypeError(
+                'SegYReader2D must be provided with a non-None CDP catalog.')
+
         self._cdp_catalog = cdp_catalog
         self._cdp_numbers = None
 

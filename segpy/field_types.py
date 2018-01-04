@@ -45,8 +45,8 @@ class Int16(metaclass=IntFieldMeta,
     pass
 
 
-class UInt16(metaclass=IntFieldMeta,
-             seg_y_type='uint16'):
+class NNInt16(metaclass=IntFieldMeta,
+              seg_y_type='nnint16'):
     pass
 
 
@@ -55,8 +55,8 @@ class Int32(metaclass=IntFieldMeta,
     pass
 
 
-class UInt32(metaclass=IntFieldMeta,
-             seg_y_type='uint32'):
+class NNInt32(metaclass=IntFieldMeta,
+              seg_y_type='nnint32'):
     pass
 
 

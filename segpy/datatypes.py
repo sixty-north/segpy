@@ -19,11 +19,11 @@ SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT = {v: k for k, v in DATA_SAMPLE_FORMAT_TO_SEG_Y
 # Python Standard Library struct module
 SEG_Y_TYPE_TO_CTYPE = {
     'int32':  'i',
-    'uint32': 'I',
+    'nnint32': 'I',
     'int16':  'h',
-    'uint16': 'H',
+    'nnint16': 'H',
     'int8': 'b',
-    'uint8': 'B',
+    'nnint8': 'B',
     'float32':  'f',
     'ibm': 'ibm'}
 
@@ -32,12 +32,12 @@ SEG_Y_TYPE_TO_CTYPE = {
 SEG_Y_TYPE_DESCRIPTION = {
     'ibm': 'IBM 32 bit float',
     'int32': '32 bit signed integer',
-    'uint32': '32 bit unsigned integer',
+    'nnint32': '32 bit non-negative integer',
     'int16': '16 bit signed integer',
-    'uint16': '16 bit unsigned integer',
+    'nnint16': '16 bit unsigned integer',
     'float32': 'IEEE float32',
     'int8': '8 bit signed integer (byte)',
-    'uint8': '8 bit unsigned integer (byte)'}
+    'nnint8': '8 bit unsigned integer (byte)'}
 
 # Sizes of various ctypes in bytes
 CTYPE_TO_SIZE = dict(
@@ -64,12 +64,12 @@ Limits = namedtuple('Limits', ['min', 'max'])
 LIMITS = {
     'ibm': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
     'int32': Limits(-2147483648, 2147483647),
-    'uint32': Limits(0, 4294967295),
+    'nnint32': Limits(0, 2147483647),
     'int16': Limits(-32768, 32767),
-    'uint16': Limits(0, 65535),
+    'nnint16': Limits(0, 32767),
     'float32': Limits(-3.402823e38, 3.402823e38),
     'int8': Limits(-128, 127),
-    'uint8': Limits(0, 255)
+    'nnint8': Limits(0, 127)
 }
 
 PY_TYPES = {

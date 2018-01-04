@@ -1,6 +1,6 @@
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE
+from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, NNInt32, NNInt16
 from segpy.header import FormatMeta, field
-from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, UInt32, UInt16
 from segpy import revisions
 
 
@@ -71,7 +71,6 @@ class FormatRevisionNumField(metaclass=IntEnumFieldMeta,
     pass
 
 
-
 class BinaryReelHeader(metaclass=FormatMeta):
 
     START_OFFSET_IN_BYTES = 3201
@@ -82,7 +81,7 @@ class BinaryReelHeader(metaclass=FormatMeta):
         "Job identification number")
 
     line_num = field(
-        UInt32, offset=3205, default=0, documentation=
+        NNInt32, offset=3205, default=0, documentation=
         "Line number. For 3-D poststack data, this will typically contain the in-line number."
     )
 
@@ -92,34 +91,34 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     data_traces_per_ensemble = field(
-        UInt16, offset=3213, default=0, documentation=
+        NNInt16, offset=3213, default=0, documentation=
         "Number of data traces per ensemble. Mandatory for prestack data."
     )
 
     auxiliary_traces_per_ensemble = field(
-        UInt16, offset=3215, default=0, documentation=
+        NNInt16, offset=3215, default=0, documentation=
         "Number of auxiliary traces per ensemble. Mandatory for prestack data."
     )
 
     sample_interval = field(
-        UInt16, offset=3217, default=0, documentation=
+        NNInt16, offset=3217, default=0, documentation=
         "Sample interval in microseconds (μs). Mandatory for all data types."
     )
 
     original_field_sample_interval = field(
-        UInt16, offset=3219, default=0, documentation=
+        NNInt16, offset=3219, default=0, documentation=
         "Sample interval in microseconds (μs) of original field recording."
     )
 
     num_samples = field(
-        UInt16, offset=3221, default=0, documentation=
+        NNInt16, offset=3221, default=0, documentation=
         "Number of samples per data trace. Mandatory for all types of data. "
         "Note: The sample interval and number of samples in the Binary File Header should be for the primary set of "
         "seismic data traces in the file."
     )
 
     original_field_num_samples = field(
-        UInt16, offset=3223, default=0, documentation=
+        NNInt16, offset=3223, default=0, documentation=
         "Number of samples per data trace for original field recording."
     )
 
@@ -137,7 +136,7 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     ensemble_fold = field(
-        UInt16, offset=3227, default=0, documentation=
+        NNInt16, offset=3227, default=0, documentation=
         "Ensemble fold. The expected number of data traces per trace ensemble (e.g. the CMP fold). "
         "Highly recommended for all types of data."
     )
@@ -159,7 +158,7 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     vertical_sum_code = field(
-        UInt16, offset=3231, default=0, documentation=
+        NNInt16, offset=3231, default=0, documentation=
         "Vertical sum code: "
         "1 = no sum, "
         "2 = two sum, "
@@ -168,17 +167,17 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     sweep_frequency_at_start = field(
-        UInt16, offset=3233, default=0, documentation=
+        NNInt16, offset=3233, default=0, documentation=
         "Sweep frequency at start (Hz)."
     )
 
     sweep_frequency_at_end = field(
-        UInt16, offset=3235, default=0, documentation=
+        NNInt16, offset=3235, default=0, documentation=
         "Sweep frequency at end (Hz)."
     )
 
     sweep_length = field(
-        UInt16, offset=3237, default=0, documentation=
+        NNInt16, offset=3237, default=0, documentation=
         "Sweep length in milliseconds."
     )
 
@@ -193,12 +192,12 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     sweep_trace_taper_length_at_start = field(
-        UInt16, offset=3243, default=0, documentation=
+        NNInt16, offset=3243, default=0, documentation=
         "Sweep trace taper length at start in milliseconds."
     )
 
     sweep_trace_taper_length_at_end = field(
-        UInt16, offset=3245, default=0, documentation=
+        NNInt16, offset=3245, default=0, documentation=
         "Sweep trace taper length at end in milliseconds."
     )
 

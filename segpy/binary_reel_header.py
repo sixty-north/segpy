@@ -1,9 +1,10 @@
+from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE
 from segpy.header import FormatMeta, field
 from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, UInt32, UInt16
 
 
 class DataSampleFormatField(metaclass=IntEnumFieldMeta,
-                            values=(range(9))):
+                            values=DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE):
     pass
 
 

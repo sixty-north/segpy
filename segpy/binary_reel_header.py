@@ -1,6 +1,7 @@
 from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE
 from segpy.header import FormatMeta, field
 from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, UInt32, UInt16
+from segpy import revisions
 
 
 class DataSampleFormatField(metaclass=IntEnumFieldMeta,
@@ -66,7 +67,7 @@ class NumExtendedTextualHeadersField(metaclass=IntFieldMeta,
 
 class FormatRevisionNumField(metaclass=IntEnumFieldMeta,
                              seg_y_type='int16',
-                             values=(0x0100, 0x0000)):
+                             values=set(revisions.VARIANTS.values())):
     pass
 
 

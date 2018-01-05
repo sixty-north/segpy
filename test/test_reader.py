@@ -78,7 +78,7 @@ class Test_create_reader_Exceptions:
     phases=(Phase.explicit, Phase.reuse, Phase.generate),
 )
 def test_round_trip(tmpdir, dataset):
-    segy_file = tmpdir / 'test.segy'
+    segy_file = str(tmpdir / 'test.segy')
 
     with open(segy_file, mode='bw') as fh:
         write_segy(fh, dataset)

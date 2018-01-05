@@ -23,7 +23,7 @@ def write_segy(fh,
         encoding: Optional encoding for text data. Typically 'cp037' for EBCDIC or 'ascii' for ASCII. If omitted, the
             seg_y_data object will be queries for an encoding property.
 
-        endian: Big endian by default. If omitted, the seg_y_data object will be queried for an encoding property.
+        endian: Big endian by default. If omitted, the dataset object will be queried for an encoding property.
 
         progress: A unary callable which will be passed a number
             between zero and one indicating the progress made. If

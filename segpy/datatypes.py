@@ -3,15 +3,34 @@
 
 # A mapping from data sample format codes to SEG Y types.
 from collections import namedtuple
+from enum import IntEnum
 
 from segpy.ibm_float import MIN_IBM_FLOAT, MAX_IBM_FLOAT
 
+
+class DataSampleFormat(IntEnum):
+    """Data sample format code. Mandatory for all data.
+    1 = 4-byte IBM floating-point,
+    2 = 4-byte, two's complement integer,
+    3 = 2-byte, two's complement integer,
+    4 = 4-byte fixed-point with gain (obsolete),
+    5 = 4-byte IEEE floating-point,
+    6 = Not currently used,
+    7 = Not currently used,
+    8 = 1-byte, two's complement integer."""
+    IBM = 1
+    INT32 = 2
+    INT16 = 3
+    FLOAT32 = 5
+    INT8 = 8
+
+
 DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
-    1: 'ibm',
-    2: 'int32',
-    3: 'int16',
-    5: 'float32',
-    8: 'int8'}
+    DataSampleFormat.IBM: 'ibm',
+    DataSampleFormat.INT32: 'int32',
+    DataSampleFormat.INT16: 'int16',
+    DataSampleFormat.FLOAT32: 'float32',
+    DataSampleFormat.INT8: 'int8'}
 
 SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT = {v: k for k, v in DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE.items()}
 
@@ -19,11 +38,11 @@ SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT = {v: k for k, v in DATA_SAMPLE_FORMAT_TO_SEG_Y
 # Python Standard Library struct module
 SEG_Y_TYPE_TO_CTYPE = {
     'int32':  'i',
-    'uint32': 'I',
+    'nnint32': 'I',
     'int16':  'h',
-    'uint16': 'H',
+    'nnint16': 'H',
     'int8': 'b',
-    'uint8': 'B',
+    'nnint8': 'B',
     'float32':  'f',
     'ibm': 'ibm'}
 
@@ -32,12 +51,12 @@ SEG_Y_TYPE_TO_CTYPE = {
 SEG_Y_TYPE_DESCRIPTION = {
     'ibm': 'IBM 32 bit float',
     'int32': '32 bit signed integer',
-    'uint32': '32 bit unsigned integer',
+    'nnint32': '32 bit non-negative integer',
     'int16': '16 bit signed integer',
-    'uint16': '16 bit unsigned integer',
+    'nnint16': '16 bit unsigned integer',
     'float32': 'IEEE float32',
     'int8': '8 bit signed integer (byte)',
-    'uint8': '8 bit unsigned integer (byte)'}
+    'nnint8': '8 bit unsigned integer (byte)'}
 
 # Sizes of various ctypes in bytes
 CTYPE_TO_SIZE = dict(
@@ -64,9 +83,12 @@ Limits = namedtuple('Limits', ['min', 'max'])
 LIMITS = {
     'ibm': Limits(MIN_IBM_FLOAT, MAX_IBM_FLOAT),
     'int32': Limits(-2147483648, 2147483647),
+    'nnint32': Limits(0, 2147483647),
     'int16': Limits(-32768, 32767),
+    'nnint16': Limits(0, 32767),
     'float32': Limits(-3.402823e38, 3.402823e38),
-    'int8': Limits(-128, 127)
+    'int8': Limits(-128, 127),
+    'nnint8': Limits(0, 127)
 }
 
 PY_TYPES = {

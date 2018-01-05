@@ -732,7 +732,7 @@ def write_textual_reel_header(fh, lines, encoding):
                     for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
     joined_header = EMPTY_BYTE_STRING.join(padded_lines)
     assert len(joined_header) == TEXTUAL_HEADER_NUM_BYTES
-    x = fh.write(joined_header)
+    fh.write(joined_header)
 
 
 def write_binary_reel_header(fh, binary_reel_header, endian='>'):

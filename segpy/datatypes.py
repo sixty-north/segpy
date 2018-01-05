@@ -3,15 +3,34 @@
 
 # A mapping from data sample format codes to SEG Y types.
 from collections import namedtuple
+from enum import IntEnum
 
 from segpy.ibm_float import MIN_IBM_FLOAT, MAX_IBM_FLOAT
 
+
+class DataSampleFormat(IntEnum):
+    """Data sample format code. Mandatory for all data.
+    1 = 4-byte IBM floating-point,
+    2 = 4-byte, two's complement integer,
+    3 = 2-byte, two's complement integer,
+    4 = 4-byte fixed-point with gain (obsolete),
+    5 = 4-byte IEEE floating-point,
+    6 = Not currently used,
+    7 = Not currently used,
+    8 = 1-byte, two's complement integer."""
+    IBM = 1
+    INT32 = 2
+    INT16 = 3
+    FLOAT32 = 5
+    INT8 = 8
+
+
 DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE = {
-    1: 'ibm',
-    2: 'int32',
-    3: 'int16',
-    5: 'float32',
-    8: 'int8'}
+    DataSampleFormat.IBM: 'ibm',
+    DataSampleFormat.INT32: 'int32',
+    DataSampleFormat.INT16: 'int16',
+    DataSampleFormat.FLOAT32: 'float32',
+    DataSampleFormat.INT8: 'int8'}
 
 SEG_Y_TYPE_TO_DATA_SAMPLE_FORMAT = {v: k for k, v in DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE.items()}
 

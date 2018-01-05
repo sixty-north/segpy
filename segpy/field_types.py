@@ -1,3 +1,4 @@
+import enum
 from .datatypes import LIMITS, SEG_Y_TYPE_TO_CTYPE, size_in_bytes
 
 
@@ -19,6 +20,7 @@ class IntFieldMeta(type):
                 max_value=None,
                 **kwargs):
 
+        # TODO: Only add this if it's not already in there.
         bases = bases + (int,)
 
         if min_value is None:
@@ -61,24 +63,21 @@ class NNInt32(metaclass=IntFieldMeta,
 
 
 class IntEnumFieldMeta(IntFieldMeta):
-    """Metaclass for int fields which are limited to a set of values.
+    """Metaclass for fields which are defined by an `enum.IntEnum`.
     """
 
     def class_new(cls, *args, **kwargs):
         instance = super(cls, cls).__new__(cls, *args, **kwargs)
-        if instance not in cls.VALUES:
-            raise ValueError("{} value {!r} not in valid value set {}".format(
-                cls.__name__, instance, cls.VALUES))
-        return instance
+        return cls.ENUM(instance)
 
-    def __new__(cls, name, bases, namespace, values, seg_y_type='int16', **kwargs):
+    def __new__(cls, name, bases, namespace, enum, seg_y_type='int16', **kwargs):
         if any((value < LIMITS[seg_y_type].min)
                or (value > LIMITS[seg_y_type].max)
-               for value in values):
+               for value in enum):
             raise ValueError(
                 'Enum values must be within specified SEGY field type range.')
 
-        namespace['VALUES'] = set(values)
+        namespace['ENUM'] = enum
 
         return super().__new__(cls, name, bases, namespace, seg_y_type, **kwargs)
 

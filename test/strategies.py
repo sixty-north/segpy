@@ -62,8 +62,8 @@ def header(header_class, **kwargs):
             field_strategy = just(kwargs.pop(field_name))
         else:
             value_type = getattr(header_class, field_name).value_type
-            if hasattr(value_type, 'VALUES'):
-                field_strategy = sampled_from(sorted(value_type.VALUES))
+            if hasattr(value_type, 'ENUM'):
+                field_strategy = sampled_from(sorted(value_type.ENUM))
             else:
                 field_strategy = integers(value_type.MINIMUM, value_type.MAXIMUM)
         field_strategies[field_name] = field_strategy

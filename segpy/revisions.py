@@ -12,16 +12,19 @@ From the specification:
 
 
 from decimal import Decimal
+from enum import IntEnum
 
 
-SEGY_REVISION_0 = 0x0000
-SEGY_REVISION_1 = 0x0100
+class SegYRevision(IntEnum):
+    REVISION_0 = 0x0000
+    REVISION_1 = 0x0100
+
 
 VARIANTS = {
-    SEGY_REVISION_0: SEGY_REVISION_0,  # Ensure that SEGY_REVISION_0 maps to itself
-    SEGY_REVISION_1: SEGY_REVISION_1,  # Ensure that SEGY_REVISION_1 maps to itself
-    1: SEGY_REVISION_1,                # Common, but erroneous, decimal one
-    100: SEGY_REVISION_1}              # Common, but erroneous, decimal one-hundred
+    SegYRevision.REVISION_0: SegYRevision.REVISION_0,  # Ensure that SEGY_REVISION_0 maps to itself
+    SegYRevision.REVISION_1: SegYRevision.REVISION_1,  # Ensure that SEGY_REVISION_1 maps to itself
+    1: SegYRevision.REVISION_1,                # Common, but erroneous, decimal one
+    100: SegYRevision.REVISION_1}              # Common, but erroneous, decimal one-hundred
 
 
 class SegYRevisionError(Exception):

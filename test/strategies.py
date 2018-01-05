@@ -4,7 +4,6 @@ from itertools import accumulate, starmap, product
 import sys
 from hypothesis import assume
 from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite, sampled_from
-from segpy.trace_header import TraceHeaderRev0
 from segpy.util import batched
 
 PRINTABLE_ASCII_RANGE = (32, 127)
@@ -63,7 +62,10 @@ def header(header_class, **kwargs):
             field_strategy = just(kwargs.pop(field_name))
         else:
             value_type = getattr(header_class, field_name).value_type
-            field_strategy = integers(value_type.MINIMUM, value_type.MAXIMUM)
+            if hasattr(value_type, 'ENUM'):
+                field_strategy = sampled_from(sorted(value_type.ENUM))
+            else:
+                field_strategy = integers(value_type.MINIMUM, value_type.MAXIMUM)
         field_strategies[field_name] = field_strategy
 
     if len(kwargs) > 0:

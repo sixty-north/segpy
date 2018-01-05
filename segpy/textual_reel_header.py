@@ -1,4 +1,4 @@
-from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SegYRevision
 
 # Do not use _TEMPLATE directly. Prefer to use TEMPLATE defined below which is
 # stripped of line endings.
@@ -50,8 +50,8 @@ TEMPLATE = ''.join(_TEMPLATE.splitlines(keepends=False)[1:])
 END_TEXTUAL_HEADER = 'END TEXTUAL HEADER'
 END_EBCDIC = 'END EBCDIC'
 
-END_MARKERS = {SEGY_REVISION_0: END_EBCDIC,
-               SEGY_REVISION_1: END_TEXTUAL_HEADER}
+END_MARKERS = {SegYRevision.REVISION_0: END_EBCDIC,
+               SegYRevision.REVISION_1: END_TEXTUAL_HEADER}
 
 TEMPLATE_FIELD_NAMES = {'client': 'client',
                         'company': 'company',

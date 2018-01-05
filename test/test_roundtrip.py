@@ -6,7 +6,7 @@ from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.encoding import ASCII, EBCDIC
 from segpy.header import are_equal
-from segpy.revisions import SEGY_REVISION_0, SEGY_REVISION_1
+from segpy.revisions import SegYRevision
 from segpy.toolkit import write_binary_reel_header, read_binary_reel_header, write_textual_reel_header, \
     read_textual_reel_header, CARDS_PER_HEADER, CARD_LENGTH, format_standard_textual_header, \
     parse_standard_textual_header
@@ -71,7 +71,7 @@ class TestTextualReelHeader:
         assert all(len(line) == CARD_LENGTH for line in read_header_lines)
 
     @given(write_header_fields=fixed_dict_of_printable_strings(textual_reel_header.TEMPLATE_FIELD_NAMES.values()),
-           revision=sampled_from([SEGY_REVISION_0, SEGY_REVISION_1]),
+           revision=sampled_from([SegYRevision.REVISION_0, SegYRevision.REVISION_1]),
            encoding=sampled_from([ASCII, EBCDIC]))
     @settings(suppress_health_check=(HealthCheck.too_slow,))
     def test_header_template(self, write_header_fields, revision, encoding):

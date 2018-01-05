@@ -264,6 +264,11 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress, dimensiona
 
     assert 1 <= dimensionality <= 3
 
+    trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = tuple(
+        catalog or {}
+        for catalog
+        in (trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog))
+
     if dimensionality == 1:
         return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                           trace_length_catalog, trace_header_format, encoding, endian)

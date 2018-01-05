@@ -202,9 +202,7 @@ def dataset(draw, dims):
                       min_size=dims,
                       max_size=dims))
     text_header = draw(textual_reel_header())
-    data_sample_format = draw(sampled_from(sorted(DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE)))
-    binary_header = draw(header(BinaryReelHeader,
-                                data_sample_format=data_sample_format))
+    binary_header = draw(header(BinaryReelHeader))
     ext_text_headers = draw(extended_textual_header(binary_header.num_extended_textual_headers))
 
     return InMemoryDataset(dims,

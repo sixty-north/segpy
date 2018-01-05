@@ -817,7 +817,6 @@ def write_extended_textual_headers(fh, pages, encoding):
         UnicodeError: If the textual data could not be encoded into the specified encoding.
 
     """
-
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing extended textual header", encoding)
 

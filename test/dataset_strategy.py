@@ -207,6 +207,9 @@ def dataset(draw, dims):
     binary_header = draw(header(BinaryReelHeader))
     ext_text_headers = draw(extended_textual_header(binary_header.num_extended_textual_headers))
 
+    # TODO: We need to look at making sure `sample_interval` is set
+    # appropriately/consistently. See the docstring for
+    # TraceHeader.sample_interval for more information.
     trace_headers = draw(lists(header(TraceHeaderRev1),
                                min_size=0,
                                max_size=100))

@@ -1,13 +1,7 @@
 from enum import IntEnum
 
 from segpy.header import FormatMeta, field
-from segpy.field_types import IntEnumFieldMeta, IntFieldMeta, Int32, Int16, NNInt16
-
-
-class EnsembleTraceNumField(metaclass=IntFieldMeta,
-                            seg_y_type='int32',
-                            min_value=0):
-    pass
+from segpy.field_types import IntEnumFieldMeta, IntFieldMeta, Int32, Int16, NNInt16, NNInt32
 
 
 class DataUse(IntEnum):
@@ -20,6 +14,162 @@ class DataUse(IntEnum):
 
 class DataUseField(metaclass=IntEnumFieldMeta,
                    enum=DataUse):
+    pass
+
+
+class ScalarFactor(IntEnum):
+    """Scalar to be applied to other fields.
+
+    See specific fields (i.e. use of this class) to see the specific fields to
+    which scalars are applied.
+
+    Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a
+    multiplier; if negative, scalar is used as a divisor.
+    """
+    POS_1 = 1
+    POS_10 = 10
+    POS_100 = 100
+    POS_1000 = 1000
+    POS_10000 = 10000
+    NEG_1 = -1
+    NEG_10 = -10
+    NEG_100 = -100
+    NEG_1000 = -1000
+    NEG_10000 = -10000
+
+
+class ScalarFactorField(metaclass=IntEnumFieldMeta,
+                        enum=ScalarFactor):
+    pass
+
+
+class CoordinateUnits(IntEnum):
+    """Coordinate units: 1 = Length (meters or feet), 2 = Seconds of arc, 3 =
+    Decimal degrees, 4 = Degrees, minutes, seconds (DMS). Note: To encode
+    ±DDDMMSS bytes this value equals ±DDD*104 + MM*102 + SS with xy_scalar set
+    to 1; To encode ±DDDMMSS.ss this value equals ±DDD*106 + MM*104 + SS*102
+    with xy_scalar set to -100.
+    """
+    UNKNOWN = 0
+    LENGTH = 1
+    SECONDS_OF_ARC = 2
+    DECIMAL_DEGREES = 3
+    DMS = 4
+
+
+class CoordinateUnitsField(metaclass=IntEnumFieldMeta,
+                           enum=CoordinateUnits):
+    pass
+
+
+class Correlated(IntEnum):
+    "Correlated: 1 = no, 2 = yes."
+    NO = 1
+    YES = 2
+
+
+class CorrelatedField(metaclass=IntEnumFieldMeta,
+                      enum=Correlated):
+    pass
+
+
+class SweepType(IntEnum):
+    """Sweep type:
+    1 = linear,
+    2 = parabolic,
+    3 = exponential
+    4 = other.
+    """
+    UNKNOWN = 0
+    LINEAR = 1
+    PARABOLIC = 2
+    EXPONENTIAL = 3
+    OTHER = 4
+
+
+class SweepTypeField(metaclass=IntEnumFieldMeta,
+                     enum=SweepType):
+    pass
+
+
+class TaperType(IntEnum):
+    """Taper type:
+    1 = linear,
+    2 = cos2,
+    3 = other
+    """
+    UNKNOWN = 0
+    LINEAR = 1
+    COS_SQUARED = 2
+    OTHER = 3
+
+
+class TaperTypeField(metaclass=IntEnumFieldMeta,
+                     enum=TaperType):
+    pass
+
+
+class DayOfYearField(metaclass=IntFieldMeta,
+                     seg_y_type='int16',
+                     min_value=0, max_value=366):
+    """Day of year. (Julian day for GMT and UTC time basis).
+
+    Value range based on:
+    https://seg.org/Portals/0/SEG/News%20and%20Resources/Technical%20Standards/seg_y_rev2_0-mar2017.pdf
+    """
+    pass
+
+
+class HourOfDayField(metaclass=IntFieldMeta,
+                     seg_y_type='int16',
+                     min_value=0, max_value=24):
+    "Hour of day. (24 hour clock)."
+    pass
+
+
+class MinuteOfHourField(metaclass=IntFieldMeta,
+                        seg_y_type='int16',
+                        min_value=0, max_value=60):
+    "Minute of hour."
+    pass
+
+
+class SecondOfMinute(metaclass=IntFieldMeta,
+                     seg_y_type='int16',
+                     min_value=0, max_value=60):
+    "Second of minutes."
+    pass
+
+
+class TimeBasisCode(IntEnum):
+    """Time basis code. 1 = Local, 2 = GMT (Greenwich Mean Time), 3 = Other, should
+    be explained in a user defined stanza in the Extended Textual File Header,
+    4 = UTC (Coordinated Universal Time).
+    """
+    UNKNOWN = 0
+    LOCAL = 1
+    GMT = 2
+    OTHER = 3
+    UTC = 4
+
+
+class TimeBasisCodeField(metaclass=IntEnumFieldMeta,
+                         enum=TimeBasisCode):
+    pass
+
+
+class OverTravel(IntEnum):
+    """Over travel associated with taper at beginning or end of line.
+    1 = down (or behind)
+    2 = up (or ahead)
+    """
+    UNKNOWN = 0
+    DOWN = 1
+    UP = 2
+
+
+class OverTravelField(metaclass=IntEnumFieldMeta,
+                      enum=OverTravel):
     pass
 
 
@@ -57,7 +207,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
         "Ensemble number (i.e. CDP , CMP , CRP , etc)")
 
     ensemble_trace_num = field(
-        EnsembleTraceNumField, offset=25, default=0, documentation=
+        NNInt32, offset=25, default=0, documentation=
         "Trace number within the ensemble — Each ensemble starts with trace number one.")
 
     trace_identification_code = field(
@@ -91,11 +241,11 @@ class TraceHeaderRev0(metaclass=FormatMeta):
         "Surface elevation at source. The elevation_scalar applies to this value.")
 
     source_depth_below_surface = field(
-        Int32, offset=49, default=0, documentation=
+        NNInt32, offset=49, default=0, documentation=
         "Source depth below surface (a positive number). The elevation_scalar applies to this value.")
 
     datum_elevation_at_receiver_group = field(
-        Int32, offset=53, default=0, documentation=
+        NNInt32, offset=53, default=0, documentation=
         "Source depth below surface (a positive number). The elevation_scalar applies to this value.")
 
     datum_elevation_at_source = field(
@@ -112,19 +262,23 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     elevation_scalar = field(
-        Int16, offset=69, default=1, documentation=
-        "Scalar to be applied to the elevations and depths specified in: receiver_group_elevation, "
-        "surface_elevation_at_source, source_depth_below_surface, datum_elevation_at_receiver_group, "
-        "datum_elevation_at_source, water_depth_at_source and water_depth_at_group, to give the real value. "
-        "Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a multiplier; if negative, scalar is "
-        "used as a divisor."
+        ScalarFactorField, offset=69, default=ScalarFactor.POS_1,
+        documentation=
+        """Scalar to be applied to the elevations and depths specified in:
+        receiver_group_elevation, surface_elevation_at_source,
+        source_depth_below_surface, datum_elevation_at_receiver_group,
+        datum_elevation_at_source, water_depth_at_source and
+        water_depth_at_group, to give the real value. Scalar = 1, +10, +100,
+        +1000, or +10,000. If positive, scalar is used as a multiplier; if
+        negative, scalar is used as a divisor."""
     )
 
     xy_scalar = field(
-        Int16, offset=71, default=1, documentation=
-        "Scalar to be applied to all coordinates specified in source_x, source_y, group_x, group_y, cdp_x and cdp_y to "
-        "give the real value. Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a multiplier; "
-        "if negative, scalar is used as divisor."
+        ScalarFactorField, offset=71, default=ScalarFactor.POS_1, documentation=
+        """Scalar to be applied to all coordinates specified in source_x, source_y,
+        group_x, group_y, cdp_x and cdp_y to give the real value. Scalar = 1,
+        +10, +100, +1000, or +10,000. If positive, scalar is used as a
+        multiplier; if negative, scalar is used as divisor."""
     )
 
     source_x = field(
@@ -160,29 +314,27 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     coordinate_units = field(
-        Int16, offset=89, default=0, documentation=
-        "Coordinate units: 1 = Length (meters or feet), 2 = Seconds of arc, 3 = Decimal degrees, 4 = Degrees, minutes, "
-        "seconds (DMS). Note: To encode ±DDDMMSS bytes this value equals ±DDD*104 + MM*102 + SS with xy_scalar set to "
-        "1; To encode ±DDDMMSS.ss this value equals ±DDD*106 + MM*104 + SS*102 with xy_scalar set to -100."
+        CoordinateUnitsField, offset=89, default=0,
+        documentation=CoordinateUnits.__doc__
     )
 
     weathering_velocity = field(
-        Int16, offset=91, default=0, documentation=
+        NNInt16, offset=91, default=0, documentation=
         "Weathering velocity. (ft/s or m/s as specified in Binary File Header bytes 3255- 3256)"  # TODO
     )
 
     subweathering_velocity = field(
-        Int16, offset=93, default=0, documentation=
+        NNInt16, offset=93, default=0, documentation=
         "Subweathering velocity. (ft/s or m/s as specified in Binary File Header bytes 3255-3256)"  # TODO
     )
 
     uphole_time_at_source = field(
-        Int16, offset=95, default=0, documentation=
+        NNInt16, offset=95, default=0, documentation=
         "Uphole time at source in milliseconds. The time_scalar applies to this value."
     )
 
     uphole_time_at_group = field(
-        Int16, offset=97, default=0, documentation=
+        NNInt16, offset=97, default=0, documentation=
         "Uphole time at group in milliseconds. The time_scalar applies to this value."
     )
 
@@ -227,12 +379,12 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     mute_start_time = field(
-        Int16, offset=111, default=0, documentation=
+        NNInt16, offset=111, default=0, documentation=
         "Mute time — Start time in milliseconds. The time_scalar applies to this value."
     )
 
     mute_end_time = field(
-        Int16, offset=113, default=0, documentation=
+        NNInt16, offset=113, default=0, documentation=
         "Mute time — End time in milliseconds.  The time_scalar applies to this value."
     )
 
@@ -253,7 +405,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     gain_type_of_field_instruments = field(
-        Int16, offset=119, default=0, documentation=
+        NNInt16, offset=119, default=0, documentation=
         "Gain type of field instruments. 1 = fixed, 2 = binary, 3 = floating point, 4 ... N = optional use."
     )
 
@@ -268,46 +420,47 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     correlated = field(
-        Int16, offset=125, default=1, documentation=
-        "Correlated: 1 = no, 2 = yes."
+        CorrelatedField, offset=125, default=1,
+        documentation=Correlated.__doc__
     )
 
     sweep_frequency_at_start = field(
-        Int16, offset=127, default=0, documentation=
+        NNInt16, offset=127, default=0, documentation=
         "Sweep frequency at start (Hz)."
     )
 
     sweep_frequency_at_end = field(
-        Int16, offset=129, default=0, documentation=
+        NNInt16, offset=129, default=0, documentation=
         "Sweep frequency at end (Hz)."
     )
 
     sweep_length = field(
-        Int16, offset=131, default=0, documentation=
+        NNInt16, offset=131, default=0, documentation=
         "Sweep length in milliseconds."
     )
 
     sweep_type = field(
-        Int16, offset=133, default=0, documentation=
-        "Sweep type: 1 = linear, 2 = parabolic, 3 = exponential 4 = other."
+        SweepTypeField, offset=133, default=0,
+        documentation=SweepType.__doc__
     )
+
     sweep_trace_taper_length_at_start = field(
-        Int16, offset=135, default=0, documentation=
+        NNInt16, offset=135, default=0, documentation=
         "Sweep trace taper length at start in milliseconds."
     )
 
     sweep_trace_taper_length_at_end = field(
-        Int16, offset=137, default=0, documentation=
+        NNInt16, offset=137, default=0, documentation=
         "Sweep trace taper length at end in milliseconds."
     )
 
     taper_type = field(
-        Int16, offset=139, default=0, documentation=
-        "Taper type: 1 = linear, 2 = cos2, 3 = other"
+        TaperTypeField, offset=139, default=0,
+        documentation=TaperType.__doc__
     )
 
     alias_filter_frequency = field(
-        Int16, offset=141, default=0, documentation=
+        NNInt16, offset=141, default=0, documentation=
         "Alias filter frequency (Hz), if used."
     )
 
@@ -317,7 +470,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     notch_filter_frequency = field(
-        Int16, offset=145, default=0, documentation=
+        NNInt16, offset=145, default=0, documentation=
         "Notch filter frequency (Hz), if used."
     )
 
@@ -327,12 +480,12 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     low_cut_frequency = field(
-        Int16, offset=149, default=0, documentation=
+        NNInt16, offset=149, default=0, documentation=
         "Low-cut frequency (Hz), if used."
     )
 
     high_cut_frequency = field(
-        Int16, offset=151, default=0, documentation=
+        NNInt16, offset=151, default=0, documentation=
         "High-cut frequency (Hz), if used."
     )
 
@@ -355,33 +508,32 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     day_of_year = field(
-        Int16, offset=159, default=0, documentation=
-        "Day of year. (Julian day for GMT and UTC time basis)."
+        DayOfYearField, offset=159, default=0,
+        documentation=DayOfYearField.__doc__
     )
 
     hour_of_day = field(
-        Int16, offset=161, default=0, documentation=
-        "Hour of day. (24 hour clock)."
+        HourOfDayField, offset=161, default=0,
+        documentation=HourOfDayField.__doc__
     )
 
     minute_of_hour = field(
-        Int16, offset=163, default=0, documentation=
-        "Minute of hour."
+        MinuteOfHourField, offset=163, default=0,
+        documentation=MinuteOfHourField.__doc__
     )
 
     second_of_minute = field(
-        Int16, offset=165, default=0, documentation=
-        "Second of minute."
+        SecondOfMinute, offset=165, default=0,
+        documentation=SecondOfMinute.__doc__
     )
 
     time_basis_code = field(
-        Int16, offset=167, default=0, documentation=
-        "Time basis code. 1 = Local, 2 = GMT (Greenwich Mean Time), 3 = Other, should be explained in a user defined "
-        "stanza in the Extended Textual File Header, 4 = UTC (Coordinated Universal Time)."
+        TimeBasisCodeField, offset=167, default=0,
+        documentation=TimeBasisCode.__doc__
     )
 
     trace_weighting_factor = field(
-        Int16, offset=169, default=0, documentation=
+        NNInt16, offset=169, default=0, documentation=
         "Trace weighting factor. Defined as 2**-N volts for the least significant bit. (N = 0, 1, ..., 32767)."
     )
 
@@ -401,13 +553,13 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     gap_size = field(
-        Int16, offset=177, default=0, documentation=
+        NNInt16, offset=177, default=0, documentation=
         "Gap size. (Total number of groups dropped)."
     )
 
     over_travel = field(
-        Int16, offset=179, default=0, documentation=
-        "Over travel associated with taper at beginning or end of line. 1 = down (or behind) 2 = up (or ahead)"
+        OverTravelField, offset=179, default=0,
+        documentation=OverTravel.__doc__
     )
 
 

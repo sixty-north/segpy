@@ -26,6 +26,7 @@ class ScalarFactor(IntEnum):
     Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a
     multiplier; if negative, scalar is used as a divisor.
     """
+    UNKNOWN = 0
     POS_1 = 1
     POS_10 = 10
     POS_100 = 100
@@ -170,6 +171,86 @@ class OverTravel(IntEnum):
 
 class OverTravelField(metaclass=IntEnumFieldMeta,
                       enum=OverTravel):
+    pass
+
+
+class SampleUnit(IntEnum):
+    """-1 = Other (should be described in Data Sample Measurement Units Stanza)
+    0 = Unknown,
+    1 = Pascal (Pa),
+    2 = Volts (v),
+    3 = Millivolts (mV),
+    4 = Amperes (A),
+    5 = Meters (m),
+    6 = Meters per second (m/s),
+    7 = Meters per second squared (m/s^2),
+    8 = Newton (N),
+    9 = Watt (W)
+    """
+    OTHER = -1
+    UNKNOWN = 0
+    PASCAL = 1
+    VOLTS = 2
+    MILLIVOLTS = 3
+    AMPERES = 4
+    METERS = 5
+    METERS_PER_SECOND = 6
+    METERS_PER_SECOND_SQUARED = 7
+    NEWTON = 8
+    WATT = 9
+
+
+class SampleUnitField(metaclass=IntEnumFieldMeta,
+                      enum=SampleUnit):
+    pass
+
+
+class SourceTypeField(metaclass=IntFieldMeta,
+                      seg_y_type='int16',
+                      max_value=9):
+    """Source Type/Orientation — Defines the type and the orientation of the energy source. The terms vertical,
+    cross-line and in-line refer to the three axes of an orthogonal coordinate system. The absolute azimuthal
+    orientation of the coordinate system axes can be defined in the Bin Grid Definition Stanza.
+    -1 to -n = Other (should be described in Source Type/Orientation stanza),
+    0 = Unknown,
+    1 = Vibratory - Vertical orientation,
+    2 = Vibratory - Cross-line orientation,
+    3 = Vibratory - In-line orientation,
+    4 = Impulsive - Vertical orientation,
+    5 = Impulsive - Cross-line orientation,
+    6 = Impulsive - In-line orientation,
+    7 = Distributed Impulsive - Vertical orientation,
+    8 = Distributed Impulsive - Cross-line orientation,
+    9 = Distributed Impulsive - In-line orientation"""
+    pass
+
+
+class SourceMeasurementUnit(IntEnum):
+    """Source Measurement Unit. The unit used for the source measurement.
+
+    -1 = Other (should be described in Source Measurement Unit stanza),
+    0 = Unknown,
+    1 = Joule (J),
+    2 = Kilowatt (kW),
+    3 = Pascal (Pa),
+    4 = Bar (Bar),
+    4 = Bar-meter (Bar-m),
+    5 = Newton (N),
+    6 = Kilograms (kg)
+    """
+    OTHER = -1
+    UNKNOWN = 0
+    JOULE = 1
+    KILOWATT = 2
+    PASCAL = 3
+    BAR = 4
+    BAR_METER = 4
+    NEWTON = 5
+    KILOGRAMS = 6
+
+
+class SourceMeasurementUnitField(metaclass=IntEnumFieldMeta,
+                                 enum=SourceMeasurementUnit):
     pass
 
 
@@ -609,19 +690,8 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
     )
 
     trace_unit = field(
-        Int16, offset=203, default=0, documentation=
-        "Trace value measurement unit: "
-        "-1 = Other (should be described in Data Sample Measurement Units Stanza)"
-        "0 = Unknown, "
-        "1 = Pascal (Pa), "
-        "2 = Volts (v), "
-        "3 = Millivolts (mV), "
-        "4 = Amperes (A), "
-        "5 = Meters (m), "
-        "6 = Meters per second (m/s), "
-        "7 = Meters per second squared (m/s^2), "
-        "8 = Newton (N), "
-        "9 = Watt (W)"
+        SampleUnitField, offset=203, default=0,
+        documentation="Trace value measurement unit:\n{}".format(SampleUnit.__doc__)
     )
 
     transduction_constant_mantissa = field(
@@ -640,21 +710,10 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
     )
 
     transduction_units = field(
-        Int16, offset=211, default=0, documentation=
+        SampleUnitField, offset=211, default=0, documentation=
         "Transduction Units. The unit of measurement of the Data Trace samples after they have been multiplied by the "
         "Transduction Constant specified in Trace Header fields transduction_constant_mantissa and "
-        "transduction_constant_exponent. "
-        "-1 = Other (should be described in Data Sample Measurement Unit stanza), "
-        "0 = Unknown, "
-        "1 = Pascal (Pa) ,"
-        "2 = Volts (v), "
-        "3 = Millivolts (mV), "
-        "4 = Amperes (A), "
-        "5 = Meters (m), "
-        "6 = Meters per second (m/s), "
-        "7 = Meters per second squared (m/s2), "
-        "8 = Newton (N), "
-        "9 = Watt (W)"
+        "transduction_constant_exponent.\n{}".format(SampleUnit.__doc__)
     )
 
     device_trace_identifier = field(
@@ -665,7 +724,7 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
     )
 
     time_scalar = field(
-        Int16, offset=215, default=0, documentation=
+        ScalarFactorField, offset=215, default=0, documentation=
         "Scalar to be applied to times specified in Trace Header fields uphole_time_at_source, uphole_time_at_group,"
         "source_static_correction, group_static_correction, total_static, lag_time_a, lag_time_b, "
         "delay_recording_time, mute_start_time, mute_end_time to give the true time value in milliseconds. "
@@ -674,21 +733,8 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
     )
 
     source_type = field(
-        Int16, offset=217, default=0, documentation=
-        "Source Type/Orientation — Defines the type and the orientation of the energy source. The terms vertical, "
-        "cross-line and in-line refer to the three axes of an orthogonal coordinate system. The absolute azimuthal "
-        "orientation of the coordinate system axes can be defined in the Bin Grid Definition Stanza."
-        "-1 to -n = Other (should be described in Source Type/Orientation stanza), "
-        "0 = Unknown, "
-        "1 = Vibratory - Vertical orientation, "
-        "2 = Vibratory - Cross-line orientation, "
-        "3 = Vibratory - In-line orientation, "
-        "4 = Impulsive - Vertical orientation, "
-        "5 = Impulsive - Cross-line orientation, "
-        "6 = Impulsive - In-line orientation, "
-        "7 = Distributed Impulsive - Vertical orientation, "
-        "8 = Distributed Impulsive - Cross-line orientation, "
-        "9 = Distributed Impulsive - In-line orientation, "
+        SourceTypeField, offset=217, default=0,
+        documentation=SourceTypeField.__doc__
     )
 
     source_energy_direction = field(
@@ -721,15 +767,6 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
     )
 
     source_measurement_unit = field(
-        Int16, offset=231, default=0, documentation=
-        "Source Measurement Unit. The unit used for the source measurement."
-        "-1 = Other (should be described in Source Measurement Unit stanza), "
-        "0 = Unknown, "
-        "1 = Joule (J), "
-        "2 = Kilowatt (kW), "
-        "3 = Pascal (Pa), "
-        "4 = Bar (Bar), "
-        "4 = Bar-meter (Bar-m), "
-        "5 = Newton (N), "
-        "6 = Kilograms (kg)"
+        SourceMeasurementUnitField, offset=231, default=0,
+        documentation=SourceMeasurementUnit.__doc__
     )

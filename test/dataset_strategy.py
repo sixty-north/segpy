@@ -1,7 +1,6 @@
 from hypothesis.strategies import composite, integers, lists, sampled_from, text, tuples
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.dataset import Dataset
-from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE
 from segpy.toolkit import CARD_LENGTH, CARDS_PER_HEADER
 from segpy.trace_header import TraceHeaderRev1
 
@@ -14,18 +13,23 @@ class InMemoryDataset(Dataset):
                  textual_reel_header,
                  binary_reel_header,
                  extended_textual_header,
-                 trace_header_type=TraceHeaderRev1):
+                 trace_headers,
+                 trace_header_format=TraceHeaderRev1):
         """Args:
             dimensions: An iterable of 1, 2, or 3 dimension extents.
-            trace_header_type: Constructor for new trace header instances.
         """
-        self._dimensions = tuple(dimensions)
-        self._textual_reel_header = textual_reel_header
-        self._binary_reel_header = binary_reel_header
-        self._trace_header_type = trace_header_type
+        if trace_headers:
+            assert isinstance(trace_headers[0], trace_header_format)
 
         if binary_reel_header.num_extended_textual_headers >= 0:
             assert binary_reel_header.num_extended_textual_headers == len(extended_textual_header)
+
+        self._dimensions = tuple(dimensions)
+        self._textual_reel_header = textual_reel_header
+        self._binary_reel_header = binary_reel_header
+
+        self._trace_headers = trace_headers
+        self._trace_header_format = trace_header_format
 
         self._extended_textual_header = extended_textual_header
 
@@ -63,7 +67,8 @@ class InMemoryDataset(Dataset):
 
     def num_traces(self):
         """The number of traces."""
-        return self._dimensions[0]
+        # This is non-trivial! https://detectation.com/forum/viewtopic.php?t=3461
+        return len(self._trace_headers)
 
     def trace_header(self, trace_index):
         """The trace header for a given trace index.
@@ -74,11 +79,7 @@ class InMemoryDataset(Dataset):
         Returns:
             A TraceHeader corresponding to the requested trace_samples.
         """
-        # TODO: We should probably be using the header strategy to generate these instead.
-        return self._trace_header_type(
-            line_sequence_num=trace_index + 1,
-            file_sequence_num=trace_index + 1,
-            ensemble_trace_num=trace_index + 1)
+        return self._trace_headers[trace_index]
 
     def trace_samples(self, trace_index, start=None, stop=None):
         """The trace samples for a given trace index.
@@ -95,8 +96,9 @@ class InMemoryDataset(Dataset):
         Returns:
             A sequence of numeric trace_samples samples.
         """
+        hdr = self.trace_header(trace_index)
         start = 0 if start is None else start
-        stop = self.binary_reel_header.num_samples if stop is None else stop
+        stop = hdr.num_samples if stop is None else stop
         return tuple(0 for _ in range(start, stop))
 
 
@@ -205,7 +207,15 @@ def dataset(draw, dims):
     binary_header = draw(header(BinaryReelHeader))
     ext_text_headers = draw(extended_textual_header(binary_header.num_extended_textual_headers))
 
+    # TODO: We need to look at making sure `sample_interval` is set
+    # appropriately/consistently. See the docstring for
+    # TraceHeader.sample_interval for more information.
+    trace_headers = draw(lists(header(TraceHeaderRev1),
+                               min_size=0,
+                               max_size=100))
+
     return InMemoryDataset(dims,
                            text_header,
                            binary_header,
-                           ext_text_headers)
+                           ext_text_headers,
+                           trace_headers)

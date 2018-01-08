@@ -3,6 +3,7 @@ from enum import IntEnum
 from segpy.datatypes import DataSampleFormat
 from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, NNInt32, NNInt16
 from segpy.header import FormatMeta, field
+import segpy.trace_header
 from segpy import revisions
 
 
@@ -40,42 +41,6 @@ class TraceSorting(IntEnum):
 
 class TraceSortingField(metaclass=IntEnumFieldMeta,
                         enum=TraceSorting):
-    pass
-
-
-class SweepType(IntEnum):
-    """Sweep type:
-    1 = linear,
-    2 = parabolic,
-    3 = exponential
-    4 = other.
-    """
-    UNKNOWN = 0
-    LINEAR = 1
-    PARABOLIC = 2
-    EXPONENTIAL = 3
-    OTHER = 4
-
-
-class SweepTypeField(metaclass=IntEnumFieldMeta,
-                     enum=SweepType):
-    pass
-
-
-class TaperType(IntEnum):
-    """Taper type:
-    1 = linear,
-    2 = cos2,
-    3 = other
-    """
-    UNKNOWN = 0
-    LINEAR = 1
-    COS_SQUARED = 2
-    OTHER = 3
-
-
-class TaperTypeField(metaclass=IntEnumFieldMeta,
-                     enum=TaperType):
     pass
 
 
@@ -308,8 +273,8 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     sweep_type = field(
-        SweepTypeField, offset=3239, default=0,
-        documentation=SweepType.__doc__
+        segpy.trace_header.SweepTypeField, offset=3239, default=0,
+        documentation=segpy.trace_header.SweepType.__doc__
     )
 
     sweep_trace_number = field(
@@ -328,8 +293,8 @@ class BinaryReelHeader(metaclass=FormatMeta):
     )
 
     taper_type = field(
-        TaperTypeField, offset=3247, default=0,
-        documentation=TaperType.__doc__
+        segpy.trace_header.TaperTypeField, offset=3247, default=0,
+        documentation=segpy.trace_header.TaperType.__doc__
     )
 
     correlated_data_traces = field(

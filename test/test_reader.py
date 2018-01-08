@@ -86,10 +86,18 @@ def test_round_trip(tmpdir, dataset):
     with open(segy_file, mode='br') as fh:
         reader = create_reader(
             fh,
-            trace_header_format=dataset._trace_header_type,
+            trace_header_format=dataset._trace_header_format,
             dimensionality=dataset.dimensionality)
 
         assert dataset.textual_reel_header == reader.textual_reel_header
         assert are_equal(dataset.binary_reel_header, reader.binary_reel_header)
         assert dataset.extended_textual_header == reader.extended_textual_header
         assert dataset.dimensionality == reader.dimensionality
+        assert tuple(dataset.trace_indexes()) == tuple(reader.trace_indexes())
+        assert dataset.num_traces() == reader.num_traces()
+        assert len(list(dataset.trace_indexes())) == dataset.num_traces()
+        assert len(list(reader.trace_indexes())) == reader.num_traces()
+        assert sorted(dataset.trace_indexes()) == sorted(reader.trace_indexes())
+
+        for trace_index in dataset.trace_indexes():
+            assert list(dataset.trace_samples(trace_index)) == list(reader.trace_samples(trace_index))

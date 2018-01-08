@@ -261,9 +261,9 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     line_sequence_num = field(
         Int32, offset=1, default=0, documentation=
-        "Trace sequence number within line — Numbers continue to increase if the same line "
-        "continues across multiple SEG Y files. Highly recommended for all types of data. "
-        "[Usually starts at one for each reel.]")
+        """Trace sequence number within line — Numbers continue to increase if the same
+        line continues across multiple SEG Y files. Highly recommended for all
+        types of data. [Usually starts at one for each reel.]""")
 
     file_sequence_num = field(
         Int32, offset=5, default=0, documentation=
@@ -279,9 +279,9 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     energy_source_point_num = field(
         Int32, offset=17, default=0, documentation=
-        "Energy source point number — Used when more than one record occurs at the same "
-        "effective surface location. It is recommended that the new entry defined in Trace "
-        "Header bytes 197-202 be used for shotpoint number.")
+        """Energy source point number — Used when more than one record occurs at the
+        same effective surface location. It is recommended that the new entry
+        defined in Trace Header bytes 197-202 be used for shotpoint number.""")
 
     ensemble_num = field(
         Int32, offset=21, default=0, documentation=
@@ -309,13 +309,14 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     doc_nreceiver_offset = field(
         Int32, offset=37, default=0, documentation=
-        "Distance from center of the source point to the center of the receiver group (negative if opposite to "
-        "direction in which line is shot).")
+        """Distance from center of the source point to the center of the receiver group
+        (negative if opposite to direction in which line is shot).""")
 
     receiver_group_elevation = field(
         Int32, offset=41, default=0, documentation=
-        "Receiver group elevation (all elevations above the Vertical datum are positive and below are negative). The "
-        "elevation_scalar applies to this value.")
+        """Receiver group elevation (all elevations above the Vertical datum are
+        positive and below are negative). The elevation_scalar applies to this
+        value.""")
 
     surface_elevation_at_source = field(
         Int32, offset=45, default=0, documentation=
@@ -364,34 +365,42 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     source_x = field(
         Int32, offset=73, default=0, documentation=
-        "Source coordinate - X. The xy_scalar applies to this value. The coordinate reference system should be "
-        "identified through an extended header Location Data stanza. If the coordinate units are in seconds of arc, "
-        "decimal degrees or DMS, the X values represent longitude. A positive value designates east of Greenwich "
-        "Meridian and a negative value designates west."
+        """Source coordinate - X. The xy_scalar applies to this value. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. If the coordinate units are in seconds of arc,
+        decimal degrees or DMS, the X values represent longitude. A positive
+        value designates east of Greenwich Meridian and a negative value
+        designates west."""
     )
 
     source_y = field(
         Int32, offset=77, default=0, documentation=
-        "Source coordinate - Y. The xy_scalar applies to this value. The coordinate reference system should be "
-        "identified through an extended header Location Data stanza. If the coordinate units are in seconds of arc, "
-        "decimal degrees or DMS, the Y values represent latitude. A positive value designates north of the equator and "
-        "a negative value designates south."
+        """Source coordinate - Y. The xy_scalar applies to this value. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. If the coordinate units are in seconds of arc,
+        decimal degrees or DMS, the Y values represent latitude. A positive
+        value designates north of the equator and a negative value designates
+        south."""
     )
 
     group_x = field(
         Int32, offset=81, default=0, documentation=
-        "Group coordinate - X. The xy_scalar applies to this value. The coordinate reference system should be "
-        "identified through an extended header Location Data stanza. If the coordinate units are in seconds of arc, "
-        "decimal degrees or DMS, the X values represent longitude. A positive value designates east of Greenwich "
-        "Meridian and a negative value designates west."
+        """Group coordinate - X. The xy_scalar applies to this value. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. If the coordinate units are in seconds of arc,
+        decimal degrees or DMS, the X values represent longitude. A positive
+        value designates east of Greenwich Meridian and a negative value
+        designates west."""
     )
 
     group_y = field(
         Int32, offset=85, default=0, documentation=
-        "Source coordinate - Y. The xy_scalar applies to this value. The coordinate reference system should be "
-        "identified through an extended header Location Data stanza. If the coordinate units are in seconds of arc, "
-        "decimal degrees or DMS, the Y values represent latitude. A positive value designates north of the equator and "
-        "a negative value designates south."
+        """Source coordinate - Y. The xy_scalar applies to this value. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. If the coordinate units are in seconds of arc,
+        decimal degrees or DMS, the Y values represent latitude. A positive
+        value designates north of the equator and a negative value designates
+        south."""
     )
 
     coordinate_units = field(
@@ -431,32 +440,38 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     total_static = field(
         Int16, offset=103, default=0, documentation=
-        "Total static applied in milliseconds. (Zero if no static has been applied). "
-        "The time_scalar applies to this value."
+        """Total static applied in milliseconds. (Zero if no static has been applied).
+        The time_scalar applies to this value."""
     )
 
     lag_time_a = field(
         Int16, offset=105, default=0, documentation=
-        "Lag time A. Time in milliseconds between end of 240-byte trace identification header and time break. "
-        "The value is positive if time break occurs after the end of header; negative if time break occurs before the "
-        "end of header. Time break is defined as the initiation pulse that may be recorded on an auxiliary trace or as "
-        "otherwise specified by the recording system. The time_scalar applies to this value."
+        """Lag time A. Time in milliseconds between end of 240-byte trace
+        identification header and time break. The value is positive if time
+        break occurs after the end of header; negative if time break occurs
+        before the end of header. Time break is defined as the initiation pulse
+        that may be recorded on an auxiliary trace or as otherwise specified by
+        the recording system. The time_scalar applies to this value."""
     )
 
     lag_time_b = field(
         Int16, offset=107, default=0, documentation=
-        "Lag Time B. Time in milliseconds between time break and the initiation time of the energy source. May be "
-        "positive or negative. The time_scalar applies to this value."
+        """Lag Time B. Time in milliseconds between time break and the initiation time
+        of the energy source. May be positive or negative. The time_scalar
+        applies to this value."""
     )
 
     delay_recording_time = field(
         Int16, offset=109, default=0, documentation=
-        "Delay recording time — Time in milliseconds between initiation time of energy source and the time when "
-        "recording of data samples begins. In SEG Y rev 0 this entry was intended for deep-water work if data "
-        "recording does not start at zero time. The entry can be negative to accommodate negative start times (i.e. "
-        "data recorded before time zero, presumably as a result of static application to the data trace). If a "
-        "non-zero value (negative or positive) is recorded in this entry, a comment to that effect should appear in "
-        "the Textual File Header. The time_scalar applies to this value."
+        """Delay recording time — Time in milliseconds between initiation time of
+        energy source and the time when recording of data samples begins. In
+        SEG Y rev 0 this entry was intended for deep-water work if data
+        recording does not start at zero time. The entry can be negative to
+        accommodate negative start times (i.e. data recorded before time zero,
+        presumably as a result of static application to the data trace). If a
+        non-zero value (negative or positive) is recorded in this entry, a
+        comment to that effect should appear in the Textual File Header. The
+        time_scalar applies to this value."""
     )
 
     mute_start_time = field(
@@ -476,13 +491,17 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     sample_interval = field(
         Int16, offset=117, default=0, documentation=
-        "Sample interval in microseconds (μs) for this trace. The number of bytes in a trace record must be consistent "
-        "with the number of samples written in the trace header. This is important for all recording media; but it is "
-        "particularly crucial for the correct processing of SEG Y data in disk files (see Appendix C). "
-        "If the fixed length trace flag in bytes 3503-3504 of the Binary File Header is set, the sample interval and "   #TODO: field names instead of byte offsets
-        "number of samples in every trace in the SEG Y file must be the same as the values recorded in the Binary File "
-        "Header. If the fixed length trace flag is not set, the sample interval and number of samples may vary from "
-        "trace to trace. Highly recommended for all types of data."
+        """Sample interval in microseconds (μs) for this trace. The number of bytes in
+        a trace record must be consistent with the number of samples written in
+        the trace header. This is important for all recording media; but it is
+        particularly crucial for the correct processing of SEG Y data in disk
+        files (see Appendix C). If the fixed length trace flag in bytes
+        3503-3504 of the Binary File Header is set, the sample interval and
+        #TODO: field names instead of byte offsets number of samples in every
+        trace in the SEG Y file must be the same as the values recorded in the
+        Binary File Header. If the fixed length trace flag is not set, the
+        sample interval and number of samples may vary from trace to trace.
+        Highly recommended for all types of data."""
     )
 
     gain_type_of_field_instruments = field(
@@ -582,10 +601,11 @@ class TraceHeaderRev0(metaclass=FormatMeta):
 
     year_recorded = field(
         Int16, offset=157, default=0, documentation=
-        "Year data recorded. The 1975 standard is unclear as to whether this should be recorded as a 2-digit or a "
-        "4-digit year and both have been used. For SEG Y revisions beyond rev 0, the year should be recorded as the "
-        "complete 4-digit Gregorian calendar year (i.e. the year 2001 should be recorded as 2001 in base 10 "
-        "(7D1 in base16))."
+        """Year data recorded. The 1975 standard is unclear as to whether this should
+        be recorded as a 2-digit or a 4-digit year and both have been used. For
+        SEG Y revisions beyond rev 0, the year should be recorded as the
+        complete 4-digit Gregorian calendar year (i.e. the year 2001 should be
+        recorded as 2001 in base 10 (7D1 in base16))."""
     )
 
     day_of_year = field(
@@ -648,45 +668,50 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
 
     cdp_x = field(
         Int32, offset=181, default=0, documentation=
-        "X coordinate of ensemble (CDP) position of this trace. "
-        "The coordinate reference system should be identified through an extended header Location Data stanza. "
-        "The xy_scalar field applies to this value."
+        """X coordinate of ensemble (CDP) position of this trace. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. The xy_scalar field applies to this value."""
     )
 
     cdp_y = field(
         Int32, offset=185, default=0, documentation=
-        "Y coordinate of ensemble (CDP) position of this trace. "
-        "The coordinate reference system should be identified through an extended header Location Data stanza. "
-        "The xy_scalar field applies to this value."
+        """Y coordinate of ensemble (CDP) position of this trace. The coordinate
+        reference system should be identified through an extended header
+        Location Data stanza. The xy_scalar field applies to this value."""
     )
 
     inline_number = field(
         Int32, offset=189, default=0, documentation=
-        "In-line number for 3-D poststack data. If one in-line per SEG Y file is "
-        "being recorded, this value should be the same for all traces in the file and the same value will be recorded "
-        "in bytes 3205-3208 of the Binary File Header."  # TODO: replace bytes with field name
+        """In-line number for 3-D poststack data. If one in-line per SEG Y file is
+        being recorded, this value should be the same for all traces in the
+        file and the same value will be recorded in bytes 3205-3208 of the
+        Binary File Header."""  # TODO: replace bytes with field name
     )
 
     crossline_number = field(
         Int32, offset=193, default=0, documentation=
-        "Cross-line number for 3-D poststack data. This will typically be the same "
-        "value as the ensemble (CDP) number in Trace Header ensemble_num field, but this does not have to be the case."
+        """Cross-line number for 3-D poststack data. This will typically be the same
+        value as the ensemble (CDP) number in Trace Header ensemble_num field,
+        but this does not have to be the case."""
     )
 
     shotpoint_number = field(
         Int32, offset=197, default=0, documentation=
-        "Shotpoint number. This is probably only applicable to 2-D poststack data. Note that it is assumed that the "
-        "shotpoint number refers to the source location nearest to the ensemble (CDP) location for a particular trace. "
-        "If this is not the case, there should be a comment in the Textual File Header explaining what the shotpoint "
-        "number actually refers to."
+        """Shotpoint number. This is probably only applicable to 2-D poststack data.
+        Note that it is assumed that the shotpoint number refers to the source
+        location nearest to the ensemble (CDP) location for a particular trace.
+        If this is not the case, there should be a comment in the Textual File
+        Header explaining what the shotpoint number actually refers to."""
     )
 
     shotpoint_scalar = field(
         Int16, offset=201, default=0, documentation=
-        "Scalar to be applied to the shotpoint number in trace header field shotpoint_number to give the real value. "
-        "If positive, scalar is used as a multiplier; if negative as a divisor; if zero the shotpoint number is not "
-        "scaled (i.e. it is an integer. A typical value will be -10, allowing shotpoint numbers with one decimal digit "
-        "to the right of the decimal point)."
+        """Scalar to be applied to the shotpoint number in trace header field
+        shotpoint_number to give the real value. If positive, scalar is used as
+        a multiplier; if negative as a divisor; if zero the shotpoint number is
+        not scaled (i.e. it is an integer. A typical value will be -10,
+        allowing shotpoint numbers with one decimal digit to the right of the
+        decimal point)."""
     )
 
     trace_unit = field(
@@ -696,40 +721,50 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
 
     transduction_constant_mantissa = field(
         Int32, offset=205, default=0, documentation=
-        "Transduction Constant mantissa. The mantissa of the multiplicative constant used to convert the Data Trace "
-        "samples to the Transduction Units (specified in Trace Header transduction_units field)."
-        "The mantissa of the constant is encoded as a four-byte, two's complement integer. The constant value is given"
-        "by transduction_constant_mantissa * 10**transduction_constant_exponent."
+        """Transduction Constant mantissa. The mantissa of the multiplicative constant
+        used to convert the Data Trace samples to the Transduction Units
+        (specified in Trace Header transduction_units field). The mantissa of
+        the constant is encoded as a four-byte, two's complement integer. The
+        constant value is given by transduction_constant_mantissa *
+        10**transduction_constant_exponent."""
     )
 
     transduction_constant_exponent = field(
         Int16, offset=209, default=0, documentation=
-        "Transduction Constant exponent. The base 10 exponent of the multiplicative constant used to convert the Data "
-        "Trace samples to the Transduction Units (specified in Trace Header transduction_units field). The constant "
-        "value is given by transduction_constant_mantissa * 10**transduction_constant_exponent."
+        """Transduction Constant exponent. The base 10 exponent of the multiplicative
+        constant used to convert the Data Trace samples to the Transduction
+        Units (specified in Trace Header transduction_units field). The
+        constant value is given by transduction_constant_mantissa *
+        10**transduction_constant_exponent."""
     )
 
     transduction_units = field(
         SampleUnitField, offset=211, default=0, documentation=
-        "Transduction Units. The unit of measurement of the Data Trace samples after they have been multiplied by the "
-        "Transduction Constant specified in Trace Header fields transduction_constant_mantissa and "
-        "transduction_constant_exponent.\n{}".format(SampleUnit.__doc__)
+        """Transduction Units. The unit of measurement of the Data Trace samples after
+        they have been multiplied by the Transduction Constant specified in
+        Trace Header fields transduction_constant_mantissa and
+        transduction_constant_exponent.\n{}""".format(SampleUnit.__doc__)
     )
 
     device_trace_identifier = field(
         Int16, offset=213, default=0, documentation=
-        "Device/Trace Identifier — The unit number or id number of the device associated with the Data Trace "
-        "(i.e. 4368 for vibrator serial number 4368 or 20316 for gun 16 on string 3 on vessel 2). This field allows "
-        "traces to be associated across trace ensembles independently of the trace number (ensemble_trace_num field)."
+        """Device/Trace Identifier — The unit number or id number of the device
+        associated with the Data Trace (i.e. 4368 for vibrator serial number
+        4368 or 20316 for gun 16 on string 3 on vessel 2). This field allows
+        traces to be associated across trace ensembles independently of the
+        trace number (ensemble_trace_num field)."""
     )
 
     time_scalar = field(
         ScalarFactorField, offset=215, default=0, documentation=
-        "Scalar to be applied to times specified in Trace Header fields uphole_time_at_source, uphole_time_at_group,"
-        "source_static_correction, group_static_correction, total_static, lag_time_a, lag_time_b, "
-        "delay_recording_time, mute_start_time, mute_end_time to give the true time value in milliseconds. "
-        "Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a multiplier; "
-        "if negative, scalar is used as divisor. A value of zero is assumed to be a scalar value of 1."
+        """Scalar to be applied to times specified in Trace Header fields
+        uphole_time_at_source, uphole_time_at_group, source_static_correction,
+        group_static_correction, total_static, lag_time_a, lag_time_b,
+        delay_recording_time, mute_start_time, mute_end_time to give the true
+        time value in milliseconds. Scalar = 1, +10, +100, +1000, or +10,000.
+        If positive, scalar is used as a multiplier; if negative, scalar is
+        used as divisor. A value of zero is assumed to be a scalar value of
+        1."""
     )
 
     source_type = field(
@@ -739,31 +774,38 @@ class TraceHeaderRev1(TraceHeaderRev0, metaclass=FormatMeta):
 
     source_energy_direction = field(
         Int32, offset=219, default=0, documentation=  # TODO: This is six bytes. What is the format?
-        "Source Energy Direction with respect to the source orientation. The positive orientation direction is "
-        "defined in Bytes 217-218 of the Trace Header. The energy direction is encoded in tenths of degrees "
-        "(i.e. 347.8° is encoded as 3478)."
+        """Source Energy Direction with respect to the source orientation. The positive
+        orientation direction is defined in Bytes 217-218 of the Trace Header.
+        The energy direction is encoded in tenths of degrees (i.e. 347.8° is
+        encoded as 3478)."""
     )
 
     source_measurement_mantissa = field(
         Int32, offset=225, default=0, documentation=
-        "Source Measurement mantissa. Describes the source effort used to generate the trace. The measurement can be "
-        "simple, qualitative measurements such as the total weight of explosive used or the peak air gun pressure or "
-        "the number of vibrators times the sweep duration. Although these simple measurements are acceptable, it is "
-        "preferable to use true measurement units of energy or work. The constant is encoded as a four-byte, two's "
-        "complement integer (source_measurement_mantissa) and a two-byte, two's complement integer "
-        "source_measurement_exponent) which is the power of ten exponent "
-        "(i.e. source_measurement_mantissa * 10**source_measurement_exponent)."
+        """Source Measurement mantissa. Describes the source effort used to generate
+        the trace. The measurement can be simple, qualitative measurements such
+        as the total weight of explosive used or the peak air gun pressure or
+        the number of vibrators times the sweep duration. Although these simple
+        measurements are acceptable, it is preferable to use true measurement
+        units of energy or work. The constant is encoded as a four-byte, two's
+        complement integer (source_measurement_mantissa) and a two-byte, two's
+        complement integer source_measurement_exponent) which is the power of
+        ten exponent (i.e. source_measurement_mantissa *
+        10**source_measurement_exponent)."""
     )
 
     source_measurement_exponent = field(
         Int16, offset=229, default=0, documentation=
-        "Source Measurement exponent. Describes the source effort used to generate the trace. The measurement can be "
-        "simple, qualitative measurements such as the total weight of explosive used or the peak air gun pressure or "
-        "the number of vibrators times the sweep duration. Although these simple measurements are acceptable, it is "
-        "preferable to use true measurement units of energy or work. The constant is encoded as a four-byte, two's "
-        "complement integer (source_measurement_mantissa) and a two-byte, two's complement integer "
-        "source_measurement_exponent) which is the power of ten exponent "
-        "(i.e. source_measurement_mantissa * 10**source_measurement_exponent)."
+        """Source Measurement exponent. Describes the source effort used to generate
+        the trace. The measurement can be simple, qualitative measurements such
+        as the total weight of explosive used or the peak air gun pressure or
+        the number of vibrators times the sweep duration. Although these simple
+        measurements are acceptable, it is preferable to use true measurement
+        units of energy or work. The constant is encoded as a four-byte, two's
+        complement integer (source_measurement_mantissa) and a two-byte, two's
+        complement integer source_measurement_exponent) which is the power of
+        ten exponent (i.e. source_measurement_mantissa *
+        10**source_measurement_exponent)."""
     )
 
     source_measurement_unit = field(

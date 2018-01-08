@@ -1,5 +1,26 @@
+from enum import IntEnum
+
 from segpy.header import FormatMeta, field
-from segpy.field_types import Int32, Int16
+from segpy.field_types import IntEnumFieldMeta, IntFieldMeta, Int32, Int16, NNInt16
+
+
+class EnsembleTraceNumField(metaclass=IntFieldMeta,
+                            seg_y_type='int32',
+                            min_value=0):
+    pass
+
+
+class DataUse(IntEnum):
+    """Data use:
+    1 = Production,
+    2 = Test"""
+    PRODUCTION = 1
+    TEST = 2
+
+
+class DataUseField(metaclass=IntEnumFieldMeta,
+                   enum=DataUse):
+    pass
 
 
 class TraceHeaderRev0(metaclass=FormatMeta):
@@ -36,7 +57,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
         "Ensemble number (i.e. CDP , CMP , CRP , etc)")
 
     ensemble_trace_num = field(
-        Int32, offset=25, default=0, documentation=
+        EnsembleTraceNumField, offset=25, default=0, documentation=
         "Trace number within the ensemble — Each ensemble starts with trace number one.")
 
     trace_identification_code = field(
@@ -44,18 +65,18 @@ class TraceHeaderRev0(metaclass=FormatMeta):
         "Trace identification code")
 
     num_vertically_summed_traces = field(
-        Int16, offset=31, default=1, documentation=
+        NNInt16, offset=31, default=1, documentation=
         "Number of vertically summed traces yielding this trace. (1 is one trace, 2 is two summed traces, etc.)")
 
     num_horizontally_stacked_traces = field(
-        Int16, offset=33, default=1, documentation=
+        NNInt16, offset=33, default=1, documentation=
         "Number of horizontally stacked traces yielding this trace. (1 is one trace, 2 is two stacked traces, etc.)")
 
     data_use = field(
-        Int16, offset=35, default=1, documentation=
-        "Data use: 1 = Production, 2 = Test")
+        DataUseField, offset=35, default=1,
+        documentation=DataUse.__doc__)
 
-    source_receiver_offset = field(
+    doc_nreceiver_offset = field(
         Int32, offset=37, default=0, documentation=
         "Distance from center of the source point to the center of the receiver group (negative if opposite to "
         "direction in which line is shot).")
@@ -216,7 +237,7 @@ class TraceHeaderRev0(metaclass=FormatMeta):
     )
 
     num_samples = field(
-        Int16, offset=115, default=0, documentation=
+        NNInt16, offset=115, default=0, documentation=
         "Number of samples in this trace. Highly recommended for all types of data."
     )
 

@@ -226,12 +226,11 @@ def extended_textual_header(draw, count=-1, end_text_stanza_probability=None):
     return headers
 
 
-
 @composite
-def dataset(draw, dims):
+def dataset(draw, num_dims, trace_headers=None):
     dims = draw(lists(integers(min_value=0, max_value=10),
-                      min_size=dims,
-                      max_size=dims))
+                      min_size=num_dims,
+                      max_size=num_dims))
     text_header = draw(textual_reel_header())
     binary_header = draw(header(BinaryReelHeader))
     ext_text_headers = draw(extended_textual_header(binary_header.num_extended_textual_headers))
@@ -239,12 +238,32 @@ def dataset(draw, dims):
     # TODO: We need to look at making sure `sample_interval` is set
     # appropriately/consistently. See the docstring for
     # TraceHeader.sample_interval for more information.
-    trace_headers = draw(lists(header(TraceHeaderRev1),
-                               min_size=0,
-                               max_size=100))
+    #
+    # TODO: We need to generate datasets with both trace header revision types.
+    if trace_headers is None:
+        if num_dims == 1:
+            # one-dimension datasets have only one trace
+            trace_headers = [draw(header(TraceHeaderRev1))]
+        else:
+            trace_headers = draw(lists(header(TraceHeaderRev1),
+                                       min_size=2,
+                                       max_size=100))
 
     return InMemoryDataset(dims,
                            text_header,
                            binary_header,
                            ext_text_headers,
                            trace_headers)
+
+
+@composite
+def dataset_2d(draw, valid_cdp_catalog=True):
+    "Create a 2D dataset."
+    trace_headers = draw(lists(header(TraceHeaderRev1),
+                               min_size=2,
+                               max_size=100))
+    if valid_cdp_catalog:
+        for idx, hdr in enumerate(trace_headers):
+            hdr.ensemble_num = idx
+
+    return draw(dataset(num_dims=2, trace_headers=trace_headers))

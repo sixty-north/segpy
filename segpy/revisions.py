@@ -35,13 +35,13 @@ def canonicalize_revision(revision):
     """Canonicalize a SEG Y revision.
 
     Various SEG Y revisions are seen in the wild; this function canonicalizes the supplies revision
-    to either SEGY_REVISION_0 or SEGY_REVISION_1.
+    to either SegYRevision.REVISION_0 or SegYRevision.REVISION_1.
 
     Args:
         revision: Any object representing a SEG Y revision.
 
     Returns:
-        An integer revision - either SEGY_REVISION_0 or SEGY_REVISION_1.
+        An integer revision - either SegYRevision.REVISION_0 or SegYRevision.REVISION_1.
 
     Raises:
         SegYRevisionError: If the revision is not known.

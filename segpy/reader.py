@@ -89,6 +89,8 @@ def create_reader(
             such as not being open, or being too short.
         ValueError: ``endian`` is not one of '<' or '>'.
         ValueError: ``dimensionality`` is not one of ``None``, 1, 2, or 3.
+        TypeError: a cached reader file is found but the pickle doesn't
+            represent a reader.
 
     Returns:
         A SegYReader object. Depending on the exact type of the
@@ -99,6 +101,7 @@ def create_reader(
         file-like object must remain open for the duration of use of
         the returned reader object. It is the caller's responsibility
         to close the underlying file.
+
     """
     if fh.closed:
         raise ValueError(
@@ -367,7 +370,7 @@ class SegYReader(Dataset):
         filename = filename_from_handle(self._fh)
         if filename == '<unknown>':
             raise TypeError("Cannot pickle {} object where file handle has filename {!r}"
-                            .format(self.__class__.__name__), filename)
+                            .format(self.__class__.__name__, filename))
         file_pos = self._fh.tell()
         file_mode = self._fh.mode
 
@@ -398,7 +401,7 @@ class SegYReader(Dataset):
             fh = open(state['_file_name'], state['_file_mode'])
         except OSError as e:
             raise TypeError("Cannot unpickle {} as file {} could not be opened because {}"
-                            .format(self.__class__.__name__, state['_filename'], str(e)))
+                            .format(self.__class__.__name__, state['_file_name'], str(e)))
         else:
             self._fh = fh
             del state['_file_name']

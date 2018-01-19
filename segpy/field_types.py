@@ -20,8 +20,7 @@ class IntFieldMeta(type):
                 max_value=None,
                 **kwargs):
 
-        # TODO: Only add this if it's not already in there.
-        bases = bases + (int,)
+        bases = bases + ((int,) if int not in bases else ())
 
         if min_value is None:
             min_value = LIMITS[seg_y_type].min
@@ -42,23 +41,31 @@ class IntFieldMeta(type):
         super().__init__(name, bases, namespace)
 
 
-class Int16(metaclass=IntFieldMeta,
+class Int16(int,
+            metaclass=IntFieldMeta,
             seg_y_type='int16'):
+    """16-bit signed integer."""
     pass
 
 
-class NNInt16(metaclass=IntFieldMeta,
+class NNInt16(int,
+              metaclass=IntFieldMeta,
               seg_y_type='nnint16'):
+    """Non-negative 16-bit signed integer."""
     pass
 
 
-class Int32(metaclass=IntFieldMeta,
+class Int32(int,
+            metaclass=IntFieldMeta,
             seg_y_type='int32'):
+    """32-bit signed integer."""
     pass
 
 
-class NNInt32(metaclass=IntFieldMeta,
+class NNInt32(int,
+              metaclass=IntFieldMeta,
               seg_y_type='nnint32'):
+    """Non-negative 32-bit signed integer."""
     pass
 
 

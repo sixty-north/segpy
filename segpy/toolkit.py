@@ -811,7 +811,7 @@ def write_extended_textual_headers(fh, pages, encoding):
         fh.write(concatenated_page)
 
 
-def write_trace_header(fh, trace_header, trace_header_packer, pos=None):
+def write_trace_header(fh, trace_header, trace_header_packer):
     """Write a TraceHeader to file.
 
     Args:
@@ -821,13 +821,7 @@ def write_trace_header(fh, trace_header, trace_header_packer, pos=None):
 
         trace_header_packer: A Packer object configured for the trace
             header format.
-
-        pos: An optional file offset in bytes from the beginning of the
-            file. Defaults to the current file position.
     """
-    if pos is not None:
-        fh.seek(pos, os.SEEK_SET)
-
     buf = trace_header_packer.pack(trace_header)
     fh.write(buf)
 

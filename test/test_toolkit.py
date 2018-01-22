@@ -1,9 +1,14 @@
-from hypothesis import given, settings, HealthCheck, Phase
+import os
+from types import SimpleNamespace
+
+from hypothesis import given, settings, HealthCheck, Phase, assume
 import hypothesis.strategies as st
 import pytest
 from io import BytesIO
 from pytest import raises
 
+from segpy.binary_reel_header import BinaryReelHeader
+from segpy.datatypes import DataSampleFormat
 from segpy.encoding import SUPPORTED_ENCODINGS
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
 import segpy.toolkit as toolkit
@@ -11,6 +16,7 @@ from segpy.util import almost_equal
 from unittest.mock import patch
 
 from test.dataset_strategy import extended_textual_header
+from test.strategies import header
 from test.test_float import any_ibm_compatible_floats
 import test.util
 
@@ -173,4 +179,67 @@ class TestReadExtendedHeadersCounted:
             fh.seek(0)
             with raises(ValueError):
                 toolkit.read_extended_headers_counted(fh, count_a + count_b, encoding=encoding)
+
+    @given(
+        data=st.data(),
+        count=st.integers(min_value=1, max_value=10),
+        encoding=st.sampled_from(SUPPORTED_ENCODINGS),
+        random=st.randoms())
+    @settings(
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate))
+    def test_read_trunctaed_header_raises_error(self, data, count, encoding, random):
+        written_headers = data.draw(extended_textual_header(count=count))
+        with BytesIO() as fh:
+            for header in written_headers:
+                for line in header:
+                    fh.write(line.encode(encoding))
+            fh.seek(0, os.SEEK_END)
+            length = fh.tell()
+
+            truncate_pos = random.randrange(0, length - 1)
+
+            truncated_buffer = fh.getbuffer()[:truncate_pos]
+            with BytesIO(truncated_buffer):
+                with raises(EOFError):
+                    toolkit.read_extended_headers_counted(fh, count, encoding=encoding)
+            del truncated_buffer
+
+
+class TestBytesPerSample:
+
+    @given(bad_dsf=st.integers(-32768, +32767))
+    def test_invalid_bytes_per_sample_field_raises_value_error(self, bad_dsf):
+        assume(all(bad_dsf != f for f in DataSampleFormat))  # IntEnum doesn't support the in operator for integers
+        fake_header = SimpleNamespace()
+        fake_header.data_sample_format = bad_dsf
+        with raises(ValueError):
+            toolkit.bytes_per_sample(fake_header)
+
+    @given(binary_reel_header=header(BinaryReelHeader))
+    def test_valid_bytes_per_sample(self, binary_reel_header):
+        bps = toolkit.bytes_per_sample(binary_reel_header)
+        assert bps in {1, 2, 4}
+
+
+@given(binary_reel_header=header(BinaryReelHeader),
+       spt=st.integers(min_value=0, max_value=1000))
+def test_samples_per_trace(binary_reel_header, spt):
+    binary_reel_header.num_samples = spt
+    assert toolkit.samples_per_trace(binary_reel_header) == spt
+
+
+@given(binary_reel_header=header(BinaryReelHeader),
+       bps=st.sampled_from((1, 2, 4)))
+def test_empty_traces_have_same_length_as_trace_header(binary_reel_header, bps):
+    binary_reel_header.num_samples = 0
+    assert toolkit.trace_length_bytes(binary_reel_header, bps) == toolkit.TRACE_HEADER_NUM_BYTES
+
+
+@given(binary_reel_header=header(BinaryReelHeader),
+       bps=st.sampled_from((1, 2, 4)))
+def test_on_sample_traces_have_same_length_as_trace_header_plus_one_sample(binary_reel_header, bps):
+    binary_reel_header.num_samples = 1
+    assert toolkit.trace_length_bytes(binary_reel_header, bps) == toolkit.TRACE_HEADER_NUM_BYTES + bps
 

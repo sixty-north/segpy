@@ -298,6 +298,11 @@ def read_extended_headers_counted(fh, num_expected, encoding):
 
     Returns:
         A list of tuples each containing forty CARD_LENGTH -character Unicode strings.
+
+    Raises:
+        ValueError: If num_expected is less than zero.
+        ValueError: If an end-text stanza is encountered prematurely.
+        EOFError: If the file is too short.
     """
     if num_expected < 0:
         raise ValueError("The number of expected extended textual headers of {} "

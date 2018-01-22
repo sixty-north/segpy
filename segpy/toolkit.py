@@ -205,41 +205,6 @@ NON_NEGATIVE_FIELD_NAMES = (
 )
 
 
-def validate_binary_reel_header(binary_reel_header, endian):
-    """Sanity check a binary reel header.
-
-    This functions checks a binary reel header for unexpected out-of-range
-    values which indicate that the header had been read with the incorrect endian setting.
-
-    Args:
-        binary_reel_header: A BinaryReelHeader such as returned by read_binary_reel_header.
-
-        endian: The endianness which was used to read the data which produced binary_reel_header.
-            '>' for big-endian data, '<' for little-endian.
-    """
-    endian_symbol = endian
-    endian_name = ENDIAN[endian]
-
-    opposite_endian_symbol = '>' if endian_symbol == '<' else '<'
-    opposite_endian_name = ENDIAN[opposite_endian_symbol]
-
-    for field_name in NON_NEGATIVE_FIELD_NAMES:
-        value = getattr(binary_reel_header, field_name)
-        if value < 0:
-            raise ValueError(
-                "Binary reel header read as {endian_name}-endian ({endian_symbol}) data specifies a negative value "
-                " of {value} for {field_name}. Try reading as {opposite_endian_name}-endian ({opposite_endian_symbol}) "
-                "data instead."
-                .format(
-                    endian_name=endian_name,
-                    endian_symbol=repr(endian_symbol),
-                    value=value,
-                    field_name=field_name,
-                    opposite_endian_name=opposite_endian_name,
-                    opposite_endian_symbol=repr(opposite_endian_symbol),
-                ))
-
-
 def has_end_text_stanza(ext_header):
     """Determine whether the header is the end text stanza.
 

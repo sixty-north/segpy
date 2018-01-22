@@ -55,8 +55,8 @@ class TestCatalogBuilder:
         assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
-           num=integers(0, 1000),
-           step=integers(-1000, 1000),
+           num=integers(0, 100),
+           step=integers(-100, 100),
            value=integers())
     def test_regular_constant_mapping(self, start, num, step, value):
         assume(step != 0)
@@ -68,8 +68,8 @@ class TestCatalogBuilder:
         assert len(shared_items) == len(mapping)
 
     @given(start=integers(),
-           num=integers(0, 1000),
-           step=integers(-1000, 1000),
+           num=integers(0, 100),
+           step=integers(-100, 100),
            values=data())
     def test_regular_mapping(self, start, num, step, values):
         assume(step != 0)
@@ -81,11 +81,11 @@ class TestCatalogBuilder:
         shared_items = set(mapping.items()) & set(catalog.items())
         assert len(shared_items) == len(mapping)
 
-    @given(num=integers(0, 1000),
+    @given(num=integers(0, 100),
            key_start=integers(),
-           key_step=integers(-1000, 1000),
+           key_step=integers(-100, 100),
            value_start=integers(),
-           value_step=integers(-1000, 1000))
+           value_step=integers(-100, 100))
     def test_linear_regular_mapping(self, num, key_start, key_step, value_start, value_step):
         assume(key_step != 0)
         assume(value_step != 0)
@@ -796,7 +796,7 @@ class TestDictionaryCatalog:
         catalog = DictionaryCatalog(items)
         assert len(catalog) == len(items)
 
-    @given(dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+    @given(dictionaries(integers(min_value=0, max_value=100), integers(min_value=0, max_value=100)))
     def test_repr(self, items):
         catalog = DictionaryCatalog(items)
         r = repr(catalog)
@@ -823,7 +823,7 @@ class TestDictionaryCatalog2D:
 
     @given(i_range=lists(integers(), min_size=2),
            j_range=ranges(min_size=1, max_size=100, min_step_value=1),
-           items=dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+           items=dictionaries(integers(min_value=0, max_value=100), integers(min_value=0, max_value=100)))
     def test_unsorted_irange_raises_value_error(self, i_range, j_range, items):
         assume(not is_sorted(i_range))
         with raises(ValueError):
@@ -831,7 +831,7 @@ class TestDictionaryCatalog2D:
 
     @given(i_range=ranges(min_size=1, max_size=100, min_step_value=1),
            j_range=lists(integers(), min_size=2),
-           items=dictionaries(integers(min_value=0, max_value=1000), integers(min_value=0, max_value=1000)))
+           items=dictionaries(integers(min_value=0, max_value=100), integers(min_value=0, max_value=100)))
     def test_unsorted_jrange_raises_value_error(self, i_range, j_range, items):
         assume(not is_sorted(j_range))
         with raises(ValueError):

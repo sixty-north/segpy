@@ -454,7 +454,7 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     Args:
         fh: A file-like-object open in binary mode.
 
-        trace_header_format: A Struct object, such as obtained from a
+        trace_header_packer: A Struct object, such as obtained from a
             call to compile_trace_header_format()
 
         pos: The file offset in bytes from the beginning from which the data
@@ -466,8 +466,6 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     if pos is not None:
         fh.seek(pos)
     data = fh.read(TRACE_HEADER_NUM_BYTES)
-    # trace_header = TraceHeader._make(
-    #     trace_header_format.unpack(data))
     trace_header = trace_header_packer.unpack(data)
     return trace_header
 

@@ -826,7 +826,7 @@ def write_trace_header(fh, trace_header, trace_header_packer):
     fh.write(buf)
 
 
-def write_trace_samples(fh, samples, seg_y_type, pos=None, endian='>'):
+def write_trace_samples(fh, samples, seg_y_type, endian='>'):
     """Write a trace samples to a file
 
     Args:
@@ -836,16 +836,13 @@ def write_trace_samples(fh, samples, seg_y_type, pos=None, endian='>'):
 
         seg_y_type: The SEG Y data type.
 
-        pos: An optional offset from the beginning of the file. If omitted,
-            any writing is done at the current file position.
-
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    write_binary_values(fh, samples, seg_y_type, pos, endian)
+    write_binary_values(fh, samples, seg_y_type, endian)
 
 
-def write_binary_values(fh, values, seg_y_type, pos=None, endian='>'):
+def write_binary_values(fh, values, seg_y_type, endian='>'):
     """Write a series of values to a file.
 
     Args:
@@ -855,16 +852,10 @@ def write_binary_values(fh, values, seg_y_type, pos=None, endian='>'):
 
         seg_y_type: The SEG Y data type.
 
-        pos: An optional offset from the beginning of the file. If omitted,
-            any writing is done at the current file position.
-
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
     ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
-
-    if pos is not None:
-        fh.seek(pos, os.SEEK_SET)
 
     buf = (pack_ibm_floats(values)
            if ctype == 'ibm'

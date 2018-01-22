@@ -142,7 +142,7 @@ def create_reader(
 
     if reader is None:
         reader = _make_reader(fh, encoding, trace_header_format, endian, progress_callback, dimensionality)
-        if cache_directory is not None:
+        if cache_file_path is not None:
             _save_reader_to_cache(reader, cache_file_path)
 
     progress_callback(1)

@@ -51,11 +51,6 @@ END_TEXT_STANZA = "((SEG: EndText))"
 force_python_ibm_floats = False
 
 
-def logger():
-    # Defer logger creation until the module is *used* rather than imported.
-    return logging.getLogger(__name__)
-
-
 def extract_revision(binary_reel_header):
     """Obtain the SEG Y revision from the reel header.
 
@@ -290,9 +285,10 @@ def read_extended_headers_counted(fh, num_expected, encoding):
     reading will be terminated and a warning logged.
 
     Args:
-        fh: A file-like object open in binary mode. The first of any extended textual headers
-            is assumed to be at an offset of 3600 bytes from the beginning of the file
-            (immediately following the binary reel header).
+        fh: A file-like object open in binary mode and positioned at the beginning of
+            the extendted textual headers. Normally, this method is called from
+            read_extended_textual_headers(), which positions the file correctly at an
+            offset of 3600 bytes from the beginning of the file.
 
         num_expected: A non-negative integer of headers.
 
@@ -303,15 +299,17 @@ def read_extended_headers_counted(fh, num_expected, encoding):
     Returns:
         A list of tuples each containing forty CARD_LENGTH -character Unicode strings.
     """
-    assert num_expected >= 0
+    if num_expected < 0:
+        raise ValueError("The number of expected extended textual headers of {} "
+                         "is less than zero".format(num_expected))
     extended_headers = []
     for i in range(num_expected):
         ext_header = read_textual_reel_header(fh, encoding)
+        extended_headers.append(ext_header)
         if has_end_text_stanza(ext_header):
             if i != num_expected - 1:
-                logger().warning("Unexpected end-text extended header.")
-            break
-        extended_headers.append(ext_header)
+                raise ValueError("Unexpected end-text stanza in header {} of {} expected"
+                                 .format(i+1, num_expected))
 
     return extended_headers
 

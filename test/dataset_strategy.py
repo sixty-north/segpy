@@ -1,4 +1,5 @@
-from hypothesis.strategies import composite, integers, lists, sampled_from, text, tuples
+from hypothesis import assume
+from hypothesis.strategies import composite, integers, lists, sampled_from, text, tuples, randoms
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.dataset import Dataset
 from segpy.toolkit import CARD_LENGTH, CARDS_PER_HEADER
@@ -132,17 +133,23 @@ def stanza_header(draw):
                     min_size=1,
                     max_size=(CARD_LENGTH - 6) // 2))
 
+    assume(not org.isspace())
+    assume('))' not in org)
+
     name = draw(text(alphabet=alphabet,
                      min_size=1,
                      max_size=(CARD_LENGTH - 6) // 2))
 
+    assume(not org.isspace())
+    assume('))' not in name)
+
     header = '(({}: {}))'.format(org, name)
     assert len(header) <= CARD_LENGTH
 
-    header = '{:{width}}'.format(header, width=CARD_LENGTH)
-    assert len(header) == CARD_LENGTH
+    padded_header = '{:{width}}'.format(header, width=CARD_LENGTH)
+    assert len(padded_header) == CARD_LENGTH
 
-    return header
+    return padded_header
 
 
 @composite
@@ -164,10 +171,10 @@ def stanza_line(draw):
     line = '{} = {}'.format(key, value)
     assert len(line) <= CARD_LENGTH
 
-    line = '{:{width}}'.format(line, width=CARD_LENGTH)
-    assert len(line) == CARD_LENGTH
+    padded_line = '{:{width}}'.format(line, width=CARD_LENGTH)
+    assert len(padded_line) == CARD_LENGTH
 
-    return line
+    return padded_line
 
 
 @composite
@@ -183,8 +190,11 @@ def stanza(draw):
 
 
 @composite
-def extended_textual_header(draw, count):
+def extended_textual_header(draw, count=-1, end_text_stanza_probability=None):
     if count == -1:
+        if end_text_stanza_probability is not None:
+            raise ValueError("end_text_stanza_probability {} does not make sense when count is not {}"
+                             .format(end_text_stanza_probability, count))
         count = draw(integers(min_value=0, max_value=10))
         headers = draw(lists(stanza(),
                              min_size=count,
@@ -192,10 +202,29 @@ def extended_textual_header(draw, count):
         headers.append(END_TEXT_STANZA)
         return headers
 
-    # TODO: This can *optionally* have an end-stanza. We should generate those sometimes.
-    return draw(lists(stanza(),
-                      min_size=count,
-                      max_size=count))
+    if count == 0:
+        return []
+
+    # For counted headers, the end-text stanza is optional. We generate it
+    # with the specified probability
+    if end_text_stanza_probability is None:
+        end_text_stanza_probability = 0.5
+
+    random = draw(randoms())
+    x = random.uniform(0.0, 1.0)
+    num_data_stanzas = count - 1 if x <= end_text_stanza_probability else count
+
+    headers = draw(lists(stanza(),
+                   min_size=num_data_stanzas,
+                   max_size=num_data_stanzas))
+
+    if num_data_stanzas == count - 1:
+        headers.append(END_TEXT_STANZA)
+
+    assert len(headers) == count
+
+    return headers
+
 
 
 @composite

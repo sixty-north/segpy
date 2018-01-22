@@ -192,7 +192,7 @@ def _save_reader_to_cache(reader, cache_file_path):
         with cache_file_path.open('wb') as cache_file:
             try:
                 pickle.dump(reader, cache_file)
-            except (pickle.PicklingError, TypeError) as pickling_error:
+            except (AttributeError, pickle.PicklingError, TypeError) as pickling_error:
                 log.warn("Could not pickle {} because {}".format(reader, pickling_error))
                 pass
     except OSError as os_error:

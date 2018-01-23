@@ -489,6 +489,9 @@ def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'
         seg_y_type: The SEG Y data type.
 
         num_items: The number of items to be read.
+
+        endian: '>' for big-endian data (the standard and default), '<'
+            for little-endian (non-standard)
     Returns:
         A sequence containing count items.
     """

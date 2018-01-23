@@ -16,6 +16,7 @@ from segpy.header import are_equal
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
 import segpy.toolkit as toolkit
 from segpy.packer import make_header_packer
+from segpy.revisions import SegYRevision
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import almost_equal
 from unittest.mock import patch
@@ -319,3 +320,38 @@ class TestReadBinaryValues:
         with BytesIO(truncated_buffer) as fh:
             with raises(EOFError):
                 toolkit.read_binary_values(fh, 0, seg_y_type, num_items, endian)
+
+
+class TestFormatStandardTextualHeader:
+
+    def test_format_header_successfully(self):
+            header = toolkit.format_standard_textual_header(
+                                            SegYRevision.REVISION_1,
+                                            client="Lundin",
+                                            company="Western Geco",
+                                            crew_number=123,
+                                            processing1="Sixty North AS",
+                                            sweep_start_hz=10,
+                                            sweep_end_hz=1000,
+                                            sweep_length_ms=10000,
+                                            sweep_channel_number=3,
+                                            sweep_type='spread')
+            assert len(header) == 40
+            assert all(len(line) == 80 for line in header)
+
+    def test_format_header_with_mismatched_keywords_raises_type_error(self):
+        with raises(TypeError):
+            toolkit.format_standard_textual_header(
+                                            SegYRevision.REVISION_1,
+                                            jelly="Strawberry")
+
+
+class ParseStandardTextualHeader:
+
+    @given(header_lines=st.lists(st.text()))
+    def test_parse_header_with_wrong_shape_raises_value_error(self, header_lines):
+        assume(len(header) != 40)
+        assume(all(len(line) != 80 for line in header))
+        with raises(TypeError):
+            toolkit.parse_standard_textual_header(header_lines)
+

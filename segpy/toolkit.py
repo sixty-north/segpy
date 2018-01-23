@@ -582,7 +582,8 @@ def format_standard_textual_header(revision, **kwargs):
         A list of forty Unicode strings.
 
     Usage:
-        header = format_standard_textual_header(1,
+        header = format_standard_textual_header(
+                                            revision=SegYRevision.REVISION_1,
                                             client="Lundin",
                                             company="Western Geco",
                                             crew_number=123,

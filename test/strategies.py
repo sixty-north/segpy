@@ -3,11 +3,16 @@ from itertools import accumulate, starmap, product
 
 import sys
 from hypothesis import assume
-from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite, sampled_from
+from hypothesis.strategies import integers, just, fixed_dictionaries, lists, text, composite, sampled_from, floats
 from segpy.util import batched
 
 PRINTABLE_ASCII_RANGE = (32, 127)
 PRINTABLE_ASCII_ALPHABET = ''.join(map(chr, range(*PRINTABLE_ASCII_RANGE)))
+
+NUMBER_STRATEGY = {
+    int: integers,
+    float: floats
+}
 
 
 def multiline_ascii_encodable_text(min_num_lines, max_num_lines):

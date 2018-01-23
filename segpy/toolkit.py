@@ -503,7 +503,8 @@ def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'
     item_size = size_in_bytes(ctype)
     block_size = item_size * num_items
 
-    fh.seek(pos, os.SEEK_SET)
+    if pos is not None:
+        fh.seek(pos, os.SEEK_SET)
     buf = fh.read(block_size)
 
     if len(buf) < block_size:

@@ -1,6 +1,8 @@
 import os
+from itertools import zip_longest
 from types import SimpleNamespace
 
+import struct
 from hypothesis import given, settings, HealthCheck, Phase, assume
 import hypothesis.strategies as st
 import pytest
@@ -8,7 +10,7 @@ from io import BytesIO
 from pytest import raises
 
 from segpy.binary_reel_header import BinaryReelHeader
-from segpy.datatypes import DataSampleFormat
+from segpy.datatypes import DataSampleFormat, SegYType, SEG_Y_TYPE_TO_CTYPE, PY_TYPES, LIMITS
 from segpy.encoding import SUPPORTED_ENCODINGS
 from segpy.header import are_equal
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
@@ -19,7 +21,7 @@ from segpy.util import almost_equal
 from unittest.mock import patch
 
 from test.dataset_strategy import extended_textual_header
-from test.strategies import header
+from test.strategies import header, NUMBER_STRATEGY
 from test.test_float import any_ibm_compatible_floats
 import test.util
 
@@ -276,3 +278,44 @@ class TestReadTraceHeader:
         with BytesIO(truncated_buffer) as fh:
             with raises(EOFError):
                 toolkit.read_trace_header(fh, trace_header_packer, pos=0)
+
+
+class TestReadBinaryValues:
+
+    @given(seg_y_type=st.sampled_from(SegYType),
+           num_items=st.integers(min_value=0, max_value=100),
+           endian=st.sampled_from(('<', '>')),
+           data=st.data())
+    def test_read_binary_values_successfully(self, seg_y_type, num_items, endian, data):
+        assume(seg_y_type != SegYType.IBM)
+        ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+        c_format = ''.join(map(str, (endian, num_items, ctype)))
+        py_type = PY_TYPES[seg_y_type]
+        min_value, max_value = LIMITS[seg_y_type]
+        items_written = data.draw(st.lists(
+            elements=NUMBER_STRATEGY[py_type](min_value=min_value, max_value=max_value),
+            min_size=num_items, max_size=num_items))
+        buffer = struct.pack(c_format, *items_written)
+        with BytesIO(buffer) as fh:
+            items_read = toolkit.read_binary_values(fh, 0, seg_y_type, num_items, endian)
+            assert all(a == b for a, b in zip_longest(items_read, items_read))
+
+    @given(seg_y_type=st.sampled_from(SegYType),
+           num_items=st.integers(min_value=1, max_value=100),
+           endian=st.sampled_from(('<', '>')),
+           data=st.data())
+    def test_truncated_read_binary_values_raises_eof_error(self, seg_y_type, num_items, endian, data):
+        assume(seg_y_type != SegYType.IBM)
+        ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+        c_format = ''.join(map(str, (endian, num_items, ctype)))
+        py_type = PY_TYPES[seg_y_type]
+        min_value, max_value = LIMITS[seg_y_type]
+        items_written = data.draw(st.lists(
+            elements=NUMBER_STRATEGY[py_type](min_value=min_value, max_value=max_value),
+            min_size=num_items, max_size=num_items))
+        buffer = struct.pack(c_format, *items_written)
+        truncate_pos = data.draw(st.integers(min_value=0, max_value=max(0, len(buffer) - 1)))
+        truncated_buffer = buffer[:truncate_pos]
+        with BytesIO(truncated_buffer) as fh:
+            with raises(EOFError):
+                toolkit.read_binary_values(fh, 0, seg_y_type, num_items, endian)

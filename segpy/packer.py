@@ -197,7 +197,7 @@ class BijectiveHeaderPacker(HeaderPacker):
         try:
             values = self._structure.unpack(buffer)
         except struct.error as e:
-            if 'requires a bytes object of length' in str(e):
+            if 'requires a' in str(e):
                 raise ValueError("Buffer of length {} too short. {}."
                                  .format(len(buffer), str(e).capitalize()))
             raise

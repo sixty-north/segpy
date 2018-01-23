@@ -10,8 +10,11 @@ from pytest import raises
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.datatypes import DataSampleFormat
 from segpy.encoding import SUPPORTED_ENCODINGS
+from segpy.header import are_equal
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
 import segpy.toolkit as toolkit
+from segpy.packer import make_header_packer
+from segpy.trace_header import TraceHeaderRev1
 from segpy.util import almost_equal
 from unittest.mock import patch
 
@@ -189,7 +192,7 @@ class TestReadExtendedHeadersCounted:
         suppress_health_check=(HealthCheck.too_slow,),
         deadline=None,
         phases=(Phase.explicit, Phase.reuse, Phase.generate))
-    def test_read_trunctaed_header_raises_error(self, data, count, encoding, random):
+    def test_read_truncated_header_raises_error(self, data, count, encoding, random):
         written_headers = data.draw(extended_textual_header(count=count))
         with BytesIO() as fh:
             for header in written_headers:
@@ -243,3 +246,33 @@ def test_on_sample_traces_have_same_length_as_trace_header_plus_one_sample(binar
     binary_reel_header.num_samples = 1
     assert toolkit.trace_length_bytes(binary_reel_header, bps) == toolkit.TRACE_HEADER_NUM_BYTES + bps
 
+
+class TestCatalogTraces:
+
+    def test_non_callable_progress_raises_type_error(self):
+        with raises(TypeError):
+            toolkit.catalog_traces(None, None, progress=object())
+
+
+class TestReadTraceHeader:
+
+    @given(trace_header_written=header(TraceHeaderRev1),
+           endian=st.sampled_from(('<', '>')))
+    def test_read_header_successfully(self, trace_header_written, endian):
+        trace_header_packer = make_header_packer(TraceHeaderRev1, endian)
+        buffer = trace_header_packer.pack(trace_header_written)
+        with BytesIO(buffer) as fh:
+            trace_header = toolkit.read_trace_header(fh, trace_header_packer, pos=0)
+            assert are_equal(trace_header_written, trace_header)
+
+    @given(trace_header_written=header(TraceHeaderRev1),
+           endian=st.sampled_from(('<', '>')),
+           random=st.randoms())
+    def test_read_trunctated_header_raises_eoferror(self, trace_header_written, endian, random):
+        trace_header_packer = make_header_packer(TraceHeaderRev1, endian)
+        buffer = trace_header_packer.pack(trace_header_written)
+        truncate_pos = random.randrange(0, len(buffer))
+        truncated_buffer = buffer[:truncate_pos]
+        with BytesIO(truncated_buffer) as fh:
+            with raises(EOFError):
+                toolkit.read_trace_header(fh, trace_header_packer, pos=0)

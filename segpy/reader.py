@@ -489,7 +489,7 @@ class SegYReader(Dataset):
         return trace_values
 
     def trace_header(self, trace_index, header_packer_override=None):
-        """Read a specific trace_samples.
+        """Read a specific trace header.
 
         Args:
             trace_index: An integer in the range zero to num_traces() - 1

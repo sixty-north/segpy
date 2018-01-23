@@ -371,6 +371,9 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
 
         where each catalog is an instance of ``collections.Mapping`` or None
         if no catalog could be built.
+
+    Raises:
+        TypeError: If progress is neither callable nor None.
     """
     progress_callback = progress if progress is not None else lambda p: None
 
@@ -457,16 +460,23 @@ def read_trace_header(fh, trace_header_packer, pos=None):
         trace_header_packer: A Struct object, such as obtained from a
             call to compile_trace_header_format()
 
-        pos: The file offset in bytes from the beginning from which the data
-            is to be read.
+        pos: An optional file offset in bytes from the beginning from which
+            the data is to be read. If None, the current file position will
+            be used.
 
     Returns:
         A TraceHeader object.
+
+    Raises:
+        EOFError: If the file is too short to contain the full trace header.
     """
     if pos is not None:
         fh.seek(pos)
     data = fh.read(TRACE_HEADER_NUM_BYTES)
-    trace_header = trace_header_packer.unpack(data)
+    try:
+        trace_header = trace_header_packer.unpack(data)
+    except ValueError as e:
+        raise EOFError("Trace header trunctated.") from e
     return trace_header
 
 

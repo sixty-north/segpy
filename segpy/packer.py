@@ -2,6 +2,8 @@ from collections import OrderedDict
 from struct import Struct
 from itertools import zip_longest
 
+import struct
+
 from segpy import __version__
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE
 from segpy.util import pairwise, intervals_partially_overlap, complementary_intervals
@@ -192,8 +194,15 @@ class BijectiveHeaderPacker(HeaderPacker):
         Returns:
             The header object.
         """
-        values = self._structure.unpack(buffer)
-        return self._header_format_class(*values)
+        try:
+            values = self._structure.unpack(buffer)
+        except struct.error as e:
+            if 'requires a bytes object of length' in str(e):
+                raise ValueError("Buffer of length {} too short. {}."
+                                 .format(len(buffer), str(e).capitalize()))
+            raise
+        else:
+            return self._header_format_class(*values)
 
 
 class SurjectiveHeaderPacker(HeaderPacker):
@@ -208,13 +217,19 @@ class SurjectiveHeaderPacker(HeaderPacker):
         Returns:
             The header object.
         """
-        values = self._structure.unpack(buffer)
+        try:
+            values = self._structure.unpack(buffer)
+        except struct.error as e:
+            if 'requires a bytes object of length' in str(e):
+                raise ValueError("Buffer of length {} too short. {}."
+                                 .format(len(buffer), str(e).capitalize()))
+            raise
+        else:
+            kwargs = {name: value
+                      for names, value in zip(self._field_name_allocations, values)
+                      for name in names}
 
-        kwargs = {name: value
-                  for names, value in zip(self._field_name_allocations, values)
-                  for name in names}
-
-        return self._header_format_class(**kwargs)
+            return self._header_format_class(**kwargs)
 
 
 def main():

@@ -1,10 +1,13 @@
+import time
 from hypothesis import given, assume, example
-from hypothesis.strategies import integers, lists, booleans, tuples, dictionaries, text
+from hypothesis.strategies import integers, lists, booleans, tuples, dictionaries, text, sets
 from pytest import raises
 
 from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range, \
-    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride, true, last, first, minmax
-from test.strategies import spaced_ranges, ranges, sequences
+    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride, true, last, first, minmax, \
+    intervals_partially_overlap, now_millis, round_up, underscores_to_camelcase, first_sentence, lower_first, \
+    is_magic_name
+from test.strategies import spaced_ranges, ranges, sequences, PRINTABLE_ASCII_ALPHABET
 
 
 class TestBatched:
@@ -48,6 +51,10 @@ class TestBatched:
         batches = list(batched([0, 0], 3, 42))
         assert batches[-1] == [0, 0, 42]
 
+    def test_batch_size_less_than_one_raises_value_error(self):
+        with raises(ValueError):
+            batched([1, 2, 3], 0)
+
 
 class TestComplementaryIntervals:
 
@@ -76,6 +83,133 @@ class TestComplementaryIntervals:
         end_index = last_interval_end + end_offset
         complements = list(complementary_intervals(intervals, stop=end_index))
         assert complements[-1] == range(last_interval_end, end_index)
+
+    def test_empty_intervals_raises_value_error(self):
+        with raises(ValueError):
+            complementary_intervals([])
+
+
+class TestIntervalsAreContiguous:
+
+    def test_intervals_are_contiguous_positive(self):
+        assert intervals_are_contiguous([
+            range(0, 10),
+            range(10, 20),
+            range(20, 30),
+        ])
+
+    def test_intervals_are_contiguous_negative(self):
+        assert not intervals_are_contiguous([
+            range(0, 10),
+            range(10, 19),
+            range(20, 30),
+        ])
+
+
+class TestIntervalsPartiallyOverlap():
+
+    @given(boundaries=sets(elements=integers(), min_size=4, max_size=4))
+    def test_intervals_partially_overlap_positive(self, boundaries):
+        p, q, r, s = sorted(boundaries)
+        interval_a = range(p, r)
+        interval_b = range(q, s)
+        assert intervals_partially_overlap(interval_a, interval_b)
+
+    @given(boundaries=sets(elements=integers(), min_size=4, max_size=4))
+    def test_intervals_partially_overlap_positive_reversed(self, boundaries):
+        p, q, r, s = sorted(boundaries)
+        interval_a = range(q, s)
+        interval_b = range(p, r)
+        assert intervals_partially_overlap(interval_a, interval_b)
+
+    @given(boundaries=sets(elements=integers(), min_size=4, max_size=4))
+    def test_intervals_partially_overlap_negative_disjoint(self, boundaries):
+        p, q, r, s = sorted(boundaries)
+        interval_a = range(p, q)
+        interval_b = range(r, s)
+        assert not intervals_partially_overlap(interval_a, interval_b)
+
+    @given(boundaries=sets(elements=integers(), min_size=2, max_size=2))
+    def test_intervals_partially_overlap_negative_equal(self, boundaries):
+        p, q = sorted(boundaries)
+        interval_a = range(p, q)
+        interval_b = range(p, q)
+        assert not intervals_partially_overlap(interval_a, interval_b)
+
+
+class TestNowMillis:
+
+    def test_about_now(self):
+        m1 = time.time() * 1000
+        time.sleep(0.001)
+        m2 = now_millis()
+        time.sleep(0.001)
+        m3 = time.time() * 1000
+        assert m1 <= m2 <= m3
+
+
+class TestRoundUp:
+
+    @given(integer=integers(),
+           multiple=integers(min_value=0))
+    def test_rounded_up_is_greater_or_equal(self, integer, multiple):
+        assume(multiple != 0)
+        r = round_up(integer, multiple)
+        assert r >= integer
+
+    @given(integer=integers(),
+           multiple=integers(min_value=0))
+    def test_rounded_up_is_a_mutiple(self, integer, multiple):
+        assume(multiple != 0)
+        r = round_up(integer, multiple)
+        assert r % multiple == 0
+
+    @given(integer=integers(),
+           multiple=integers(max_value=0))
+    def test_rounded_up_non_positive_multiple_raises_value_error(self, integer, multiple):
+        assume(multiple != 0)
+        with raises(ValueError):
+            round_up(integer, multiple)
+
+
+class TestUnderscoresToCamelCase:
+
+    def test_example(self):
+        assert underscores_to_camelcase("the_quick_brown_fox") == "TheQuickBrownFox"
+
+
+
+PRINTABLE_ASCII_ALPHANUMERIC = [c for c in PRINTABLE_ASCII_ALPHABET if c.isalnum()]
+
+
+class TestFirstSentence:
+
+    @given(sentence_a=text(alphabet=PRINTABLE_ASCII_ALPHANUMERIC),
+           sentence_b=text(alphabet=PRINTABLE_ASCII_ALPHANUMERIC))
+    def test_successfully_extracts_first_sentence(self, sentence_a, sentence_b):
+        t = sentence_a + '. ' + sentence_b
+        assert first_sentence(t) == sentence_a + '.'
+
+
+class TestLowerFirst:
+
+    def test_first_character_is_lowercased(self):
+        assert lower_first("ABCdef") == "aBCdef"
+
+
+class TestIsMagicName:
+
+    @given(root=text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=1))
+    def test_is_magic_name_positive(self, root):
+        magic_name = '__' + root + '__'
+        assert is_magic_name(magic_name)
+
+    @given(root=text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=1))
+    def test_is_magic_name_negative(self, root):
+        muggle_name = root
+        assert not is_magic_name(muggle_name)
+
+
 
 
 class TestReversedRange:

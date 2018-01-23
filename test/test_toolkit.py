@@ -390,7 +390,7 @@ class TestWriteExtendedTextualHeaders:
 
     @given(pages=st.lists(st.lists(st.text(alphabet=PRINTABLE_ASCII_ALPHABET))),
            encoding=st.sampled_from(SUPPORTED_ENCODINGS))
-    def line_length_raises_value_error(self, pages, encoding):
+    def test_line_length_raises_value_error(self, pages, encoding):
         assume(any(len(line) != 80 for page in pages for line in page))
         with BytesIO() as fh:
             with raises(ValueError):

@@ -47,16 +47,17 @@ def batched(iterable, batch_size, padding=UNSET):
     """
     if batch_size < 1:
         raise ValueError("Batch size {} is not at least one.".format(batch_size))
+    return _batched(batch_size, iterable, padding)
 
+
+def _batched(batch_size, iterable, padding):
     pending = []
-
     for item in iterable:
         pending.append(item)
         if len(pending) == batch_size:
             batch = pending
             pending = []
             yield batch
-
     num_left_over = len(pending)
     if num_left_over > 0:
         if padding is not UNSET:
@@ -96,19 +97,19 @@ def complementary_intervals(intervals, start=None, stop=None):
     if len(intervals) < 1:
         raise ValueError("intervals must contain at least one interval (slice or range) object")
 
-    interval_type = type(intervals[0])
+    return _complementary_intervals(intervals, start, stop)
 
+
+def _complementary_intervals(intervals, start, stop):
+    interval_type = type(intervals[0])
     if start is None:
         start = intervals[0].start
-
     if stop is None:
         stop = intervals[-1].stop
-
     index = start
     for s in intervals:
         yield interval_type(index, s.start)
         index = s.stop
-
     yield interval_type(index, stop)
 
 
@@ -276,6 +277,8 @@ def now_millis():
 
 def round_up(integer, multiple):
     """Round up to the nearest multiple"""
+    if multiple <= 0:
+        raise ValueError("Can not round up to non-positive multiple {}".format(multiple))
     return integer if integer % multiple == 0 else integer + multiple - integer % multiple
 
 

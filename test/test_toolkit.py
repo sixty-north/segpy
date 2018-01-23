@@ -271,10 +271,10 @@ class TestReadTraceHeader:
     @given(trace_header_written=header(TraceHeaderRev1),
            endian=st.sampled_from(('<', '>')),
            random=st.randoms())
-    def test_read_trunctated_header_raises_eoferror(self, trace_header_written, endian, random):
+    def test_read_truncated_header_raises_eoferror(self, trace_header_written, endian, random):
         trace_header_packer = make_header_packer(TraceHeaderRev1, endian)
         buffer = trace_header_packer.pack(trace_header_written)
-        truncate_pos = random.randrange(0, len(buffer))
+        truncate_pos = random.randrange(0, len(buffer) - 1)
         truncated_buffer = buffer[:truncate_pos]
         with BytesIO(truncated_buffer) as fh:
             with raises(EOFError):
@@ -390,13 +390,15 @@ class TestWriteExtendedTextualHeaders:
 
     @given(pages=st.lists(st.lists(st.text(alphabet=PRINTABLE_ASCII_ALPHABET))),
            encoding=st.sampled_from(SUPPORTED_ENCODINGS))
-    def test_incorrect_line_length_raises_value_error(self, pages, encoding):
+    def line_length_raises_value_error(self, pages, encoding):
         assume(any(len(line) != 80 for page in pages for line in page))
         with BytesIO() as fh:
             with raises(ValueError):
                 toolkit.write_extended_textual_headers(fh, pages, encoding)
 
-    @given(pages=st.lists(st.lists(st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80))),
+    @given(pages=st.lists(elements=st.lists(elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80),
+                                            max_size=50),
+                          max_size=5),
            encoding=st.sampled_from(SUPPORTED_ENCODINGS))
     def test_incorrect_page_length_raises_value_error(self, pages, encoding):
         assume(any(len(page) != 40 for page in pages))

@@ -396,10 +396,16 @@ class TestWriteExtendedTextualHeaders:
             with raises(ValueError):
                 toolkit.write_extended_textual_headers(fh, pages, encoding)
 
-    @given(pages=st.lists(elements=st.lists(elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80),
-                                            max_size=50),
-                          max_size=5),
-           encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    @given(pages=st.lists(
+        elements=st.lists(
+            elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80),
+            max_size=50),
+        max_size=5),
+        encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    @settings(
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate))
     def test_incorrect_page_length_raises_value_error(self, pages, encoding):
         assume(any(len(page) != 40 for page in pages))
         with BytesIO() as fh:

@@ -486,6 +486,10 @@ def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'
     Args:
         fh: A file-like-object open in binary mode.
 
+        pos: An optional file offset in bytes from the beginning from which
+            the data is to be read. If None, the current file position will
+            be used.
+
         seg_y_type: The SEG Y data type.
 
         num_items: The number of items to be read.

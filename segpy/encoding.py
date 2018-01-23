@@ -22,7 +22,7 @@ class UnsupportedEncodingError(Exception):
         return self._encoding
 
     def __str__(self):
-        return "{} not supported for encoding {}".format(self.args[0], self._encoding)
+        return "{} not supported for encoding {!r}".format(self.args[0], self._encoding)
 
     def __repr__(self):
         return "{}({!r}, {!r}".format(self.__class__.__name__, self.args[0], self._encoding)

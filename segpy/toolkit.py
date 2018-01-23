@@ -662,10 +662,13 @@ def parse_standard_textual_header(header_lines):
     Returns:
         An ordered mapping of field names to Unicode strings.
     """
-    # TODO: Consider making the template (or the template module) an argument with a default.
+    if len(header_lines) != CARDS_PER_HEADER:
+        raise ValueError("Cannot parse standard header which has {} lines instead of {}"
+                         .format(len(header_lines), CARDS_PER_HEADER))
 
-    if not all(len(line) == CARD_LENGTH for line in header_lines):
-        raise ValueError("Cannot parse standard header where a line has length not equal to {}".format(CARD_LENGTH))
+    if any(len(line) != CARD_LENGTH for line in header_lines):
+        raise ValueError("Cannot parse standard header where a line has length not equal to {}"
+                         .format(CARD_LENGTH))
 
     header = ''.join(header_lines)
     template = textual_reel_header.TEMPLATE
@@ -871,8 +874,8 @@ def write_binary_values(fh, values, seg_y_type, endian='>'):
 
         seg_y_type: The SEG Y data type.
 
-        endian: '>' for big-endian data (the standard and default), '<'
-            for little-endian (non-standard)
+        endian: '>' for big-endian data (the standard and default),
+            '<' for little-endian (non-standard)
     """
     ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
 
@@ -909,7 +912,7 @@ def pack_values(values, ctype, endian='>'):
     Args:
         values: An iterable series of values.
 
-        fmt: A format code (one of the values in the datatype.CTYPES
+        ctype: A format code (one of the values in the datatype.CTYPES
             dictionary)
 
         endian: '>' for big-endian data (the standard and default), '<'

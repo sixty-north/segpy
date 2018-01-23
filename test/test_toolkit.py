@@ -11,7 +11,7 @@ from pytest import raises
 
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.datatypes import DataSampleFormat, SegYType, SEG_Y_TYPE_TO_CTYPE, PY_TYPES, LIMITS
-from segpy.encoding import SUPPORTED_ENCODINGS
+from segpy.encoding import SUPPORTED_ENCODINGS, is_supported_encoding, UnsupportedEncodingError
 from segpy.header import are_equal
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
 import segpy.toolkit as toolkit
@@ -22,7 +22,7 @@ from segpy.util import almost_equal
 from unittest.mock import patch
 
 from test.dataset_strategy import extended_textual_header
-from test.strategies import header, NUMBER_STRATEGY
+from test.strategies import header, NUMBER_STRATEGY, PRINTABLE_ASCII_ALPHABET
 from test.test_float import any_ibm_compatible_floats
 import test.util
 
@@ -346,12 +346,80 @@ class TestFormatStandardTextualHeader:
                                             jelly="Strawberry")
 
 
-class ParseStandardTextualHeader:
+class TestParseStandardTextualHeader:
 
-    @given(header_lines=st.lists(st.text()))
-    def test_parse_header_with_wrong_shape_raises_value_error(self, header_lines):
-        assume(len(header) != 40)
-        assume(all(len(line) != 80 for line in header))
-        with raises(TypeError):
+    @given(header_lines=st.lists(elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET),
+                                 min_size=40, max_size=40))
+    def test_parse_header_with_wrong_line_length_raises_value_error(self, header_lines):
+        assume(all(len(line) != 80 for line in header_lines))
+        with raises(ValueError):
             toolkit.parse_standard_textual_header(header_lines)
 
+    @given(header_lines=st.lists(elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET)))
+    def test_parse_header_with_wrong_number_of_lines_raises_value_error(self, header_lines):
+        assume(len(header_lines) != 40)
+        with raises(ValueError):
+            toolkit.parse_standard_textual_header(header_lines)
+
+
+class TestWriteTextualReelHeader:
+
+    @given(encoding=st.text(alphabet=PRINTABLE_ASCII_ALPHABET))
+    def test_unsupported_encoding_raises_unsupported_encoding_error(self, encoding):
+        assume(not is_supported_encoding(encoding))
+        with raises(UnsupportedEncodingError):
+            toolkit.write_textual_reel_header(None, [], encoding)
+
+
+class TestFormatExtendedTextualHeader:
+
+    @given(encoding=st.text(alphabet=PRINTABLE_ASCII_ALPHABET))
+    def test_unsupported_encoding_raises_unsupported_encoding_error(self, encoding):
+        assume(not is_supported_encoding(encoding))
+        with raises(UnsupportedEncodingError):
+            toolkit.format_extended_textual_header('', encoding)
+
+
+class TestWriteExtendedTextualHeaders:
+
+    @given(encoding=st.text(alphabet=PRINTABLE_ASCII_ALPHABET))
+    def test_unsupported_encoding_raises_unsupported_encoding_error(self, encoding):
+        assume(not is_supported_encoding(encoding))
+        with raises(UnsupportedEncodingError):
+            toolkit.write_extended_textual_headers(None, [], encoding)
+
+    @given(pages=st.lists(st.lists(st.text(alphabet=PRINTABLE_ASCII_ALPHABET))),
+           encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    def test_incorrect_line_length_raises_value_error(self, pages, encoding):
+        assume(any(len(line) != 80 for page in pages for line in page))
+        with BytesIO() as fh:
+            with raises(ValueError):
+                toolkit.write_extended_textual_headers(fh, pages, encoding)
+
+    @given(pages=st.lists(st.lists(st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80))),
+           encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    def test_incorrect_page_length_raises_value_error(self, pages, encoding):
+        assume(any(len(page) != 40 for page in pages))
+        with BytesIO() as fh:
+            with raises(ValueError):
+                toolkit.write_extended_textual_headers(fh, pages, encoding)
+
+
+class TestPackValues:
+
+    @given(seg_y_type=st.sampled_from(SegYType),
+           num_items=st.integers(min_value=1, max_value=100),
+           endian=st.sampled_from(('<', '>')),
+           data=st.data())
+    def test_pack_values(self, seg_y_type, num_items, endian, data):
+        assume(seg_y_type not in {SegYType.FLOAT32, SegYType.IBM})
+        c_type = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
+        c_format = ''.join(map(str, (endian, num_items, c_type)))
+        py_type = PY_TYPES[seg_y_type]
+        min_value, max_value = LIMITS[seg_y_type]
+        items_written = tuple(data.draw(st.lists(
+            elements=NUMBER_STRATEGY[py_type](min_value=min_value, max_value=max_value),
+            min_size=num_items, max_size=num_items)))
+        buffer = toolkit.pack_values(items_written, c_type, endian)
+        items_read = struct.unpack(c_format, buffer)
+        assert items_written == items_read

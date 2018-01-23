@@ -3,10 +3,10 @@ from hypothesis import given, assume, example
 from hypothesis.strategies import integers, lists, booleans, tuples, dictionaries, text, sets
 from pytest import raises
 
-from segpy.util import batched, complementary_intervals, flatten, intervals_are_contiguous, roundrobin, reversed_range, \
-    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride, true, last, first, minmax, \
+from segpy.util import batched, complementary_intervals, intervals_are_contiguous, roundrobin, reversed_range, \
+    make_sorted_distinct_sequence, SortSense, sgn, is_sorted, measure_stride, last, first, minmax, \
     intervals_partially_overlap, now_millis, round_up, underscores_to_camelcase, first_sentence, lower_first, \
-    is_magic_name
+    is_magic_name, super_class, collect_attributes
 from test.strategies import spaced_ranges, ranges, sequences, PRINTABLE_ASCII_ALPHABET
 
 
@@ -292,6 +292,27 @@ class TestMakeSortedDistinctSequence:
         assert b == descending != ascending
 
 
+class TestSuperClass:
+
+    def test_super_class_multiple(self):
+
+        class A:
+            pass
+
+        class B:
+            pass
+
+        class C(A, B):
+            pass
+
+        assert super_class(C) == A
+        assert super_class(A) == object
+        assert super_class(B) == object
+
+    def test_super_class_single(self):
+        assert super_class(object) == object
+
+
 class TestIsSorted:
 
     @given(r=sequences(min_size=2, unique=True))
@@ -409,14 +430,6 @@ class TestMeasureStride:
         assert measure_stride(s) is None
 
 
-class TestTrue:
-
-    @given(args=lists(integers()),
-           kwargs=dictionaries(keys=text(), values=integers()))
-    def test_true(self, args, kwargs):
-        assert true(*args, **kwargs)
-
-
 class TestFirst:
 
     @given(s=sequences(min_size=1, max_size=100))
@@ -457,3 +470,4 @@ class TestMinMax:
         a, b = minmax(s)
         assert a == min(s)
         assert b == max(s)
+

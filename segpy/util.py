@@ -304,30 +304,18 @@ def almost_equal(x, y, epsilon=sys.float_info.epsilon):
     return delta <= e
 
 
-def ensure_contains(collection, item):
-    return collection if item in collection else conjoin(collection, item)
-
-
-def conjoin(collection, item):
-    return collection + type(collection)((item,))
-
-
 def is_magic_name(name):
     return len(name) > 4 and name.startswith('__') and name.endswith('__')
 
 
 def super_class(cls):
-    """Return the next class in the MRO of cls."""
-    mro = cls.mro()
+    """Return the next class in the MRO of cls, or object."""
+    mro = cls.__mro__
     assert len(mro) > 0
     if len(mro) == 1:
         assert mro[0] is object
         return object
     return mro[1]
-
-
-def flatten(sequence_of_sequences):
-    return chain.from_iterable(sequence_of_sequences)
 
 
 def four_bytes(byte_str):
@@ -490,60 +478,6 @@ def hash_for_file(fh, *args):
     return digest
 
 
-def is_range_superset_of_range(superset_range, subset_range):
-    """Are all the elements of
-
-    """
-    if subset_range.start not in superset_range:
-        return False
-    if subset_range.step % superset_range.step != 0:
-        return False
-    if subset_range[-1] > superset_range[-1]:
-        return False
-    assert set(subset_range).issubset(set(superset_range))
-    return True
-
-
-def is_superset(superset, subset):
-    """A more general version of set.issuperset that is smart enough to work with ranges."""
-    if isinstance(subset, range) and isinstance(superset, range):
-        return is_range_superset_of_range(superset, subset)
-    if isinstance(superset, range):
-        return all(item in superset for item in subset)
-    if isinstance(superset, set):
-        return superset.issuperset(subset)
-    if isinstance(subset, set):
-        return subset.issubset(superset)
-    return set(superset).issuperset(subset)
-
-
-def ensure_superset(superset, subset):
-    """Ensure that one collection is a subset of another.
-
-    Args:
-        superset: A sequence containing all items.
-
-        subset: Subset must either be a collection the elements of which are a subset of
-            superset, or a slice object, in which case the subset items will be sliced
-            from superset.
-    Returns:
-        A sorted, distinct collection which is a subset of superset.
-
-    Raises:
-        ValueError: If the items in subset are not a subset of the items in all_items.
-    """
-    if subset is None:
-        return superset
-    elif isinstance(subset, slice):
-        return superset[subset]
-    else:
-        subset = make_sorted_distinct_sequence(subset)
-        if not is_superset(superset, subset):
-            raise ValueError("subset_or_slice {!r} is not a subset of all_items {!r}"
-                             .format(subset, superset))
-        return subset
-
-
 def first(iterable):
     i = iter(iterable)
     try:
@@ -571,25 +505,17 @@ def identity(x):
     return x
 
 
-def true(*args, **kwargs):
-    return True
-
-
-def collect_attributes(derived_class, base_class=object, predicate=None):
+def collect_attributes(derived_class, base_class, predicate):
     """
 
     Args:
         derived_class: The class at which to start searching.
         base_class: The class at which to stop searching
-        predicate: A predicate which accepts
+        predicate: A predicate which accepts a name and value for each attribute.
 
     Returns:
         A generator of items containing the (class, attribute_name)
     """
-    # TODO: Consider using the inspect module to do this
-    if predicate is None:
-        predicate = true
-
     for cls in derived_class.__mro__:
         for key, value in vars(cls).items():
             if predicate(key, value):

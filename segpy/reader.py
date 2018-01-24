@@ -277,8 +277,6 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress, dimensiona
     elif dimensionality == 3:
         return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
-    else:
-        assert False, "dimensionality out of range 1-3 inclusive."
 
 
 class SegYReader(Dataset):

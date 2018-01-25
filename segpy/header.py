@@ -3,8 +3,7 @@ from weakref import WeakKeyDictionary
 from itertools import chain
 
 from segpy import __version__
-from segpy.docstring import docstring_property
-from segpy.util import underscores_to_camelcase, first_sentence, super_class, collect_attributes
+from segpy.util import underscores_to_camelcase, super_class, collect_attributes
 
 
 class Header:
@@ -90,15 +89,15 @@ class Header:
         self.__dict__.update(state)
 
 
-def are_equal(self, other):
+def are_equal(header_a, header_b):
     """Compare two headers for equality.
 
     Note:
         This is not implemented as __eq__() to prevent recursive behaviour in the header descriptor.
     """
-    if type(self) != type(other):
+    if type(header_a) != type(header_b):
         return False
-    return all(getattr(self, field_name) == getattr(other, field_name) for field_name in self.ordered_field_names())
+    return all(getattr(header_a, field_name) == getattr(header_b, field_name) for field_name in header_a.ordered_field_names())
 
 
 class FormatMeta(type):
@@ -134,18 +133,13 @@ class FormatMeta(type):
                 if attr._name is None:
                     attr._name = attr_name
 
-            # We rename the *class* and set its docstring so help() works usefully
-            # when called with a class containing such fields.
-            attr_class = attr.__class__
-            if issubclass(attr_class, NamedField) and attr_class is not NamedField:
-                attr_class.__name__ = underscores_to_camelcase(attr_name)
-                attr_class.__doc__ = attr.documentation
-
         return super().__new__(mcs, name, bases, namespace)
 
 
 def is_public_non_field_attr(name, attr):
-    return (not name.startswith('_')) and (not isinstance(attr, HeaderFieldDescriptor) and (not isinstance(attr, classmethod)))
+    return ((not name.startswith('_'))
+            and (not isinstance(attr, HeaderFieldDescriptor)
+                 and (not isinstance(attr, classmethod))))
 
 
 class SubFormatMeta(FormatMeta):
@@ -235,10 +229,6 @@ class NamedField:
         "A descriptive text string."
         return self._documentation
 
-    @docstring_property(__doc__)
-    def __doc__(self):
-        return first_sentence(self._documentation)
-
     def __repr__(self):
         return "{}(name={!r}, value_type={!r}, offset={!r}, default={!r})".format(
             self.__class__.__name__,
@@ -261,23 +251,16 @@ def field(value_type, offset, default, documentation):
             as a brief description.
 
     Returns:
-        An instance of a subclass of NamedField class.
+        An instance of a subclass of HeaderFieldDescriptor class.
     """
-
-    # Create a class specifically for this field. This class will later get
-    # renamed when the NamedDescriptorMangler metaclass does its job, to
-    # a class name based on the field name.
-
-    class SpecificField(HeaderFieldDescriptor):
-        pass
-
-    return SpecificField(value_type, offset, default, documentation)
+    return HeaderFieldDescriptor(value_type, offset, default, documentation)
 
 
 class HeaderFieldDescriptor:
 
     def __init__(self, value_type, offset, default, documentation):
-        self._named_field = NamedField(value_type, offset, default, documentation)
+        SpecificNamedField = type('SpecificNamedField', (NamedField,), {'__doc__': documentation})
+        self._named_field = SpecificNamedField(value_type, offset, default, documentation)
         self._instance_data = WeakKeyDictionary()
 
     @property
@@ -286,7 +269,9 @@ class HeaderFieldDescriptor:
 
     @_name.setter
     def _name(self, value):
+        self._named_field.__class__.__name__ = underscores_to_camelcase(value + '_field')
         self._named_field._name = value
+
 
     def __get__(self, instance, owner):
         """Retrieve the format or instance data.
@@ -316,9 +301,3 @@ class HeaderFieldDescriptor:
 
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))
-
-    @docstring_property(__doc__)
-    def __doc__(self):
-        return self._named_field._documentation
-
-    # TODO: Get documentation of these descriptors working correctly

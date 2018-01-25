@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from segpy.header import FormatMeta, field
+from segpy.header import FormatMeta, field, Header
 from segpy.field_types import IntEnumFieldMeta, IntFieldMeta, Int32, Int16, NNInt16, NNInt32
 
 
@@ -254,7 +254,7 @@ class SourceMeasurementUnitField(metaclass=IntEnumFieldMeta,
     pass
 
 
-class TraceHeaderRev0(metaclass=FormatMeta):
+class TraceHeaderRev0(Header, metaclass=FormatMeta):
 
     START_OFFSET_IN_BYTES = 1
     LENGTH_IN_BYTES = 240

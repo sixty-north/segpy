@@ -2,7 +2,7 @@ from enum import IntEnum
 
 from segpy.datatypes import DataSampleFormat
 from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, NNInt32, NNInt16
-from segpy.header import FormatMeta, field
+from segpy.header import FormatMeta, field, Header
 import segpy.trace_header
 from segpy import revisions
 
@@ -182,7 +182,7 @@ class FormatRevisionNumField(metaclass=IntEnumFieldMeta,
     pass
 
 
-class BinaryReelHeader(metaclass=FormatMeta):
+class BinaryReelHeader(Header, metaclass=FormatMeta):
 
     START_OFFSET_IN_BYTES = 3201
     LENGTH_IN_BYTES = 400

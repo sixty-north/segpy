@@ -1,6 +1,5 @@
 import inspect
 import pickle
-import contextlib
 
 from copy import copy
 
@@ -8,7 +7,6 @@ from pytest import raises
 from hypothesis import given, assume
 from hypothesis.strategies import integers
 
-import segpy
 from segpy.header import FormatMeta, field, Header, are_equal
 from segpy.field_types import Int32, NNInt32
 from segpy.datatypes import LIMITS, SegYType

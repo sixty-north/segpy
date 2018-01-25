@@ -78,7 +78,4 @@ def guess_encoding(bs, threshold=0.5):
     if ebcdic_freq >= threshold > ascii_freq:
         return EBCDIC
 
-    if ebcdic_freq < threshold and ascii_freq < threshold:
-        return None
-
     return None

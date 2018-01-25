@@ -1,6 +1,7 @@
 from segpy.encoding import (UnsupportedEncodingError, guess_encoding,
                             COMMON_ASCII_CHARS, COMMON_EBCDIC_CHARS,
                             ASCII, EBCDIC)
+from test.predicates import check_balanced
 
 
 class TestUnsupportedEncodingError:
@@ -20,6 +21,7 @@ class TestUnsupportedEncodingError:
         r = repr(e)
         assert 'abcdef' in r
         assert 'latin5' in r
+        assert check_balanced(r)
 
 
 class TestGuessEncoding:

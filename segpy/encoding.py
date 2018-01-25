@@ -25,7 +25,7 @@ class UnsupportedEncodingError(Exception):
         return "{} not supported for encoding {!r}".format(self.args[0], self._encoding)
 
     def __repr__(self):
-        return "{}({!r}, {!r}".format(self.__class__.__name__, self.args[0], self._encoding)
+        return "{}({!r}, {!r})".format(self.__class__.__name__, self.args[0], self._encoding)
 
 
 def is_supported_encoding(encoding):

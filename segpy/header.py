@@ -6,8 +6,11 @@ from segpy import __version__
 from segpy.util import underscores_to_camelcase, super_class, collect_attributes
 
 
-class Header:
-    """An abstract base class for header format definitions."""
+class BaseHeader:
+    """An abstract base class for header format definitions.
+
+    Prefer to inherit from Header rather than BaseHeader.
+    """
 
     def __init__(self, *args, **kwargs):
         """Initialise a header instance.
@@ -48,7 +51,7 @@ class Header:
             An tuple containing the field names in order.
         """
 
-        if cls is Header:
+        if cls is BaseHeader:
             return cls._ordered_field_names
         return super_class(cls).ordered_field_names() + cls._ordered_field_names
 
@@ -120,8 +123,8 @@ class FormatMeta(type):
 
         transitive_bases = set(chain.from_iterable(type(base).mro(base) for base in bases))
 
-        if Header not in transitive_bases:
-            bases = (Header,) + bases
+        if BaseHeader not in transitive_bases:
+            bases = (BaseHeader,) + bases
 
         for attr_name, attr in namespace.items():
 
@@ -181,7 +184,7 @@ class SubFormatMeta(FormatMeta):
             namespace[field_name] = field_copy
 
         # Copy other non-field class attributes
-        non_field_attributes = list(collect_attributes(parent_format, Header, is_public_non_field_attr))
+        non_field_attributes = list(collect_attributes(parent_format, BaseHeader, is_public_non_field_attr))
         namespace.update((name, value) for _, name, value in non_field_attributes)
 
         # Add a reference back to the original format
@@ -272,7 +275,6 @@ class HeaderFieldDescriptor:
         self._named_field.__class__.__name__ = underscores_to_camelcase(value + '_field')
         self._named_field._name = value
 
-
     def __get__(self, instance, owner):
         """Retrieve the format or instance data.
 
@@ -302,3 +304,7 @@ class HeaderFieldDescriptor:
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))
 
+
+class Header(BaseHeader, metaclass=FormatMeta):
+    """A base class for header definition classes."""
+    pass

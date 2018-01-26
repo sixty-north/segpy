@@ -7,14 +7,14 @@ from pytest import raises
 from hypothesis import given, assume
 from hypothesis.strategies import integers
 
-from segpy.header import FormatMeta, field, Header, are_equal
+from segpy.header import field, Header, are_equal
 from segpy.field_types import Int32, NNInt32
 from segpy.datatypes import LIMITS, SegYType
 
 from test.predicates import check_balanced
 
 
-class ExampleHeader(Header, metaclass=FormatMeta):
+class ExampleHeader(Header):
 
     field_a = field(
         Int32, offset=1, default=0, documentation=

@@ -4,12 +4,12 @@ from hypothesis.strategies import sampled_from
 from pytest import raises
 
 from segpy.field_types import Int32, NNInt32
-from segpy.header import Header, FormatMeta, field, are_equal
+from segpy.header import Header, field, are_equal
 from segpy.packer import compile_struct, make_header_packer, BijectiveHeaderPacker, SurjectiveHeaderPacker
 from test.predicates import check_balanced
 
 
-class PickleableHeader(Header, metaclass=FormatMeta):
+class PickleableHeader(Header):
     START_OFFSET_IN_BYTES = 1
 
     field_a = field(Int32, 1, 0, "Field A.")
@@ -29,7 +29,7 @@ class TestCompileStruct:
 
     def test_compile_empty_header_raises_type_error(self):
 
-        class EmptyHeader(Header, metaclass=FormatMeta):
+        class EmptyHeader(Header):
             pass
 
         with raises(TypeError):
@@ -37,7 +37,7 @@ class TestCompileStruct:
 
     def test_compile_header_with_too_short_length_raises_value_error(self):
 
-        class ShortHeader(Header, metaclass=FormatMeta):
+        class ShortHeader(Header):
 
             START_OFFSET_IN_BYTES = 1
             LENGTH_IN_BYTES = 3
@@ -49,7 +49,7 @@ class TestCompileStruct:
 
     def test_compile_header_with_partially_overlapping_fields_raises_value_error(self):
 
-        class OverlappingFieldsHeader(Header, metaclass=FormatMeta):
+        class OverlappingFieldsHeader(Header):
 
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(Int32, 3, 0, "Field B.")
@@ -59,7 +59,7 @@ class TestCompileStruct:
 
     def test_compile_header_coincident_fields_with_different_types_raises_type_error(self):
 
-        class CoincidentFieldsWithDifferentTypesHeader(Header, metaclass=FormatMeta):
+        class CoincidentFieldsWithDifferentTypesHeader(Header):
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(NNInt32, 1, 0, "Field B.")
 
@@ -69,7 +69,7 @@ class TestCompileStruct:
     @given(endian=sampled_from(('<', '>')))
     def test_compile_bijective_header_packer_successfully(self, endian):
 
-        class BijectiveHeader(Header, metaclass=FormatMeta):
+        class BijectiveHeader(Header):
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(NNInt32, 5, 0, "Field B.")
 
@@ -82,7 +82,7 @@ class TestCompileStruct:
     @given(endian=sampled_from(('<', '>')))
     def test_compile_surjective_header_packer_successfully(self, endian):
 
-        class SurjectiveHeader(Header, metaclass=FormatMeta):
+        class SurjectiveHeader(Header):
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(NNInt32, 5, 0, "Field B.")
             field_c = field(Int32, 1, 0, "Field C.")
@@ -97,7 +97,7 @@ class TestMakeHeaderPacker:
 
     def test_make_bijective_header_packer_successfully(self):
 
-        class BijectiveHeader(Header, metaclass=FormatMeta):
+        class BijectiveHeader(Header):
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(NNInt32, 5, 0, "Field B.")
 
@@ -107,7 +107,7 @@ class TestMakeHeaderPacker:
 
     def test_make_surjective_header_packer_successfully(self):
 
-        class SurjectiveHeader(Header, metaclass=FormatMeta):
+        class SurjectiveHeader(Header):
             field_a = field(Int32, 1, 0, "Field A.")
             field_b = field(NNInt32, 5, 0, "Field B.")
             field_c = field(Int32, 1, 0, "Field C.")
@@ -120,7 +120,7 @@ class TestMakeHeaderPacker:
 class TestHeaderPacker:
 
     def test_pack_incorrect_type(self):
-        class BijectiveHeader(Header, metaclass=FormatMeta):
+        class BijectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -132,7 +132,7 @@ class TestHeaderPacker:
 
     def test_pack_bijective(self):
 
-        class BijectiveHeader(Header, metaclass=FormatMeta):
+        class BijectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -145,7 +145,7 @@ class TestHeaderPacker:
 
     def test_pack_surjective(self):
 
-        class SurjectiveHeader(Header, metaclass=FormatMeta):
+        class SurjectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -159,7 +159,7 @@ class TestHeaderPacker:
 
     def test_pack_inconsistent_surjective_raises_value_error(self):
 
-        class SurjectiveHeader(Header, metaclass=FormatMeta):
+        class SurjectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -173,7 +173,7 @@ class TestHeaderPacker:
 
     def test_unpack_bijective_header(self):
 
-        class BijectiveHeader(Header, metaclass=FormatMeta):
+        class BijectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -186,7 +186,7 @@ class TestHeaderPacker:
 
     def test_unpack_surjective_header(self):
 
-        class SurjectiveHeader(Header, metaclass=FormatMeta):
+        class SurjectiveHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")
@@ -200,7 +200,7 @@ class TestHeaderPacker:
 
     def test_repr(self):
 
-        class MyHeader(Header, metaclass=FormatMeta):
+        class MyHeader(Header):
             START_OFFSET_IN_BYTES = 1
 
             field_a = field(Int32, 1, 0, "Field A.")

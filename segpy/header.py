@@ -301,3 +301,4 @@ class HeaderFieldDescriptor:
 
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))
+

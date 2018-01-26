@@ -3,12 +3,10 @@ import operator
 import time
 import os
 import sys
-from bisect import bisect_left, bisect_right
 
 from contextlib import contextmanager
-from collections.abc import Set
 from enum import Enum
-from itertools import (islice, cycle, tee, chain, repeat)
+from itertools import (islice, cycle, tee, chain, repeat, groupby)
 
 from segpy.reversed_sequence_view import ReversedSequenceView
 from segpy.sorted_frozen_set import SortedFrozenSet
@@ -555,3 +553,9 @@ def sgn(x):
         +1 is x is positive, -1 if x is negative, 0 if x is zero.
     """
     return cmp(x, 0)
+
+
+def all_equal(iterable):
+    "Returns True if all the elements are equal to each other"
+    g = groupby(iterable)
+    return next(g, True) and not next(g, False)

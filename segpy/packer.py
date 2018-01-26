@@ -1,3 +1,4 @@
+from abc import abstractmethod, ABC
 from collections import OrderedDict
 from struct import Struct
 from itertools import zip_longest
@@ -6,7 +7,7 @@ import struct
 
 from segpy import __version__
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE
-from segpy.util import pairwise, intervals_partially_overlap, complementary_intervals
+from segpy.util import pairwise, intervals_partially_overlap, complementary_intervals, all_equal
 
 
 def size_of(t):
@@ -53,19 +54,25 @@ def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, en
         ValueError: If header_format_class described a format longer than length_in_bytes.
 
     """
+    if start_offset < 0:
+        raise ValueError("start_offset {} is less than zero".format(start_offset))
+
+    if isinstance(length_in_bytes, int) and length_in_bytes < 1:
+        raise ValueError("length_in_bytes {} is less than one".format(length_in_bytes))
+
     fields = [getattr(header_format_class, name) for name in header_format_class.ordered_field_names()]
 
     sorted_fields = sorted(fields, key=lambda f: f.offset)
 
     if len(sorted_fields) < 1:
-        raise ValueError("Header format class {!r} defines no fields".format(header_format_class.__name__))
+        raise TypeError("Header format class {!r} defines no fields".format(header_format_class.__name__))
 
     if len(sorted_fields) > 1:
         for a, b in pairwise(sorted_fields):
             if intervals_partially_overlap(range(a.offset, a.offset + size_of(a.value_type)),
                                            range(b.offset, b.offset + size_of(b.value_type))):
-                raise ValueError("Record fields {!r} at offset {} and {!r} at offset {} are distinct but overlap."
-                                  .format(a.name, a.offset, b.name, b.offset))
+                raise ValueError("Fields {!r} at offset {} and {!r} at offset {} of {} are distinct but overlap."
+                                  .format(a.name, a.offset, b.name, b.offset, header_format_class.__name__))
 
     last_field = sorted_fields[-1]
     defined_length = (last_field.offset - start_offset) + size_of(last_field.value_type)
@@ -82,13 +89,12 @@ def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, en
             offset_to_fields[relative_offset] = []
         if len(offset_to_fields[relative_offset]) > 0:
             if offset_to_fields[relative_offset][0].value_type is not field.value_type:
-                # TODO: Test this error handling
-                raise ValueError("Coincident fields {!r} and {!r} at offset {} have different types {!r} and {!r}"
+                raise TypeError("Coincident fields {!r} and {!r} at offset {} have different types {} and {}"
                                   .format(offset_to_fields[relative_offset][0],
                                           field,
                                           offset_to_fields[relative_offset][0].offset,
-                                          offset_to_fields[relative_offset][0].value_type,
-                                          field.value_type))
+                                          offset_to_fields[relative_offset][0].value_type.__name__,
+                                          field.value_type.__name__))
         offset_to_fields[relative_offset].append(field)
 
     # Create a list of ranges where each range spans the byte indexes covered by each field
@@ -120,8 +126,8 @@ def compile_struct(header_format_class, start_offset=0, length_in_bytes=None, en
 def make_header_packer(header_format_class, endian='>'):
     cformat, field_name_allocations = compile_struct(
         header_format_class,
-        header_format_class.START_OFFSET_IN_BYTES,
-        header_format_class.LENGTH_IN_BYTES,
+        getattr(header_format_class, 'START_OFFSET_IN_BYTES', 0),
+        getattr(header_format_class, 'LENGTH_IN_BYTES', None),
         endian)
     structure = Struct(cformat)
 
@@ -132,7 +138,7 @@ def make_header_packer(header_format_class, endian='>'):
     return SurjectiveHeaderPacker(header_format_class, structure, field_name_allocations)
 
 
-class HeaderPacker:
+class HeaderPacker(ABC):
     """Packing and unpacking header instances."""
 
     def __init__(self, header_format_class, structure, field_name_allocations):
@@ -173,8 +179,33 @@ class HeaderPacker:
                 self._header_format_class.__name__,
                 header.__class__.__name__
             ))
-        values = [getattr(header, names[0]) for names in self._field_name_allocations]
-        return self._structure.pack(*values)
+        return self._pack(header)
+
+    def unpack(self, buffer):
+        """Unpack a header into a header object.
+
+        Overwrites any existing header field values with new values
+        obtained from the buffer.
+
+        Returns:
+            The header object.
+        """
+        try:
+            values = self._structure.unpack(buffer)
+        except struct.error as e:
+                raise ValueError("Buffer of length {} too short"
+                                 .format(len(buffer),
+                                         str(e).capitalize())) from e
+        else:
+            return self._unpack(values)
+
+    @abstractmethod
+    def _pack(self, header):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _unpack(self, values):
+        raise NotImplementedError
 
     def __repr__(self):
         return "{}({})".format(
@@ -185,57 +216,31 @@ class HeaderPacker:
 class BijectiveHeaderPacker(HeaderPacker):
     """One-to-one packing/unpacking of serialised values to header fields."""
 
-    def unpack(self, buffer):
-        """Unpack a header into a header object.
+    def _pack(self, header):
+        values = [getattr(header, names[0]) for names in self._field_name_allocations]
+        return self._structure.pack(*values)
 
-        Overwrites any existing header field values with new values
-        obtained from the buffer.
-
-        Returns:
-            The header object.
-        """
-        try:
-            values = self._structure.unpack(buffer)
-        except struct.error as e:
-            if 'requires a' in str(e):
-                raise ValueError("Buffer of length {} too short. {}."
-                                 .format(len(buffer), str(e).capitalize()))
-            raise
-        else:
-            return self._header_format_class(*values)
+    def _unpack(self, values):
+        return self._header_format_class(*values)
 
 
 class SurjectiveHeaderPacker(HeaderPacker):
     """One-to-many unpacking of serialised values to header fields."""
 
-    def unpack(self, buffer):
-        """Unpack a header into a header object.
+    def _pack(self, header):
+        for names in self._field_name_allocations:
+            field_values = [getattr(header, name) for name in names]
+            if not all_equal(field_values):
+                raise ValueError("fields {} have unequal values {}"
+                                 .format(', '.join(names),
+                                         ', '.join(map(str, field_values))))
 
-        Overwrites any existing header field values with new values
-        obtained from the buffer.
+        values = [getattr(header, names[0]) for names in self._field_name_allocations]
+        return self._structure.pack(*values)
 
-        Returns:
-            The header object.
-        """
-        try:
-            values = self._structure.unpack(buffer)
-        except struct.error as e:
-            if 'requires a bytes object of length' in str(e):
-                raise ValueError("Buffer of length {} too short. {}."
-                                 .format(len(buffer), str(e).capitalize()))
-            raise
-        else:
-            kwargs = {name: value
-                      for names, value in zip(self._field_name_allocations, values)
-                      for name in names}
+    def _unpack(self, values):
+        kwargs = {name: value
+                  for names, value in zip(self._field_name_allocations, values)
+                  for name in names}
 
-            return self._header_format_class(**kwargs)
-
-
-def main():
-    from segpy.trace_header import TraceHeaderRev0
-    compile_struct(TraceHeaderRev0, 1, 240)
-    pass
-
-if __name__ == '__main__':
-    main()
+        return self._header_format_class(**kwargs)

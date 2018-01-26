@@ -46,3 +46,4 @@ class TestGuessEncoding:
 
     def test_guess_encoding_inconclusive(self):
         assert guess_encoding(bytes(COMMON_ASCII_CHARS) + bytes(5) + bytes(COMMON_EBCDIC_CHARS)) == None
+

@@ -36,7 +36,7 @@ class TestDelegatingDataset:
         type(delegatee).textual_reel_header = p
         dd = DelegatingDataset(delegatee)
         trh = dd.textual_reel_header
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert trh == ['foo']
 
     def test_binary_reel_header_delegation(self, delegatee):
@@ -44,7 +44,7 @@ class TestDelegatingDataset:
         type(delegatee).binary_reel_header = p
         dd = DelegatingDataset(delegatee)
         brh = dd.binary_reel_header
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert are_equal(brh, BinaryReelHeader())
 
     def test_trace_header_delegation(self, delegatee):
@@ -59,14 +59,14 @@ class TestDelegatingDataset:
         delegatee.configure_mock(**{'trace_indexes.return_value': range(1, 900)})
         dd = DelegatingDataset(delegatee)
         ti = dd.trace_indexes()
-        delegatee.trace_indexes.assert_called_once()
+        delegatee.trace_indexes.assert_called_once_with()
         assert ti == range(1, 900)
 
     def test_num_traces_delegation(self, delegatee):
         delegatee.configure_mock(**{'num_traces.return_value': 543})
         dd = DelegatingDataset(delegatee)
         nt = dd.num_traces()
-        delegatee.num_traces.assert_called_once()
+        delegatee.num_traces.assert_called_once_with()
         assert nt == 543
 
     def test_dimensionality_header_delegation(self, delegatee):
@@ -74,7 +74,7 @@ class TestDelegatingDataset:
         type(delegatee).dimensionality = p
         dd = DelegatingDataset(delegatee)
         d = dd.dimensionality
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert d == 3
 
     def test_extended_textual_header_delegation(self, delegatee):
@@ -82,7 +82,7 @@ class TestDelegatingDataset:
         type(delegatee).extended_textual_header = p
         dd = DelegatingDataset(delegatee)
         eth = dd.extended_textual_header
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert eth == ['Hello', 'World!']
 
     def test_encoding_delegation(self, delegatee):
@@ -90,7 +90,7 @@ class TestDelegatingDataset:
         type(delegatee).encoding = p
         dd = DelegatingDataset(delegatee)
         e = dd.encoding
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert e == 'ascii'
 
     def test_endian_delegation(self, delegatee):
@@ -98,7 +98,7 @@ class TestDelegatingDataset:
         type(delegatee).endian = p
         dd = DelegatingDataset(delegatee)
         e = dd.endian
-        p.assert_called_once()
+        p.assert_called_once_with()
         assert e == '<'
 
     def test_data_sample_format_ibm(self, delegatee):

@@ -476,7 +476,7 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     try:
         trace_header = trace_header_packer.unpack(data)
     except ValueError as e:
-        raise EOFError("Trace header trunctated.") from e
+        raise EOFError("Trace header truncated.") from e
     return trace_header
 
 

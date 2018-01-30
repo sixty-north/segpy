@@ -470,13 +470,14 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     Raises:
         EOFError: If the file is too short to contain the full trace header.
     """
-    if pos is not None:
-        fh.seek(pos)
+    pos = fh.tell() if pos is None else pos
+    fh.seek(pos)
     data = fh.read(TRACE_HEADER_NUM_BYTES)
     try:
         trace_header = trace_header_packer.unpack(data)
     except ValueError as e:
-        raise EOFError("Trace header truncated.") from e
+        raise EOFError("Trace header truncated when reading from position "
+                       "{} with packer {!r}".format(pos, trace_header_packer)) from e
     return trace_header
 
 

@@ -1,8 +1,6 @@
 from unittest.mock import Mock, PropertyMock
 
 import pytest
-from hypothesis import given, assume, example
-from hypothesis.strategies import integers, sampled_from
 
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.dataset import DelegatingDataset

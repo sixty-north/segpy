@@ -7,12 +7,11 @@ from itertools import zip_longest, count
 import os
 import struct
 import re
-import logging
 
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.catalog import CatalogBuilder
-from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE, ENDIAN
+from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.header import SubFormatMeta
 from segpy.ibm_float import IBMFloat

@@ -1,10 +1,12 @@
 """Tools for interoperability between Segpy and Numpy arrays."""
 from collections import namedtuple
+
 import numpy as np
+
 from segpy.header import SubFormatMeta
 from segpy.packer import make_header_packer
 
-from segpy.util import ensure_superset
+from segpy_numpy.util import ensure_superset
 from segpy_numpy.dtypes import make_dtype
 
 

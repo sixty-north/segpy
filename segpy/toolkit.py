@@ -75,7 +75,6 @@ def num_extended_textual_headers(binary_reel_header):
     in the final record. A positive value indicates that there are exactly that many
     Extended Textual File Header records.
     """
-    # TODO: Is this method needed any more?
     num_ext_headers = binary_reel_header.num_extended_textual_headers
     return num_ext_headers
 

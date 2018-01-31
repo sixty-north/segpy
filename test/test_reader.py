@@ -13,7 +13,7 @@ from segpy.header import are_equal
 from segpy.reader import (create_reader, SegYReader, SegYReader2D,
                           SegYReader3D, _load_reader_from_cache,
                           _save_reader_to_cache)
-from segpy.toolkit import REEL_HEADER_NUM_BYTES
+from segpy.toolkit import bytes_per_sample, REEL_HEADER_NUM_BYTES
 from segpy.trace_header import TraceHeaderRev0, TraceHeaderRev1
 from segpy.writer import write_segy
 from .dataset_strategy import dataset, dataset_2d, dataset_3d
@@ -28,6 +28,17 @@ def min_reader_data():
 @pytest.fixture
 def tempdir(tmpdir):
     return pathlib.Path(str(tmpdir))
+
+
+@pytest.fixture(params=['<', '>'])
+def endian(request):
+    return request.param
+
+
+@pytest.fixture(params=[1, 2, 3])
+def dimensionality(request):
+    return request.param
+
 
 # To test:
 # - cache directory
@@ -669,3 +680,22 @@ def test_segy_revision_is_correct(dataset):
     fh.seek(0)
     reader = create_reader(fh)
     assert reader.revision == dataset.binary_reel_header.format_revision_num
+
+
+def test_SegYReader_bytes_per_sample_is_correct():
+    dset = dataset(num_dims=2).example()
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.bytes_per_sample == bytes_per_sample(dset.binary_reel_header)
+
+
+def test_SegYReader_endianness_is_correct(dimensionality, endian):
+    dset = dataset(num_dims=dimensionality).example()
+    fh = io.BytesIO()
+    write_segy(fh, dset, endian=endian)
+    fh.seek(0)
+    reader = create_reader(fh, endian=endian)
+    assert reader.endian == endian

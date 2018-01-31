@@ -399,7 +399,6 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     trace_offset_catalog_builder = CatalogBuilder()
     trace_length_catalog_builder = CatalogBuilder()
     line_catalog_builder = CatalogBuilder()
-    alt_line_catalog_builder = CatalogBuilder()
     cdp_catalog_builder = CatalogBuilder()
 
     for trace_number in count():
@@ -418,9 +417,6 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
         line_catalog_builder.add((trace_header.inline_number,
                                   trace_header.crossline_number),
                                  trace_number)
-        alt_line_catalog_builder.add((trace_header.file_sequence_num,
-                                     trace_header.ensemble_num),
-                                     trace_number)
         cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
@@ -437,10 +433,6 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     progress_callback(_READ_PROPORTION + (_READ_PROPORTION * 3 / 4))
 
     line_catalog = line_catalog_builder.create()
-
-    if line_catalog is None:
-        # Some 3D files put Inline and Crossline numbers in (TraceSequenceFile, cdp) pair
-        line_catalog = alt_line_catalog_builder.create()
 
     progress_callback(1)
 

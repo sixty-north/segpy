@@ -267,3 +267,18 @@ def dataset_2d(draw, valid_cdp_catalog=True):
             hdr.ensemble_num = idx
 
     return draw(dataset(num_dims=2, trace_headers=trace_headers))
+
+
+@composite
+def dataset_3d(draw, valid_line_catalog=True):
+    "Create a 3D dataset."
+    trace_headers = draw(lists(header(TraceHeaderRev1),
+                               min_size=2,
+                               max_size=100))
+    if valid_line_catalog:
+        for idx, hdr in enumerate(trace_headers):
+            hdr.ensemble_num = idx
+            hdr.inline_number = idx
+            hdr.crossline_number = idx
+
+    return draw(dataset(num_dims=3, trace_headers=trace_headers))

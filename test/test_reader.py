@@ -10,7 +10,7 @@ from hypothesis import assume, given, HealthCheck, Phase, settings, unlimited
 import hypothesis.strategies as ST
 import pytest
 from segpy.header import are_equal
-from segpy.reader import create_reader, SegYReader, _load_reader_from_cache, _save_reader_to_cache
+from segpy.reader import create_reader, SegYReader, SegYReader2D, _load_reader_from_cache, _save_reader_to_cache
 from segpy.toolkit import REEL_HEADER_NUM_BYTES
 from segpy.trace_header import TraceHeaderRev0, TraceHeaderRev1
 from segpy.writer import write_segy
@@ -435,6 +435,26 @@ def test_all_cdps_map_to_a_trace_index():
     for cdp_number in reader.cdp_numbers():
         reader.trace_index(cdp_number)
 
+
+def test_SegYReader2D_raises_TypeError_on_null_cdp_catalog():
+    dataset = dataset_2d().example()
+    fh = io.BytesIO()
+    write_segy(fh, dataset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=2)
+
+    fh.seek(0)
+    with pytest.raises(TypeError):
+        SegYReader2D(
+            fh=fh,
+            textual_reel_header=reader.textual_reel_header,
+            binary_reel_header=reader.binary_reel_header,
+            extended_textual_headers=reader._extended_textual_headers,
+            trace_offset_catalog=reader._trace_offset_catalog,
+            trace_length_catalog=reader._trace_length_catalog,
+            cdp_catalog=None,
+            trace_header_format=reader.trace_header_format_class,
+            encoding=reader.encoding)
 
 # TODO: These tests are trying to get at the dimensionality heuristics, but they feel
 # wrong. I need to figure out how to trigger those heuristics "naturally".

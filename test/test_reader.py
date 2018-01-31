@@ -640,3 +640,12 @@ def test_SegYReader_endianness_is_correct(dset, endian):
     fh.seek(0)
     reader = create_reader(fh, endian=endian)
     assert reader.endian == endian
+
+
+@patch('segpy.reader.guess_textual_header_encoding',
+       MagicMock(return_value=None))
+def test_create_reader_will_default_to_ascii_encoding(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    reader = create_reader(fh, encoding=None)
+    assert reader.encoding == 'ascii'

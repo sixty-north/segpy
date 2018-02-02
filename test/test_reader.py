@@ -16,7 +16,7 @@ from segpy.reader import (create_reader, SegYReader, SegYReader2D,
 from segpy.toolkit import bytes_per_sample, REEL_HEADER_NUM_BYTES
 from segpy.trace_header import TraceHeaderRev0, TraceHeaderRev1
 from segpy.writer import write_segy
-from .dataset_strategy import dataset, dataset_2d, dataset_3d
+from .dataset_strategy import dataset, dataset_2d, diagonal_dataset_3d
 
 
 @pytest.fixture
@@ -462,7 +462,7 @@ def test_SegYReader2D_raises_TypeError_on_null_cdp_catalog():
 
 
 def test_SegYReader3D_raises_TypeError_on_null_line_catalog():
-    dataset = dataset_3d().example()
+    dataset = diagonal_dataset_3d().example()
     fh = io.BytesIO()
     write_segy(fh, dataset)
     fh.seek(0)
@@ -627,7 +627,7 @@ def test_heuristic_for_2D_works_as_expected(dset):
     assert reader.dimensionality == 2
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
@@ -642,7 +642,7 @@ def test_heuristic_for_3D_works_as_expected(dset):
     assert reader.dimensionality == 3
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
@@ -657,7 +657,7 @@ def test_num_inlines_is_correct(dset):
     assert reader.num_inlines() == dset.num_traces()
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
@@ -672,7 +672,7 @@ def test_num_xlines_is_correct(dset):
     assert reader.num_xlines() == dset.num_traces()
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
@@ -687,7 +687,7 @@ def test_inline_xline_numbers_is_correct(dset):
     assert sorted(reader.inline_xline_numbers()) == sorted((idx, idx) for idx in range(dset.num_traces()))
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
@@ -703,7 +703,7 @@ def test_all_inline_xlines_have_a_trace_index(dset):
         assert reader.has_trace_index(num)
 
 
-@given(dataset_3d(valid_line_catalog=True))
+@given(diagonal_dataset_3d(valid_line_catalog=True))
 @settings(
     max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),

@@ -272,7 +272,7 @@ def dataset_2d(draw, valid_cdp_catalog=True):
 
 
 @composite
-def dataset_3d(draw, valid_line_catalog=True):
+def diagonal_dataset_3d(draw, valid_line_catalog=True):
     "Create a 3D dataset."
     trace_headers = draw(lists(header(TraceHeaderRev1),
                                min_size=2,

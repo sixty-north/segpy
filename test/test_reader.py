@@ -13,10 +13,10 @@ from segpy.header import are_equal
 from segpy.reader import (create_reader, SegYReader, SegYReader2D,
                           SegYReader3D, _load_reader_from_cache,
                           _save_reader_to_cache)
-from segpy.toolkit import REEL_HEADER_NUM_BYTES
+from segpy.toolkit import bytes_per_sample, REEL_HEADER_NUM_BYTES
 from segpy.trace_header import TraceHeaderRev0, TraceHeaderRev1
 from segpy.writer import write_segy
-from .dataset_strategy import dataset, dataset_2d, dataset_3d
+from .dataset_strategy import dataset, dataset_2d, diagonal_dataset_3d
 
 
 @pytest.fixture
@@ -28,6 +28,17 @@ def min_reader_data():
 @pytest.fixture
 def tempdir(tmpdir):
     return pathlib.Path(str(tmpdir))
+
+
+@pytest.fixture(params=['<', '>'])
+def endian(request):
+    return request.param
+
+
+@pytest.fixture(params=[1, 2, 3])
+def dset(request):
+    return dataset(num_dims=request.param).example()
+
 
 # To test:
 # - cache directory
@@ -82,8 +93,7 @@ class Test_create_reader_Exceptions:
 
 
 class TestReaderCache:
-    def test_cache_is_created_when_requested(self, tempdir):
-        dset = dataset(num_dims=1).example()
+    def test_cache_is_created_when_requested(self, dset, tempdir):
         segy_file = str(tempdir / 'test.segy')
         cache_dir = '.segy_cache'
         cache_path = tempdir / cache_dir
@@ -153,8 +163,7 @@ class TestReaderCache:
             _compare_datasets(dset1, reader,
                               compare_dimensionality=False)
 
-    def test_type_error_on_non_reader_cache_file(self, tempdir):
-        dset = dataset(num_dims=2).example()
+    def test_type_error_on_non_reader_cache_file(self, dset, tempdir):
         segy_file = str(tempdir / 'test.segy')
         cache_dir = '.segy_cache'
         with open(segy_file, mode='wb') as fh:
@@ -172,8 +181,7 @@ class TestReaderCache:
             with open(segy_file, mode='rb') as fh:
                 create_reader(fh, cache_directory=cache_dir)
 
-    def test_reading_when_cache_dir_is_empty(self, tempdir):
-        dset = dataset(num_dims=2).example()
+    def test_reading_when_cache_dir_is_empty(self, dset, tempdir):
         segy_file = str(tempdir / 'test.segy')
         cache_dir = '.segy_cache'
         with open(segy_file, mode='wb') as fh:
@@ -239,8 +247,7 @@ class TestReaderCache:
         assert filename.exists()
 
 
-def test_reading_from_non_file():
-    dset = dataset(num_dims=2).example()
+def test_reading_from_non_file(dset):
     handle = io.BytesIO()
     write_segy(handle, dset)
 
@@ -349,8 +356,7 @@ def test_SegYReader_throws_TypeError_when_trace_length_catalog_is_None():
             encoding=object())
 
 
-def test_SegYReader_throws_TypeError_when_pickling_from_closed_file_handle():
-    dset = dataset(num_dims=3).example()
+def test_SegYReader_throws_TypeError_when_pickling_from_closed_file_handle(dset):
     fh = io.BytesIO()
     write_segy(fh, dset)
     fh.seek(0)
@@ -361,8 +367,7 @@ def test_SegYReader_throws_TypeError_when_pickling_from_closed_file_handle():
         pickle.dumps(reader)
 
 
-def test_SegYReader_throws_TypeError_if_pickled_without_real_file_handle():
-    dset = dataset(num_dims=3).example()
+def test_SegYReader_throws_TypeError_if_pickled_without_real_file_handle(dset):
     fh = io.BytesIO()
     write_segy(fh, dset)
 
@@ -373,8 +378,7 @@ def test_SegYReader_throws_TypeError_if_pickled_without_real_file_handle():
         pickle.dumps(reader)
 
 
-def test_cache_version_mismatch_throws_TypeError(tempdir):
-    dset = dataset(num_dims=3).example()
+def test_cache_version_mismatch_throws_TypeError(dset, tempdir):
     segy_file = tempdir / 'segy'
     cache_dir = 'cache_dir'
     with open(str(segy_file), mode='wb') as fh:
@@ -389,8 +393,7 @@ def test_cache_version_mismatch_throws_TypeError(tempdir):
             reader.__setstate__(state_dict)
 
 
-def test_TypeError_unpickling_cache_with_missing_segy_file(tempdir):
-    dset = dataset(num_dims=3).example()
+def test_TypeError_unpickling_cache_with_missing_segy_file(dset, tempdir):
     segy_file = tempdir / 'segy'
     cache_dir = 'cache_dir'
 
@@ -413,26 +416,24 @@ def test_TypeError_unpickling_cache_with_missing_segy_file(tempdir):
 
 
 def test_num_cdps_is_correct():
-    dataset = dataset_2d().example()
+    dset = dataset_2d().example()
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
     reader = create_reader(fh, dimensionality=2)
     assert reader.num_traces() == reader.num_cdps()
 
 
-def test_all_cdps_have_a_trace_index():
-    dataset = dataset_2d().example()
+def test_all_cdps_have_a_trace_index(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
     reader = create_reader(fh, dimensionality=2)
     for cdp_number in reader.cdp_numbers():
         assert reader.has_trace_index(cdp_number)
 
 
-def test_all_cdps_map_to_a_trace_index():
-    dataset = dataset_2d().example()
+def test_all_cdps_map_to_a_trace_index(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
     fh.seek(0)
     reader = create_reader(fh, dimensionality=2)
     for cdp_number in reader.cdp_numbers():
@@ -461,7 +462,7 @@ def test_SegYReader2D_raises_TypeError_on_null_cdp_catalog():
 
 
 def test_SegYReader3D_raises_TypeError_on_null_line_catalog():
-    dataset = dataset_3d().example()
+    dataset = diagonal_dataset_3d().example()
     fh = io.BytesIO()
     write_segy(fh, dataset)
     fh.seek(0)
@@ -481,57 +482,13 @@ def test_SegYReader3D_raises_TypeError_on_null_line_catalog():
             encoding=reader.encoding)
 
 
-# TODO: These tests are trying to get at the dimensionality heuristics, but they feel
-# wrong. I need to figure out how to trigger those heuristics "naturally".
-#
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=1))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_1D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=2))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_2D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=3))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_3D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
 class Test_trace_samples_Exceptions:
     "Tests for various exceptions from trace_samples()."
-    @given(dataset(num_dims=3))
-    @settings(
-        suppress_health_check=(HealthCheck.too_slow,),
-        deadline=None,
-        phases=(Phase.explicit, Phase.reuse, Phase.generate),
-    )
-    def test_ValueError_on_out_of_range_trace_index(self, dataset):
+
+    def test_ValueError_on_out_of_range_trace_index(self, dset):
         fh = io.BytesIO()
 
-        write_segy(fh, dataset)
+        write_segy(fh, dset)
 
         fh.seek(0)
         reader = create_reader(fh)
@@ -542,17 +499,11 @@ class Test_trace_samples_Exceptions:
         with pytest.raises(ValueError):
             reader.trace_samples(reader.num_traces())
 
-    @given(dataset(num_dims=3))
-    @settings(
-        suppress_health_check=(HealthCheck.too_slow,),
-        deadline=None,
-        phases=(Phase.explicit, Phase.reuse, Phase.generate),
-    )
-    def test_ValueError_on_out_of_range_stop_sample(self, dataset):
-        assume(dataset.num_traces() > 0)
+    def test_ValueError_on_out_of_range_stop_sample(self, dset):
+        assume(dset.num_traces() > 0)
 
         fh = io.BytesIO()
-        write_segy(fh, dataset)
+        write_segy(fh, dset)
 
         fh.seek(0)
         reader = create_reader(fh)
@@ -563,18 +514,12 @@ class Test_trace_samples_Exceptions:
         with pytest.raises(ValueError):
             reader.trace_samples(0, stop=reader.num_trace_samples(0) + 1)
 
-    @given(dataset(num_dims=3))
-    @settings(
-        suppress_health_check=(HealthCheck.too_slow,),
-        deadline=None,
-        phases=(Phase.explicit, Phase.reuse, Phase.generate),
-    )
-    def test_ValueError_on_out_of_range_start_sample(self, dataset):
-        assume(dataset.num_traces() > 0)
+    def test_ValueError_on_out_of_range_start_sample(self, dset):
+        assume(dset.num_traces() > 0)
 
         fh = io.BytesIO()
 
-        write_segy(fh, dataset)
+        write_segy(fh, dset)
 
         fh.seek(0)
         reader = create_reader(fh)
@@ -585,15 +530,9 @@ class Test_trace_samples_Exceptions:
             reader.trace_samples(0, start=reader.num_trace_samples(0) + 1)
 
 
-@given(dataset(num_dims=3))
-@settings(
-    suppress_health_check=(HealthCheck.too_slow,),
-    deadline=None,
-    phases=(Phase.explicit, Phase.reuse, Phase.generate),
-)
-def test_trace_header_raises_ValueError_on_out_of_range(dataset):
+def test_trace_header_raises_ValueError_on_out_of_range(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
 
     fh.seek(0)
     reader = create_reader(fh)
@@ -605,15 +544,9 @@ def test_trace_header_raises_ValueError_on_out_of_range(dataset):
         reader.trace_header(reader.num_traces() + 1)
 
 
-@given(dataset(num_dims=3))
-@settings(
-    suppress_health_check=(HealthCheck.too_slow,),
-    deadline=None,
-    phases=(Phase.explicit, Phase.reuse, Phase.generate),
-)
-def test_trace_header_format_is_requested_format(dataset):
+def test_trace_header_format_is_requested_format(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
 
     fh.seek(0)
     reader = create_reader(
@@ -625,47 +558,163 @@ def test_trace_header_format_is_requested_format(dataset):
     assert reader.trace_header_format_class is TraceHeaderRev1
 
 
-@given(dataset(num_dims=3))
-@settings(
-    suppress_health_check=(HealthCheck.too_slow,),
-    deadline=None,
-    phases=(Phase.explicit, Phase.reuse, Phase.generate),
-)
-def test_filename_correctly_reported_for_normal_files(tempdir, dataset):
+def test_filename_correctly_reported_for_normal_files(tempdir, dset):
     segy_file = str(tempdir / 'segy')
     with open(segy_file, mode='wb') as fh:
-        write_segy(fh, dataset)
+        write_segy(fh, dset)
 
     with open(segy_file, mode='rb') as fh:
         reader = create_reader(fh)
         assert reader.filename == segy_file
 
 
-@given(dataset(num_dims=3))
-@settings(
-    suppress_health_check=(HealthCheck.too_slow,),
-    deadline=None,
-    phases=(Phase.explicit, Phase.reuse, Phase.generate),
-)
-def test_filename_reports_unknown_when_filename_unavailable(dataset):
+def test_filename_reports_unknown_when_filename_unavailable(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
 
     fh.seek(0)
     reader = create_reader(fh)
     assert reader.filename == '<unknown>'
 
 
-@given(dataset(num_dims=3))
+def test_segy_revision_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.revision == dset.binary_reel_header.format_revision_num
+
+
+def test_SegYReader_bytes_per_sample_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.bytes_per_sample == bytes_per_sample(dset.binary_reel_header)
+
+
+def test_SegYReader_endianness_is_correct(dset, endian):
+    fh = io.BytesIO()
+    write_segy(fh, dset, endian=endian)
+    fh.seek(0)
+    reader = create_reader(fh, endian=endian)
+    assert reader.endian == endian
+
+
+@patch('segpy.reader.guess_textual_header_encoding',
+       MagicMock(return_value=None))
+def test_create_reader_will_default_to_ascii_encoding(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    reader = create_reader(fh, encoding=None)
+    assert reader.encoding == 'ascii'
+
+
+@given(dataset_2d(valid_cdp_catalog=True))
 @settings(
+    max_examples=10,
     suppress_health_check=(HealthCheck.too_slow,),
     deadline=None,
     phases=(Phase.explicit, Phase.reuse, Phase.generate),
 )
-def test_segy_revision_is_correct(dataset):
+def test_heuristic_for_2D_works_as_expected(dset):
     fh = io.BytesIO()
-    write_segy(fh, dataset)
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=None)
+    assert reader.dimensionality == 2
 
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_heuristic_for_3D_works_as_expected(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=None)
+    assert reader.dimensionality == 3
+
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_num_inlines_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
     fh.seek(0)
     reader = create_reader(fh)
-    assert reader.revision == dataset.binary_reel_header.format_revision_num
+    assert reader.num_inlines() == dset.num_traces()
+
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_num_xlines_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.num_xlines() == dset.num_traces()
+
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_inline_xline_numbers_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert sorted(reader.inline_xline_numbers()) == sorted((idx, idx) for idx in range(dset.num_traces()))
+
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_all_inline_xlines_have_a_trace_index(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=3)
+    for num in reader.inline_xline_numbers():
+        assert reader.has_trace_index(num)
+
+
+@given(diagonal_dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_inline_xlines_map_to_correct_trace_index(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=3)
+    for num in reader.inline_xline_numbers():
+        assert reader.trace_index(num) == num[0]
+        assert reader.trace_index(num) == num[1]

@@ -149,7 +149,9 @@ def guess_textual_header_encoding(fh):
             beginning of the textual header will be the next byte to read.
 
     Returns:
-        Either 'cp037' for EBCDIC or 'ascii' for ASCII.
+        Either 'cp037' for EBCDIC, 'ascii' for ASCII, or `None` if the encoding
+            can not be determined.
+
     """
     with restored_position_seek(fh, 0):
         raw_header = fh.read(TEXTUAL_HEADER_NUM_BYTES)

@@ -5,6 +5,7 @@ import pytest
 from hypothesis import given, assume
 from hypothesis.errors import UnsatisfiedAssumption
 from hypothesis.strategies import integers, floats, one_of, just
+from pytest import raises
 
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT,
@@ -24,9 +25,15 @@ ibm_compatible_non_positive_floats = one_of(
     floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT))
 
 
-def ibm_compatible_floats(min_f, max_f):
-    truncated_min_f = max(min_f, MIN_IBM_FLOAT)
-    truncated_max_f = min(max_f, MAX_IBM_FLOAT)
+def ibm_compatible_floats(min_value=None, max_value=None):
+    if min_value is None:
+        min_value = MIN_IBM_FLOAT
+        
+    if max_value is None:
+        max_value = MAX_IBM_FLOAT
+    
+    truncated_min_f = max(min_value, MIN_IBM_FLOAT)
+    truncated_max_f = min(max_value, MAX_IBM_FLOAT)
 
     strategies = []
     if truncated_min_f <= LARGEST_NEGATIVE_NORMAL_IBM_FLOAT <= truncated_max_f:
@@ -42,9 +49,6 @@ def ibm_compatible_floats(min_f, max_f):
         strategies.append(floats(truncated_min_f, truncated_max_f))
 
     return one_of(*strategies)
-
-
-any_ibm_compatible_floats = ibm_compatible_floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT)
 
 
 class TestIbm2Ieee:
@@ -187,6 +191,10 @@ class TestIBMFloat:
         zero = IBMFloat.from_bytes(b'\x00\x00\x00\x00')
         assert zero.is_zero()
 
+    def test_incorrect_number_of_bytes_raises_value_error(self):
+        with raises(ValueError):
+            IBMFloat.from_bytes(b'\x00\x00\x00')
+
     def test_subnormal(self):
         ibm = IBMFloat.from_float(1.6472184286297693e-83)
         assert ibm.is_subnormal()
@@ -215,7 +223,7 @@ class TestIBMFloat:
         with pytest.raises(OverflowError):
             IBMFloat.from_float(MIN_IBM_FLOAT * 10)
 
-    @given(any_ibm_compatible_floats)
+    @given(ibm_compatible_floats())
     def test_bool(self, f):
         assert bool(IBMFloat.from_float(f)) == bool(f)
 
@@ -228,7 +236,7 @@ class TestIBMFloat:
         ibm = IBMFloat.from_bytes(b)
         assert bytes(ibm) == b
 
-    @given(any_ibm_compatible_floats)
+    @given(ibm_compatible_floats())
     def test_floats_roundtrip(self, f):
         ibm = IBMFloat.from_float(f)
         assert almost_equal(f, float(ibm), epsilon=EPSILON_IBM_FLOAT)
@@ -346,7 +354,7 @@ class TestIBMFloat:
         negated = -zero
         assert negated.is_zero()
 
-    @given(any_ibm_compatible_floats)
+    @given(ibm_compatible_floats())
     def test_signbit(self, f):
         ltz = f < 0
         ibm = IBMFloat.from_float(f)
@@ -363,7 +371,78 @@ class TestIBMFloat:
             f, e = ibm.frexp()
             assert almost_equal(fraction * 2**exponent, f * 2**e, epsilon=EPSILON_IBM_FLOAT)
 
-    @given(any_ibm_compatible_floats,
+    @given(fraction=one_of(
+                ibm_compatible_floats(max_value=-1.0),
+                ibm_compatible_floats(min_value=+1.0)),
+           exponent=integers(-256, 255))
+    def test_ldexp_fraction_out_of_range_raises_value_error(self, fraction, exponent):
+        assume(fraction != -1.0 and fraction != +1.0)
+        with raises(ValueError):
+            IBMFloat.ldexp(fraction, exponent)
+
+    @given(fraction=ibm_compatible_floats(-1.0, +1.0),
+           exponent=one_of(
+               integers(max_value=-257),
+               integers(min_value=256)))
+    def test_ldexp_exponent_out_of_range_raises_value_error(self, fraction, exponent):
+        with raises(ValueError):
+            IBMFloat.ldexp(fraction, exponent)
+
+    @given(f=ibm_compatible_floats())
+    def test_str(self, f):
+        ibm = IBMFloat.from_float(f)
+        g = float(ibm)
+        assert str(g) == str(ibm)
+
+    @given(a=integers(min_value=1, max_value=255))
+    def test_is_subnormal(self, a):
+        buffer = bytes([a, 0, 0, 0])
+        ibm = IBMFloat(buffer)
+        assert ibm.is_subnormal()
+
+    @given(f=ibm_compatible_floats())
+    def test_pos(self, f):
+        ibm = IBMFloat.from_float(f)
+        assert ibm == +ibm
+
+    def test_zero_equal(self):
+        buffer = bytes([0, 0, 0, 0])
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    @given(a=integers(min_value=1, max_value=255))
+    def test_subnormal_equal(self, a):
+        buffer = bytes([a, 0, 0, 0])
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    def test_positive_half_equal(self):
+        buffer = bytes((0b11000000, 0x80, 0x00, 0x00))
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    def test_negative_half_equal(self):
+        buffer = bytes((0b01000000, 0x80, 0x00, 0x00))
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    def test_one_equal(self):
+        buffer = b'\x41\x10\x00\x00'
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    def test_smallest_subnormal_is_equal(self):
+        buffer = bytes((0x00, 0x00, 0x00, 0x01))
+        p = IBMFloat(buffer)
+        q = IBMFloat(buffer)
+        assert p == q
+
+    @given(ibm_compatible_floats(),
            ibm_compatible_floats(0.0, 1.0))
     def test_add(self, f, p):
         a = f * p

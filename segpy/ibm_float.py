@@ -216,9 +216,6 @@ class IBMFloat(Real):
     def is_zero(self):
         return self.int_mantissa == 0
 
-    def __nonzero__(self):
-        return not self.is_zero()
-
     def is_subnormal(self):
         if self.is_zero():
             # Only one of the many possible representations of zero is considered 'normal' - all the zeros
@@ -267,8 +264,14 @@ class IBMFloat(Real):
     def __eq__(self, rhs):
         lhs = self
 
+        if lhs is rhs:
+            return True
+
         if not isinstance(rhs, IBMFloat):
             return float(lhs) == float(rhs)
+
+        if lhs._data == rhs._data:
+            return True
 
         lhs_sign = lhs.signbit
         rhs_sign = rhs.signbit

@@ -47,7 +47,7 @@ def ibm_compatible_floats(min_f, max_f):
 any_ibm_compatible_floats = ibm_compatible_floats(MIN_IBM_FLOAT, MAX_IBM_FLOAT)
 
 
-class Ibm2Ieee:
+class TestIbm2Ieee:
 
     @given(integers(0, 255))
     def test_zero(self, a):
@@ -94,7 +94,7 @@ class Ibm2Ieee:
         assert ibm2ieee(bytes((0x00, 0x00, 0x00, 0x01))) == 5.147557589468029e-85
 
 
-class Ieee2Ibm:
+class TestIeee2Ibm:
 
     def test_zero(self):
         assert ieee2ibm(0.0) == b'\0\0\0\0'
@@ -144,7 +144,7 @@ class Ieee2Ibm:
             ieee2ibm(MIN_IBM_FLOAT * 10)
 
 
-class Ibm2IeeeRoundtrip:
+class TestIbm2IeeeRoundtrip:
 
     def test_zero(self):
         ibm_start = b'\0\0\0\0'

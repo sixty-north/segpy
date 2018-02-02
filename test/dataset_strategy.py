@@ -265,6 +265,8 @@ def dataset_2d(draw, valid_cdp_catalog=True):
     if valid_cdp_catalog:
         for idx, hdr in enumerate(trace_headers):
             hdr.ensemble_num = idx
+            hdr.inline_number = 0
+            hdr.crossline_number = 0
 
     return draw(dataset(num_dims=2, trace_headers=trace_headers))
 

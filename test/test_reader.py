@@ -482,45 +482,6 @@ def test_SegYReader3D_raises_TypeError_on_null_line_catalog():
             encoding=reader.encoding)
 
 
-# TODO: These tests are trying to get at the dimensionality heuristics, but they feel
-# wrong. I need to figure out how to trigger those heuristics "naturally".
-#
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=1))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_1D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=2))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_2D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
-# @patch('test.dataset_strategy.InMemoryDataset.dimensionality', None)
-# @given(dataset(num_dims=3))
-# @settings(
-#     suppress_health_check=(HealthCheck.too_slow,),
-#     deadline=None,
-#     phases=(Phase.explicit, Phase.reuse, Phase.generate),
-# )
-# def test_round_trip_3D_without_dimensionality(tempdir, dataset):
-#     assert dataset.dimensionality == None
-#     _dataset_round_trip(tempdir, dataset, compare_dimensionality=False)
-
-
 class Test_trace_samples_Exceptions:
     "Tests for various exceptions from trace_samples()."
 
@@ -649,3 +610,33 @@ def test_create_reader_will_default_to_ascii_encoding(dset):
     write_segy(fh, dset)
     reader = create_reader(fh, encoding=None)
     assert reader.encoding == 'ascii'
+
+
+@given(dataset_2d(valid_cdp_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_heuristic_for_2D_works_as_expected(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=None)
+    assert reader.dimensionality == 2
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_heuristic_for_3D_works_as_expected(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=None)
+    assert reader.dimensionality == 3

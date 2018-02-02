@@ -640,3 +640,81 @@ def test_heuristic_for_3D_works_as_expected(dset):
     fh.seek(0)
     reader = create_reader(fh, dimensionality=None)
     assert reader.dimensionality == 3
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_num_inlines_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.num_inlines() == dset.num_traces()
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_num_xlines_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert reader.num_xlines() == dset.num_traces()
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_inline_xline_numbers_is_correct(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh)
+    assert sorted(reader.inline_xline_numbers()) == sorted((idx, idx) for idx in range(dset.num_traces()))
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_all_inline_xlines_have_a_trace_index(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=3)
+    for num in reader.inline_xline_numbers():
+        assert reader.has_trace_index(num)
+
+
+@given(dataset_3d(valid_line_catalog=True))
+@settings(
+    max_examples=10,
+    suppress_health_check=(HealthCheck.too_slow,),
+    deadline=None,
+    phases=(Phase.explicit, Phase.reuse, Phase.generate),
+)
+def test_inline_xlines_map_to_correct_trace_index(dset):
+    fh = io.BytesIO()
+    write_segy(fh, dset)
+    fh.seek(0)
+    reader = create_reader(fh, dimensionality=3)
+    for num in reader.inline_xline_numbers():
+        assert reader.trace_index(num) == num[0]
+        assert reader.trace_index(num) == num[1]

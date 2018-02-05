@@ -1,8 +1,7 @@
-from fractions import Fraction
-from math import frexp, isnan, isinf, gcd, trunc, floor
-from numbers import Real, Integral, Rational, Complex
+from math import frexp, isnan, isinf, trunc, floor
+from numbers import Real, Rational
 
-from segpy.util import four_bytes
+from segpy.util import four_bytes, gcd
 
 
 IBM_ZERO_BYTES = b'\x00\x00\x00\x00'

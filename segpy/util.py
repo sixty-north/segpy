@@ -3,6 +3,8 @@ import operator
 import time
 import os
 import sys
+import math
+import fractions
 
 from contextlib import contextmanager
 from enum import Enum
@@ -559,3 +561,5 @@ def all_equal(iterable):
     "Returns True if all the elements are equal to each other"
     g = groupby(iterable)
     return next(g, True) and not next(g, False)
+
+gcd = getattr(math, 'gcd', getattr(fractions, 'gcd'))

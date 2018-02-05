@@ -213,6 +213,49 @@ class TestReadExtendedHeadersCounted:
             del truncated_buffer
 
 
+class TestReadExtendedHeaders:
+    @given(
+        data=st.data(),
+        encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    @settings(
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate))
+    def test_uncounted_headers_are_correctly_detected(self, data, encoding):
+        binary_header = BinaryReelHeader(num_extended_textual_headers=-1)
+        written_headers = data.draw(extended_textual_header())
+        with BytesIO() as fh:
+            fh.write(b' ' * toolkit.REEL_HEADER_NUM_BYTES)
+            for header in written_headers:
+                for line in header:
+                    fh.write(line.encode(encoding))
+            fh.seek(0)
+            read_headers = toolkit.read_extended_textual_headers(
+                fh, binary_header, encoding=encoding)
+            assert read_headers == written_headers
+
+    @given(
+        data=st.data(),
+        count=st.integers(min_value=1, max_value=10),
+        encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    @settings(
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate))
+    def test_counted_headers_are_correctly_detected(self, data, count, encoding):
+        binary_header = BinaryReelHeader(num_extended_textual_headers=count)
+        written_headers = data.draw(extended_textual_header(count=count))
+        with BytesIO() as fh:
+            fh.write(b' ' * toolkit.REEL_HEADER_NUM_BYTES)
+            for header in written_headers:
+                for line in header:
+                    fh.write(line.encode(encoding))
+            fh.seek(0)
+            read_headers = toolkit.read_extended_textual_headers(
+                fh, binary_header, encoding=encoding)
+            assert read_headers == written_headers
+
+
 class TestBytesPerSample:
 
     @given(bad_dsf=st.integers(-32768, +32767))

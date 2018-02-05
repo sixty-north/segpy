@@ -1,5 +1,6 @@
+from fractions import Fraction
 from math import frexp, isnan, isinf, gcd, trunc, floor
-from numbers import Real, Integral, Rational
+from numbers import Real, Integral, Rational, Complex
 
 from segpy.util import four_bytes
 
@@ -162,12 +163,35 @@ class IBMFloat(Real):
             ValueError: If f is NaN or infinite.
             FloatingPointError: If f cannot be represented without total loss of precision.
         """
+        if isinstance(f, IBMFloat):
+            return f
         return cls(ieee2ibm(f))
 
     @classmethod
+    def from_float_without_underflow(cls, f):
+        """Construct an IBMFloat from an IEEE float.
+
+        Args:
+            f (float): The value to be converted. If the provided
+                IEEE value underflows the smallest representable
+                IBM value, this function returns zero.
+
+        Returns:
+            An IBMFloat.
+
+        Raises:
+            OverflowError: If f is outside the representable range.
+            ValueError: If f is NaN or infinite.
+        """
+        try:
+            buffer = ieee2ibm(f)
+        except FloatingPointError:  # Underflow
+            return IBM_FLOAT_ZERO
+        else:
+            return cls(buffer)
+
+    @classmethod
     def from_real(cls, f):
-        if isinstance(f, IBMFloat):
-            return f
         return cls.from_float(f)
 
     @classmethod
@@ -321,8 +345,6 @@ class IBMFloat(Real):
         lhs_mantissa = nlhs.int_mantissa
         rhs_mantissa = nrhs.int_mantissa
 
-        # TODO: I'm not at all sure this is correct. When equalizing the
-        # exponents, should we be shifting the mantissas right?
         if lhs_exp16 < rhs_exp16:
             delta_exp16 = rhs_exp16 - lhs_exp16
             lhs_mantissa >>= 4 * delta_exp16
@@ -335,68 +357,6 @@ class IBMFloat(Real):
 
         assert lhs_exp16 == rhs_exp16
         return lhs_mantissa == rhs_mantissa
-
-    def __floordiv__(self, rhs):
-        return floor(self / rhs)
-
-    def __rfloordiv__(self, lhs):
-        return floor(lhs / self)
-
-    def __rtruediv__(self, lhs):
-        # TODO: Interim implementation based on float
-        q = float(lhs) / float(self)
-        return IBMFloat.from_float(q) if isinstance(lhs, float) else q
-
-    def __pow__(self, exponent):
-        # TODO: Interim implementation based on float
-        p = pow(float(self), float(exponent))
-        return IBMFloat.from_float(p) if isinstance(exponent, IBMFloat) else p
-
-    def __rpow__(self, base):
-        # TODO: Interim implementation based on float
-        return IBMFloat.from_float(pow(float(base), float(self)))
-
-    def __mod__(self, rhs):
-        div = self // rhs
-        return self - rhs * div
-
-    def __rmod__(self, lhs):
-        div = lhs // self
-        return lhs - self * div
-
-    def __rmul__(self, lhs):
-        # TODO: Interim implementation based on float
-        p = float(lhs) * float(self)
-        return IBMFloat.from_float(p) if isinstance(lhs, IBMFloat) else p
-
-    def __radd__(self, lhs):
-        # TODO: Interim implementation based on float
-        s = float(lhs) + float(self)
-        return IBMFloat.from_float(s) if isinstance(lhs, IBMFloat) else s
-
-    def __lt__(self, rhs):
-        # TODO: Interim implementation based on float
-        return float(self) < float(rhs)
-
-    def __le__(self, rhs):
-        # TODO: Interim implementation based on float
-        return float(self) <= float(rhs)
-
-    def __gt__(self, rhs):
-        # TODO: Interim implementation based on float
-        return float(self) > float(rhs)
-
-    def __ge__(self, rhs):
-        # TODO: Interim implementation based on float
-        return float(self) >= float(rhs)
-
-    def __ceil__(self):
-        t = trunc(self)
-        return t if self.signbit else t + 1
-
-    def __floor__(self):
-        t = trunc(self)
-        return t - 1 if self.signbit else t
 
     @property
     def exp16(self):
@@ -425,7 +385,7 @@ class IBMFloat(Real):
         return sign * magnitude
 
     def normalize(self):
-        """Normalize the floating point value.
+        """Normalize the floating point representation.
 
         Returns:
             A normalized IBMFloat equal in value to this object.
@@ -459,28 +419,129 @@ class IBMFloat(Real):
         return IBMFloat.from_bytes((a, b, c, d))
 
     def try_normalize(self):
+        """Normalize if possible.
+
+        If it is not possible to normalize the representation,
+        it remains unmodified.
+        """
         try:
             return self.normalize()
         except FloatingPointError:
             return self
 
-    def __round__(self, ndigits=None):
-        return IBMFloat.from_float(round(float(self), ndigits))
+    def __floordiv__(self, rhs):
+        return floor(float(self) / float(rhs))
+
+    def __rfloordiv__(self, lhs):
+        return floor(float(lhs) / float(self))
 
     def __truediv__(self, rhs):
-        # TODO: Interim implementation based on float
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
         q = float(self) / float(rhs)
-        return IBMFloat.from_float(q) if isinstance(rhs, IBMFloat) else q
+        return IBMFloat.from_float_without_underflow(q) if isinstance(rhs, IBMFloat) else q
+
+    def __rtruediv__(self, lhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        q = float(lhs) / float(self)
+        return IBMFloat.from_float_without_underflow(q) if isinstance(lhs, float) else q
+
+    def __pow__(self, exponent):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        p = pow(float(self), float(exponent))
+        if isinstance(p, complex) and p.imag != 0:
+            return p
+        elif isinstance(exponent, IBMFloat):
+            return IBMFloat.from_float_without_underflow(p)
+        else:
+            return p
+
+    def __rpow__(self, base):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        p = pow(float(base), float(self))
+        if isinstance(p, complex) and p.imag != 0:
+            return p
+        else:
+            return p
+
+    def __mod__(self, rhs):
+        """a % b"""
+        p = float(self) % float(rhs)
+        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+
+    def __rmod__(self, lhs):
+        """a % b"""
+        return float(lhs) % float(self)
 
     def __mul__(self, rhs):
-        # TODO: Interim implementation based on float
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
         p = float(self) * float(rhs)
-        return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
+        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+
+    def __rmul__(self, lhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        p = float(lhs) * float(self)
+        return IBMFloat.from_float(p) if isinstance(lhs, IBMFloat) else p
 
     def __add__(self, rhs):
-        # TODO: Interim implementation based on float
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
         p = float(self) + float(rhs)
-        return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
+        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+
+    def __radd__(self, lhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(lhs) + float(self)
+
+    def __sub__(self, rhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        p = float(self) - float(rhs)
+        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+
+    def __rsub__(self, lhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(lhs) - float(self)
+
+    def __lt__(self, rhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(self) < float(rhs)
+
+    def __le__(self, rhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(self) <= float(rhs)
+
+    def __gt__(self, rhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(self) > float(rhs)
+
+    def __ge__(self, rhs):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return float(self) >= float(rhs)
+
+    def __ceil__(self):
+        t = trunc(self)
+        return t if self.signbit else t + 1
+
+    def __floor__(self):
+        t = trunc(self)
+        return t - 1 if self.signbit else t
+
+    def __round__(self, ndigits=None):
+        # Python's 64-bit float has much more precision than this
+        # 32-bit IBM float and is much faster, so delegate
+        return IBMFloat.from_float_without_underflow(round(float(self), ndigits))
 
     def __int__(self):
         return trunc(self)

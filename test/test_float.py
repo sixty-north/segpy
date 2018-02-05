@@ -3,7 +3,7 @@ from fractions import Fraction
 from math import trunc
 import pytest
 
-from hypothesis import given, assume
+from hypothesis import given, assume, settings, HealthCheck, Phase
 from hypothesis.errors import UnsatisfiedAssumption
 from hypothesis.strategies import integers, floats, one_of, just, composite
 from pytest import raises
@@ -204,8 +204,14 @@ class TestIBMFloat:
         zero = IBMFloat.from_float(0.0)
         assert zero.is_zero()
 
-    def test_zero_from_real(self):
-        zero = IBMFloat.from_float(Fraction(0, 1))
+    @given(ibm_compatible_floats())
+    def test_zero_from_ibm_float(self, f):
+        ibm_a = IBMFloat.from_float(f)
+        ibm_b = IBMFloat.from_float(ibm_a)
+        assert ibm_a == ibm_b
+
+    def test_zero_from_real_fraction(self):
+        zero = IBMFloat.from_real(Fraction(0, 1))
         assert zero.is_zero()
 
     def test_zero_from_bytes(self):
@@ -553,9 +559,9 @@ class TestIBMFloat:
     @given(ibm_compatible_non_negative_floats(),
            ibm_compatible_non_negative_floats())
     def test_sub(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
         try:
-            ibm_a = IBMFloat.from_float(a)
-            ibm_b = IBMFloat.from_float(b)
             ibm_c = ibm_a - ibm_b
         except FloatingPointError:
             raise UnsatisfiedAssumption
@@ -583,5 +589,235 @@ class TestIBMFloat:
         g = float(ibm)
         assert round(ibm) == round(g)
 
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_floordiv_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert ibm_a // ibm_b == ieee_a // ieee_b
 
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_rfloordiv_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert ieee_a // ibm_b == ieee_a // ieee_b
 
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_truediv_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ibm_c = ibm_a / ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c = ieee_a / ieee_b
+        assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_rtruediv_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ieee_a / ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a / ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(min_value=0.0),
+           b=ibm_compatible_floats())
+    def test_pow_ibm(self, a, b):
+        assume(a != 0.0)
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ibm_c = ibm_a ** ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c = ieee_a ** ieee_b
+        assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(max_value=0.0),
+           b=ibm_compatible_floats(min_value=0.0, max_value=1.0))
+    @settings(
+        max_examples=5,
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate),
+    )
+    def test_pow_ibm_complex_result(self, a, b):
+        assume(a != 0.0)
+        assume(b != 0.0 and b != 1.0)
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ibm_c = ibm_a ** ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c = ieee_a ** ieee_b
+        assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(min_value=0.0),
+           b=ibm_compatible_floats())
+    def test_pow_ibm_ieee_result(self, a, b):
+        assume(a != 0.0)
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ibm_a ** ieee_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a ** ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(min_value=0.0),
+           b=ibm_compatible_floats())
+    def test_rpow_ibm_ieee_results(self, a, b):
+        assume(a != 0.0)
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ieee_a ** ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a ** ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(max_value=0.0),
+           b=ibm_compatible_floats(min_value=0.0, max_value=1.0))
+    @settings(
+        max_examples=5,
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate),
+    )
+    def test_rpow_ibm_complex_result(self, a, b):
+        assume(a != 0.0)
+        assume(b != 0.0 and b != 1.0)
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ieee_a ** ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a ** ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_mod_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ibm_c = ibm_a % ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c = ieee_a % ieee_b
+        assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_rmod_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        assume(not ibm_b.is_zero())
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ieee_a % ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a % ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_radd_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ieee_c1 = ieee_a + ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c2 = ieee_a + ieee_b
+        assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_lt_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert (ibm_a < ibm_b) == (ieee_a < ieee_b)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_gt_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert (ibm_a > ibm_b) == (ieee_a > ieee_b)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_ge_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert (ibm_a >= ibm_b) == (ieee_a >= ieee_b)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_le_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        assert (ibm_a <= ibm_b) == (ieee_a <= ieee_b)
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_mul_ibm(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(b)
+        ieee_a = float(ibm_a)
+        ieee_b = float(ibm_b)
+        try:
+            ibm_c = ibm_a * ibm_b
+        except OverflowError:
+            raise UnsatisfiedAssumption
+        ieee_c = ieee_a * ieee_b
+        assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)

@@ -6,7 +6,7 @@ from segpy.dataset import Dataset
 from segpy.util import identity
 
 
-class ArrayDataset3d(Dataset, metaclass=ABCMeta):
+class ArrayDataset3d(Dataset):
     """A Dataset where the traces are stored in a NumpyArray.
 
     """

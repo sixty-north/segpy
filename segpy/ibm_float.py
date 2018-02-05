@@ -1,7 +1,7 @@
-from math import frexp, isnan, isinf, trunc, floor
+from math import frexp, isnan, isinf, trunc, floor, gcd
 from numbers import Real, Rational
 
-from segpy.util import four_bytes, gcd
+from segpy.util import four_bytes
 
 
 IBM_ZERO_BYTES = b'\x00\x00\x00\x00'

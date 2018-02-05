@@ -27,6 +27,6 @@ How To Get It
 Requirements
 ============
 
-*Segpy 2* work with Python 3.3 and higher.  For the majority of use *Segpy 2* has no external
+*Segpy 2* work with Python 3.5 and higher.  For the majority of use *Segpy 2* has no external
 dependencies.  Optional modules with further dependencies such as *Numpy* are included in the ``segpy.ext`` package of
 extras.

@@ -1,8 +1,7 @@
-from math import frexp, isnan, isinf, ceil, floor, trunc
-from numbers import Real
+from math import frexp, isnan, isinf, gcd, trunc, floor
+from numbers import Real, Integral, Rational
 
 from segpy.util import four_bytes
-
 
 
 IBM_ZERO_BYTES = b'\x00\x00\x00\x00'
@@ -22,6 +21,7 @@ _F24 = float(pow(2, MAX_BITS_PRECISION_IBM_FLOAT))
 
 _L21 = 2 ** MIN_BITS_PRECISION_IBM_FLOAT
 
+EXPONENT_BASE = 16
 EXPONENT_BIAS = 64
 
 MIN_EXACT_INTEGER_IBM_FLOAT = -2**MAX_BITS_PRECISION_IBM_FLOAT
@@ -46,7 +46,7 @@ def ibm2ieee(big_endian_bytes):
     exponent_16_biased = a & 0x7f
     mantissa = ((b << 16) | (c << 8) | d) / _F24
 
-    value = sign * mantissa * pow(16, exponent_16_biased - EXPONENT_BIAS)
+    value = sign * mantissa * pow(EXPONENT_BASE, exponent_16_biased - EXPONENT_BIAS)
     return value
 
 
@@ -114,7 +114,7 @@ def ieee2ibm(f):
         exponent += shift
 
     exponent_16 = exponent >> 2            # Divide by four to convert to base 16
-    exponent_16_biased = exponent_16 + 64  # Add the exponent bias of 64
+    exponent_16_biased = exponent_16 + EXPONENT_BIAS  # Add the exponent bias of 64
 
     # If the biased exponent is negative, we try to use a subnormal representation
     if exponent_16_biased < 0:
@@ -205,7 +205,10 @@ class IBMFloat(Real):
         return self._data
 
     def __repr__(self):
-        return "{}.from_float({!r}) ~{!r}".format(self.__class__.__name__, self._data, float(self))
+        return "{}(bytes([{}])) ≈ {!r}".format(
+            self.__class__.__name__,
+            ', '.join('0x{:02x}'.format(b) for b in self._data),
+            float(self))
 
     def __str__(self):
         return str(float(self))
@@ -221,7 +224,7 @@ class IBMFloat(Real):
             # Only one of the many possible representations of zero is considered 'normal' - all the zeros
             return not all(b == 0 for b in self._data)
 
-        return self._data[1] < 16  # TODO: Replace magic number with constant
+        return self._data[1] < 16
 
     def zero_subnormal(self):
         return IBM_FLOAT_ZERO if self.is_subnormal() else self
@@ -237,6 +240,20 @@ class IBMFloat(Real):
         mantissa = sign * self.int_mantissa / _F24
         exp_2 = self.exp16 * 4
         return mantissa, exp_2
+
+    def as_integer_ratio(self):
+        sign = -1 if self.signbit else 1
+        e16 = self.exp16
+        if e16 >= 0:
+            numerator = self.int_mantissa * EXPONENT_BASE**self.exp16
+            denominator = _L24
+        else:
+            numerator = self.int_mantissa
+            denominator = _L24 * EXPONENT_BASE**abs(self.exp16)
+        divisor = gcd(numerator, denominator)
+        reduced_numerator = sign * numerator // divisor
+        reduced_denominator = denominator // divisor
+        return reduced_numerator, reduced_denominator
 
     def __pos__(self):
         return self
@@ -267,8 +284,19 @@ class IBMFloat(Real):
         if lhs is rhs:
             return True
 
+        if isinstance(rhs, float):
+            if isnan(rhs) or isinf(rhs):
+                return 0.0 == rhs
+            lhs_numerator, lhs_denominator = lhs.as_integer_ratio()
+            rhs_numerator, rhs_denominator = rhs.as_integer_ratio()
+            return (lhs_numerator == rhs_numerator) and (lhs_denominator == rhs_denominator)
+
+        if isinstance(rhs, Rational):
+            lhs_numerator, lhs_denominator = lhs.as_integer_ratio()
+            return (lhs_numerator == rhs.numerator) and (lhs_denominator == rhs.denominator)
+
         if not isinstance(rhs, IBMFloat):
-            return float(lhs) == float(rhs)
+            return NotImplemented
 
         if lhs._data == rhs._data:
             return True
@@ -279,8 +307,8 @@ class IBMFloat(Real):
         if lhs_sign != rhs_sign:
             return False
 
-        nlhs = lhs.normalize()
-        nrhs = rhs.normalize()
+        nlhs = lhs.try_normalize()
+        nrhs = rhs.try_normalize()
 
         if not (nlhs.is_subnormal() or nrhs.is_subnormal()):
             # Both of the numbers are normalised
@@ -293,6 +321,8 @@ class IBMFloat(Real):
         lhs_mantissa = nlhs.int_mantissa
         rhs_mantissa = nrhs.int_mantissa
 
+        # TODO: I'm not at all sure this is correct. When equalizing the
+        # exponents, should we be shifting the mantissas right?
         if lhs_exp16 < rhs_exp16:
             delta_exp16 = rhs_exp16 - lhs_exp16
             lhs_mantissa >>= 4 * delta_exp16
@@ -307,48 +337,57 @@ class IBMFloat(Real):
         return lhs_mantissa == rhs_mantissa
 
     def __floordiv__(self, rhs):
-        return float(self) // float(rhs)
+        return floor(self / rhs)
 
     def __rfloordiv__(self, lhs):
-        return float(lhs) // float(self)
+        return floor(lhs / self)
 
     def __rtruediv__(self, lhs):
+        # TODO: Interim implementation based on float
         q = float(lhs) / float(self)
         return IBMFloat.from_float(q) if isinstance(lhs, float) else q
 
     def __pow__(self, exponent):
+        # TODO: Interim implementation based on float
         p = pow(float(self), float(exponent))
         return IBMFloat.from_float(p) if isinstance(exponent, IBMFloat) else p
 
     def __rpow__(self, base):
+        # TODO: Interim implementation based on float
         return IBMFloat.from_float(pow(float(base), float(self)))
 
     def __mod__(self, rhs):
-        m = float(self) % float(rhs)
-        return IBMFloat.from_float(m) if isinstance(rhs, IBMFloat) else m
+        div = self // rhs
+        return self - rhs * div
 
     def __rmod__(self, lhs):
-        m = float(lhs) % float(self)
-        return IBMFloat.from_float(m) if isinstance(lhs, IBMFloat) else m
+        div = lhs // self
+        return lhs - self * div
 
     def __rmul__(self, lhs):
+        # TODO: Interim implementation based on float
         p = float(lhs) * float(self)
         return IBMFloat.from_float(p) if isinstance(lhs, IBMFloat) else p
 
     def __radd__(self, lhs):
+        # TODO: Interim implementation based on float
         s = float(lhs) + float(self)
         return IBMFloat.from_float(s) if isinstance(lhs, IBMFloat) else s
 
     def __lt__(self, rhs):
+        # TODO: Interim implementation based on float
         return float(self) < float(rhs)
 
     def __le__(self, rhs):
+        # TODO: Interim implementation based on float
         return float(self) <= float(rhs)
 
     def __gt__(self, rhs):
+        # TODO: Interim implementation based on float
         return float(self) > float(rhs)
 
     def __ge__(self, rhs):
+        # TODO: Interim implementation based on float
         return float(self) >= float(rhs)
 
     def __ceil__(self):
@@ -382,7 +421,7 @@ class IBMFloat(Real):
         preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
 
         truncated_mantissa = mantissa & preserve_mask
-        magnitude = int(truncated_mantissa * pow(16, exponent_16)) >> MAX_BITS_PRECISION_IBM_FLOAT
+        magnitude = int(truncated_mantissa * pow(EXPONENT_BASE, exponent_16)) >> MAX_BITS_PRECISION_IBM_FLOAT
         return sign * magnitude
 
     def normalize(self):
@@ -419,18 +458,27 @@ class IBMFloat(Real):
 
         return IBMFloat.from_bytes((a, b, c, d))
 
+    def try_normalize(self):
+        try:
+            return self.normalize()
+        except FloatingPointError:
+            return self
+
     def __round__(self, ndigits=None):
         return IBMFloat.from_float(round(float(self), ndigits))
 
     def __truediv__(self, rhs):
+        # TODO: Interim implementation based on float
         q = float(self) / float(rhs)
         return IBMFloat.from_float(q) if isinstance(rhs, IBMFloat) else q
 
     def __mul__(self, rhs):
+        # TODO: Interim implementation based on float
         p = float(self) * float(rhs)
         return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
 
     def __add__(self, rhs):
+        # TODO: Interim implementation based on float
         p = float(self) + float(rhs)
         return IBMFloat.from_float(p) if isinstance(rhs, IBMFloat) else p
 

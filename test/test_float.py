@@ -1,31 +1,47 @@
 import math
+from fractions import Fraction
 from math import trunc
 import pytest
 
 from hypothesis import given, assume
 from hypothesis.errors import UnsatisfiedAssumption
-from hypothesis.strategies import integers, floats, one_of, just
+from hypothesis.strategies import integers, floats, one_of, just, composite
 from pytest import raises
 
 from segpy.ibm_float import (ieee2ibm, ibm2ieee, MAX_IBM_FLOAT, SMALLEST_POSITIVE_NORMAL_IBM_FLOAT,
                              LARGEST_NEGATIVE_NORMAL_IBM_FLOAT, MIN_IBM_FLOAT, IBMFloat, EPSILON_IBM_FLOAT,
-                             MAX_EXACT_INTEGER_IBM_FLOAT, MIN_EXACT_INTEGER_IBM_FLOAT, EXPONENT_BIAS)
+                             MAX_EXACT_INTEGER_IBM_FLOAT, MIN_EXACT_INTEGER_IBM_FLOAT, EXPONENT_BIAS, _L21)
 
 from segpy.util import almost_equal
-
-ibm_compatible_negative_floats = floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)
-ibm_compatible_positive_floats = floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT)
-
-ibm_compatible_non_negative_floats = one_of(
-    just(0.0),
-    floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT))
-
-ibm_compatible_non_positive_floats = one_of(
-    just(0.0),
-    floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT))
+from test.predicates import check_balanced
 
 
-def ibm_compatible_floats(min_value=None, max_value=None):
+@composite
+def ibm_compatible_negative_floats(draw):
+    return draw(floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT))
+
+
+@composite
+def ibm_compatible_positive_floats(draw):
+    return draw(floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT))
+
+
+@composite
+def ibm_compatible_non_negative_floats(draw):
+    return draw(one_of(
+        just(0.0),
+        floats(SMALLEST_POSITIVE_NORMAL_IBM_FLOAT, MAX_IBM_FLOAT)))
+
+
+@composite
+def ibm_compatible_non_positive_floats(draw):
+    return draw(one_of(
+        just(0.0),
+        floats(MIN_IBM_FLOAT, LARGEST_NEGATIVE_NORMAL_IBM_FLOAT)))
+
+
+@composite
+def ibm_compatible_floats(draw, min_value=None, max_value=None):
     if min_value is None:
         min_value = MIN_IBM_FLOAT
         
@@ -48,7 +64,8 @@ def ibm_compatible_floats(min_value=None, max_value=None):
     if len(strategies) == 0:
         strategies.append(floats(truncated_min_f, truncated_max_f))
 
-    return one_of(*strategies)
+    ibm = draw(one_of(*strategies))
+    return ibm
 
 
 class TestIbm2Ieee:
@@ -187,6 +204,10 @@ class TestIBMFloat:
         zero = IBMFloat.from_float(0.0)
         assert zero.is_zero()
 
+    def test_zero_from_real(self):
+        zero = IBMFloat.from_float(Fraction(0, 1))
+        assert zero.is_zero()
+
     def test_zero_from_bytes(self):
         zero = IBMFloat.from_bytes(b'\x00\x00\x00\x00')
         assert zero.is_zero()
@@ -270,6 +291,12 @@ class TestIBMFloat:
         ieee = i + f
         ibm = IBMFloat.from_float(ieee)
         assert math.floor(ibm) == i
+
+    def test_normalize_zero(self):
+        zero = IBMFloat(bytes((0x32, 0x00, 0x00, 0x00)))
+        assert zero.is_subnormal()
+        nzero = zero.normalize()
+        assert bytes(nzero) == bytes((0x00, 0x00, 0x00, 0x00))
 
     def test_normalise_subnormal_expect_failure(self):
         # This float has an base-16 exponent of -64 (the minimum) and cannot be normalised
@@ -442,6 +469,68 @@ class TestIBMFloat:
         q = IBMFloat(buffer)
         assert p == q
 
+    def test_small_subnormals_are_not_equal(self):
+        p = IBMFloat(bytes((0x00, 0x00, 0x00, 0x01)))
+        q = IBMFloat(bytes((0x00, 0x00, 0x00, 0x02)))
+        assert p != q
+
+    def test_subnormals_lhs_are_not_equal_to_one(self):
+        p = IBMFloat(bytes((0x00, 0x00, 0x00, 0x01)))
+        q = IBMFloat.from_float(1.0)
+        assert p != q
+
+    def test_subnormals_rhs_are_not_equal_to_one(self):
+        p = IBMFloat.from_float(1.0)
+        q = IBMFloat(bytes((0x00, 0x00, 0x00, 0x01)))
+        assert p != q
+
+    def test_equality_different_signs(self):
+        p = IBMFloat.from_float(+1.0)
+        q = IBMFloat.from_float(-1.0)
+        assert p != q
+
+    def test_equality_with_finite_float_positive(self):
+        p = IBMFloat.from_float(+1.5)
+        q = +1.5
+        assert p == q
+
+    def test_equality_with_finite_float_negative(self):
+        p = IBMFloat.from_float(+1.5)
+        q = +1.6
+        assert p != q
+
+    def test_equality_with_infinite_float_negative(self):
+        p = IBMFloat.from_float(+1.5)
+        q = float("+inf")
+        assert p != q
+
+    def test_equality_with_nan_negative(self):
+        p = IBMFloat.from_float(+1.5)
+        q = float("nan")
+        assert p != q
+
+    def test_equality_with_int_positive(self):
+        p = IBMFloat.from_float(1234.0)
+        q = 1234
+        assert p == q
+
+    def test_equality_with_int_negative(self):
+        p = IBMFloat.from_float(1234.0)
+        q = 4321
+        assert p != q
+
+    def test_equality_with_non_comparable_type_is_false(self):
+        p = IBMFloat.from_float(1234.0)
+        q = None
+        assert p != q
+
+    def test_equality_normalizable_subnormal(self):
+        p = IBMFloat(bytes((0x10, 0x04, 0x00, 0x00)))
+        assert p.is_subnormal()
+        q = IBMFloat(bytes((0x10, 0x05, 0x00, 0x00)))
+        assert q.is_subnormal()
+        assert p != q
+
     @given(ibm_compatible_floats(),
            ibm_compatible_floats(0.0, 1.0))
     def test_add(self, f, p):
@@ -461,8 +550,8 @@ class TestIBMFloat:
 
         assert almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT * 4)
 
-    @given(ibm_compatible_non_negative_floats,
-           ibm_compatible_non_negative_floats)
+    @given(ibm_compatible_non_negative_floats(),
+           ibm_compatible_non_negative_floats())
     def test_sub(self, a, b):
         try:
             ibm_a = IBMFloat.from_float(a)
@@ -476,3 +565,23 @@ class TestIBMFloat:
         ieee_c = ieee_a - ieee_b
 
         assert almost_equal(ieee_c, ibm_c, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(ibm_compatible_floats())
+    def test_repr(self, f):
+        ibm = IBMFloat.from_float(f)
+        r = repr(ibm)
+        assert check_balanced(r)
+
+    @given(ibm_compatible_floats(min_value=-2**21, max_value=+2**21))
+    def test_conversion_to_int(self, f):
+        ibm = IBMFloat.from_float(f)
+        assert int(ibm) == int(f)
+
+    @given(ibm_compatible_floats(min_value=-2**21, max_value=+2**21))
+    def test_round(self, f):
+        ibm = IBMFloat.from_float(f)
+        g = float(ibm)
+        assert round(ibm) == round(g)
+
+
+

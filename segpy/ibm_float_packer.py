@@ -29,7 +29,7 @@ class PackerExtension(metaclass=abc.ABCMeta):
         Returns:
             A sequence of bytes.
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def unpack(self, data, num_items):
@@ -42,7 +42,7 @@ class PackerExtension(metaclass=abc.ABCMeta):
         Returns:
             A sequence of floats.
         """
-        pass
+        raise NotImplementedError
 
 
 class Packer(PackerExtension):

@@ -344,6 +344,23 @@ class TestWriteExtendedTextualHeaders:
             with raises(ValueError):
                 toolkit.write_extended_textual_headers(fh, pages, encoding)
 
+    @given(pages_written=st.lists(
+        elements=st.lists(
+            elements=st.text(alphabet=PRINTABLE_ASCII_ALPHABET, min_size=80, max_size=80),
+            min_size=40, max_size=40).map(tuple),
+        max_size=5),
+        encoding=st.sampled_from(SUPPORTED_ENCODINGS))
+    @settings(
+        suppress_health_check=(HealthCheck.too_slow,),
+        deadline=None,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate))
+    def test_correctly_rounttrip_extended_headers(self, pages_written, encoding):
+        with BytesIO() as fh:
+            toolkit.write_extended_textual_headers(fh, pages_written, encoding)
+            fh.seek(toolkit.REEL_HEADER_NUM_BYTES)
+            pages_read = toolkit.read_extended_headers_counted(fh, len(pages_written), encoding)
+            assert pages_read == pages_written
+
 
 class TestPackValues:
 

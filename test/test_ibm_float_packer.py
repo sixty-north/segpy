@@ -1,7 +1,7 @@
 from hypothesis import given
 import hypothesis.strategies as st
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from segpy import ibm_float_packer
 from segpy.ibm_float import EPSILON_IBM_FLOAT, ieee2ibm
@@ -23,6 +23,9 @@ def byte_arrays_of_floats(draw):
 
 @pytest.mark.usefixtures("ibm_floating_point_impls")
 class TestPackIBMFloat:
+    """This tests the actual Python pack implementation.
+    """
+
     def test_pack_empty(self):
         dest = ibm_float_packer.pack_ibm_floats([])
         assert len(dest) == 0
@@ -42,38 +45,11 @@ class TestPackIBMFloat:
                 epsilon=EPSILON_IBM_FLOAT)
 
 
-class TestPackImplementationSelection:
-    @given(st.data())
-    def test_python_pack_used_when_forced(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer.Packer.pack') as mock,\
-             test.util.force_python_ibm_float(True):
-            ibm_float_packer.pack_ibm_floats(data)
-            assert mock.called
-
-    @pytest.mark.skipif('cpp' not in ibm_float_packer._EXTENSION_MANAGER,
-                        reason="C++ IBM float not installed")
-    @given(st.data())
-    def test_cpp_pack_used_when_available(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy_ibm_float_ext.Packer.pack') as mock,\
-             test.util.force_python_ibm_float(False):
-            ibm_float_packer.pack_ibm_floats(data)
-            assert mock.called
-
-    @pytest.mark.skipif('cpp' in ibm_float_packer._EXTENSION_MANAGER,
-                        reason="C++ IBM float is installed")
-    @given(st.data())
-    def test_python_pack_used_as_fallback(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer.Packer.pack') as mock,\
-             test.util.force_python_ibm_float(False):
-            ibm_float_packer.pack_ibm_floats(data)
-            assert mock.called
-
-
 @pytest.mark.usefixtures("ibm_floating_point_impls")
 class TestUnpackIBMFloat:
+    """This tests the actual Python unpack implementation.
+    """
+
     def test_unpack_empty(self):
         dest = ibm_float_packer.pack_ibm_floats(b'')
         assert len(dest) == 0
@@ -86,31 +62,74 @@ class TestUnpackIBMFloat:
         assert bytes(byte_data) == bytes(packed)
 
 
+class TestPackImplementationSelection:
+    """This tests whether the correct pack implementation is selected.
+    """
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_python_pack_used_when_forced(self, mgr):
+        # Let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=True)
+
+        data = byte_arrays_of_floats().example()
+        with test.util.force_python_ibm_float(True):
+            ibm_float_packer.pack_ibm_floats(data)
+            mgr.__getitem__.assert_called_once_with('python')
+            mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_cpp_pack_used_when_available(self, mgr):
+        # Let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=True)
+
+        data = byte_arrays_of_floats().example()
+        with test.util.force_python_ibm_float(False):
+            ibm_float_packer.pack_ibm_floats(data)
+            mgr.__getitem__.assert_called_once_with('cpp')
+            mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+
+
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_python_pack_used_as_fallback(self, mgr):
+        # Don't let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=False)
+
+        data = byte_arrays_of_floats()
+        with test.util.force_python_ibm_float(False):
+            ibm_float_packer.pack_ibm_floats(data)
+            mgr.__getitem__.assert_called_once_with('python')
+            mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+
+
 class TestUnpackImplementationSelection:
-    @given(st.data())
-    def test_python_unpack_used_when_forced(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer.Packer.unpack') as mock,\
-             test.util.force_python_ibm_float(True):
-            ibm_float_packer.unpack_ibm_floats(*data)
-            assert mock.called
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_python_unpack_used_when_forced(self, mgr):
+        # Let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=True)
 
-    @pytest.mark.skipif('cpp' not in ibm_float_packer._EXTENSION_MANAGER,
-                        reason="C++ IBM float not installed")
-    @given(st.data())
-    def test_cpp_unpack_used_when_available(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy_ibm_float_ext.Packer.unpack') as mock,\
-             test.util.force_python_ibm_float(False):
+        data = byte_arrays_of_floats().example()
+        with test.util.force_python_ibm_float(True):
             ibm_float_packer.unpack_ibm_floats(*data)
-            assert mock.called
+            mgr.__getitem__.assert_called_once_with('python')
+            mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)
 
-    @pytest.mark.skipif('cpp' in ibm_float_packer._EXTENSION_MANAGER,
-                        reason="C++ IBM float is installed")
-    @given(st.data())
-    def test_python_unpack_used_as_fallback(self, data):
-        data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer.Packer.unpack') as mock,\
-             test.util.force_python_ibm_float(False):
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_cpp_unpack_used_when_available(self, mgr):
+        # Let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=True)
+
+        data = byte_arrays_of_floats().example()
+        with test.util.force_python_ibm_float(False):
             ibm_float_packer.unpack_ibm_floats(*data)
-            assert mock.called
+            mgr.__getitem__.assert_called_once_with('cpp')
+            mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)
+
+    @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
+    def test_python_unpack_used_as_fallback(self, mgr):
+        # Don't let the manager report that it contains 'cpp'
+        mgr.__contains__ = MagicMock(return_value=False)
+
+        data = byte_arrays_of_floats().example()
+        with test.util.force_python_ibm_float(False):
+            ibm_float_packer.unpack_ibm_floats(*data)
+            mgr.__getitem__.assert_called_once_with('python')
+            mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)

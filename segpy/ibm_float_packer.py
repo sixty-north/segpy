@@ -72,11 +72,6 @@ force_python_ibm_floats = False
 
 
 def _active_packer():
-    def foo(ext, data):
-        print('ext', ext, ext.obj)
-
-    _EXTENSION_MANAGER.map(foo, '')
-
     name = 'python'
     if 'cpp' in _EXTENSION_MANAGER and not force_python_ibm_floats:
         name = 'cpp'

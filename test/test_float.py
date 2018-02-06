@@ -599,6 +599,13 @@ class TestIBMFloat:
         ieee_b = float(ibm_b)
         assert ibm_a // ibm_b == ieee_a // ieee_b
 
+    @given(a=ibm_compatible_floats())
+    def test_floordiv_ibm_division_by_zero_raises_zero_division_error(self, a):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        with raises(ZeroDivisionError):
+            _ = ibm_a // ibm_b
+
     @given(a=ibm_compatible_floats(),
            b=ibm_compatible_floats())
     def test_rfloordiv_ibm(self, a, b):
@@ -608,6 +615,15 @@ class TestIBMFloat:
         ieee_a = float(ibm_a)
         ieee_b = float(ibm_b)
         assert ieee_a // ibm_b == ieee_a // ieee_b
+
+    @given(a=ibm_compatible_floats(),
+           b=ibm_compatible_floats())
+    def test_rfloordiv_ibm_division_by_zero_raises_zero_division_error(self, a, b):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        ieee_a = float(ibm_a)
+        with raises(ZeroDivisionError):
+            _ = ieee_a // ibm_b
 
     @given(a=ibm_compatible_floats(),
            b=ibm_compatible_floats())
@@ -624,6 +640,13 @@ class TestIBMFloat:
         ieee_c = ieee_a / ieee_b
         assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
 
+    @given(a=ibm_compatible_floats())
+    def test_truediv_ibm_by_zero_raises_zero_division_error(self, a):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        with raises(ZeroDivisionError):
+            _ = ibm_a / ibm_b
+
     @given(a=ibm_compatible_floats(),
            b=ibm_compatible_floats())
     def test_rtruediv_ibm(self, a, b):
@@ -638,6 +661,14 @@ class TestIBMFloat:
             raise UnsatisfiedAssumption
         ieee_c2 = ieee_a / ieee_b
         assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats())
+    def test_rtruediv_ibm_division_by_zero_raises_zero_division_error(self, a):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        ieee_a = float(ibm_a)
+        with raises(ZeroDivisionError):
+            _ = ieee_a / ibm_b
 
     @given(a=ibm_compatible_floats(min_value=0.0),
            b=ibm_compatible_floats())
@@ -743,6 +774,13 @@ class TestIBMFloat:
         ieee_c = ieee_a % ieee_b
         assert almost_equal(ibm_c, ieee_c, epsilon=EPSILON_IBM_FLOAT)
 
+    @given(a=ibm_compatible_floats())
+    def test_mod_ibm_division_by_zero_raises_zero_division_error(self, a):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        with raises(ZeroDivisionError):
+            _ = ibm_a % ibm_b
+
     @given(a=ibm_compatible_floats(),
            b=ibm_compatible_floats())
     def test_rmod_ibm(self, a, b):
@@ -757,6 +795,14 @@ class TestIBMFloat:
             raise UnsatisfiedAssumption
         ieee_c2 = ieee_a % ieee_b
         assert almost_equal(ieee_c1, ieee_c2, epsilon=EPSILON_IBM_FLOAT)
+
+    @given(a=ibm_compatible_floats())
+    def test_rmod_ibm_division_by_zero_raises_zero_division_error(self, a):
+        ibm_a = IBMFloat.from_float(a)
+        ibm_b = IBMFloat.from_float(0.0)
+        ieee_a = float(ibm_a)
+        with raises(ZeroDivisionError):
+            _ = ieee_a % ibm_b
 
     @given(a=ibm_compatible_floats(),
            b=ibm_compatible_floats())

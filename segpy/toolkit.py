@@ -15,19 +15,12 @@ from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORM
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.header import SubFormatMeta
 from segpy.ibm_float import IBMFloat
+from segpy.ibm_float_packer import pack_ibm_floats, unpack_ibm_floats
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING, \
     restored_position_seek
-
-try:
-    import segpy_ibm_float_ext
-    unpack_ibm_floats_cpp = segpy_ibm_float_ext.unpack_ibm_floats
-    pack_ibm_floats_cpp = segpy_ibm_float_ext.pack_ibm_floats
-except ImportError:
-    pack_ibm_floats_cpp = None
-    unpack_ibm_floats_cpp = None
 
 
 HEADER_NEWLINE = '\r\n'
@@ -41,13 +34,6 @@ REEL_HEADER_NUM_BYTES = TEXTUAL_HEADER_NUM_BYTES + BINARY_HEADER_NUM_BYTES
 TRACE_HEADER_NUM_BYTES = 240
 
 END_TEXT_STANZA = "((SEG: EndText))"
-
-
-# Boolean controller whether the Python implementation of IBM floating points
-# numbers will be required. If this is True, then the Python implementation
-# will always be used. If it is False (default) then the C++ implementation
-# will be used if it's available.
-force_python_ibm_floats = False
 
 
 def extract_revision(binary_reel_header):
@@ -511,28 +497,6 @@ def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'
     return values
 
 
-def unpack_ibm_floats_py(data, num_items):
-    return [IBMFloat.from_bytes(data[i: i+4])
-            for i in range(0, num_items * 4, 4)]
-
-
-def unpack_ibm_floats(data, num_items):
-    """Unpack a series of binary-encoded big-endian single-precision IBM floats.
-
-    Args:
-        data: A sequence of bytes.
-
-        num_items: The number of floats to be read.
-
-    Returns:
-        A sequence of floats.
-    """
-    if force_python_ibm_floats or not unpack_ibm_floats_cpp:
-        return unpack_ibm_floats_py(data, num_items)
-    else:
-        return unpack_ibm_floats_cpp(data, num_items)
-
-
 def unpack_values(buf, ctype, endian='>'):
     """Unpack a series items from a byte string.
 
@@ -877,26 +841,6 @@ def write_binary_values(fh, values, seg_y_type, endian='>'):
            else pack_values(values, ctype, endian))
 
     fh.write(buf)
-
-
-def pack_ibm_floats_py(values):
-    return EMPTY_BYTE_STRING.join(bytes(IBMFloat.from_real(value))
-                                  for value in values)
-
-
-def pack_ibm_floats(values):
-    """Pack floats into binary-encoded big-endian single-precision IBM floats.
-
-    Args:
-        values: An iterable series of numeric values.
-
-    Returns:
-        A sequence of bytes.
-    """
-    if force_python_ibm_floats or not pack_ibm_floats_cpp:
-        return pack_ibm_floats_py(values)
-    else:
-        return pack_ibm_floats_cpp(values)
 
 
 def pack_values(values, ctype, endian='>'):

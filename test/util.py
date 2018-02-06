@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-import segpy.toolkit as toolkit
+import segpy.ibm_float_packer
 
 
 @contextmanager
@@ -7,9 +7,9 @@ def force_python_ibm_float(force):
     """Configure segpy to run with and without the C++ implementation of IBM
     floating point un/packing.
     """
-    orig = toolkit.force_python_ibm_floats
-    toolkit.force_python_ibm_floats = force
+    orig = segpy.ibm_float_packer.force_python_ibm_floats
+    segpy.ibm_float_packer.force_python_ibm_floats = force
     try:
         yield force
     finally:
-        toolkit.force_python_ibm_floats = orig
+        segpy.ibm_float_packer.force_python_ibm_floats = orig

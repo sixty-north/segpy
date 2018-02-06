@@ -84,7 +84,7 @@ setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['docopt_subcommands'],
+    install_requires=['docopt_subcommands', 'stevedore'],
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
@@ -114,5 +114,8 @@ setup(
         'console_scripts': [
             'segpy = segpy.cli:main',
         ],
+        'segpy.ibm_float_packer': [
+            'python = segpy.ibm_float_packer:Packer'
+        ]
     }
 )

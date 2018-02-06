@@ -46,27 +46,27 @@ class TestPackImplementationSelection:
     @given(st.data())
     def test_python_pack_used_when_forced(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._pack_ibm_floats_py') as mock,\
+        with patch('segpy.ibm_float_packer.Packer.pack') as mock,\
              test.util.force_python_ibm_float(True):
             ibm_float_packer.pack_ibm_floats(data)
             assert mock.called
 
-    @pytest.mark.skipif(ibm_float_packer._pack_ibm_floats_cpp is None,
+    @pytest.mark.skipif('cpp' not in ibm_float_packer._EXTENSION_MANAGER,
                         reason="C++ IBM float not installed")
     @given(st.data())
     def test_cpp_pack_used_when_available(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._pack_ibm_floats_cpp') as mock,\
+        with patch('segpy_ibm_float_ext.Packer.pack') as mock,\
              test.util.force_python_ibm_float(False):
             ibm_float_packer.pack_ibm_floats(data)
             assert mock.called
 
-    @pytest.mark.skipif(ibm_float_packer._pack_ibm_floats_cpp is not None,
+    @pytest.mark.skipif('cpp' in ibm_float_packer._EXTENSION_MANAGER,
                         reason="C++ IBM float is installed")
     @given(st.data())
     def test_python_pack_used_as_fallback(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._pack_ibm_floats_py') as mock,\
+        with patch('segpy.ibm_float_packer.Packer.pack') as mock,\
              test.util.force_python_ibm_float(False):
             ibm_float_packer.pack_ibm_floats(data)
             assert mock.called
@@ -90,27 +90,27 @@ class TestUnpackImplementationSelection:
     @given(st.data())
     def test_python_unpack_used_when_forced(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._unpack_ibm_floats_py') as mock,\
+        with patch('segpy.ibm_float_packer.Packer.unpack') as mock,\
              test.util.force_python_ibm_float(True):
             ibm_float_packer.unpack_ibm_floats(*data)
             assert mock.called
 
-    @pytest.mark.skipif(ibm_float_packer._unpack_ibm_floats_cpp is None,
+    @pytest.mark.skipif('cpp' not in ibm_float_packer._EXTENSION_MANAGER,
                         reason="C++ IBM float not installed")
     @given(st.data())
     def test_cpp_unpack_used_when_available(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._unpack_ibm_floats_cpp') as mock,\
+        with patch('segpy_ibm_float_ext.Packer.unpack') as mock,\
              test.util.force_python_ibm_float(False):
             ibm_float_packer.unpack_ibm_floats(*data)
             assert mock.called
 
-    @pytest.mark.skipif(ibm_float_packer._unpack_ibm_floats_cpp is not None,
+    @pytest.mark.skipif('cpp' in ibm_float_packer._EXTENSION_MANAGER,
                         reason="C++ IBM float is installed")
     @given(st.data())
     def test_python_unpack_used_as_fallback(self, data):
         data = data.draw(byte_arrays_of_floats())
-        with patch('segpy.ibm_float_packer._unpack_ibm_floats_py') as mock,\
+        with patch('segpy.ibm_float_packer.Packer.unpack') as mock,\
              test.util.force_python_ibm_float(False):
             ibm_float_packer.unpack_ibm_floats(*data)
             assert mock.called

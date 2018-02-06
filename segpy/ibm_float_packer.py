@@ -6,16 +6,60 @@ un/packing routines. The default version is written in pure Python, but if the
 faster C++ implementation is detected then it will be used.
 """
 
+import abc
+from stevedore.extension import ExtensionManager
+
 from segpy.ibm_float import IBMFloat
 from segpy.util import EMPTY_BYTE_STRING
 
-try:
-    import segpy_ibm_float_ext
-    _unpack_ibm_floats_cpp = segpy_ibm_float_ext.unpack_ibm_floats
-    _pack_ibm_floats_cpp = segpy_ibm_float_ext.pack_ibm_floats
-except ImportError:
-    _pack_ibm_floats_cpp = None
-    _unpack_ibm_floats_cpp = None
+
+class PackerExtension(metaclass=abc.ABCMeta):
+    """Abstract base class defining the Packer extension.
+
+    Packers know how to pack and unpack IBM floating point format.
+    """
+
+    @abc.abstractmethod
+    def pack(self, values):
+        """Pack floats into binary-encoded big-endian single-precision IBM floats.
+
+        Args:
+            values: An iterable series of numeric values.
+
+        Returns:
+            A sequence of bytes.
+        """
+        pass
+
+    @abc.abstractmethod
+    def unpack(self, data, num_items):
+        """Unpack a series of binary-encoded big-endian single-precision IBM floats.
+
+        Args:
+            data: A sequence of bytes.
+            num_items: The number of floats to be read.
+
+        Returns:
+            A sequence of floats.
+        """
+        pass
+
+
+class Packer(PackerExtension):
+    """Default implementation of IBM float un/packing.
+    """
+    def pack(self, values):
+        return EMPTY_BYTE_STRING.join(bytes(IBMFloat.from_real(value))
+                                      for value in values)
+
+    def unpack(self, data, num_items):
+        return [IBMFloat.from_bytes(data[i: i+4])
+                for i in range(0, num_items * 4, 4)]
+
+
+_EXTENSION_MANAGER = ExtensionManager(
+    namespace='segpy.ibm_float_packer',
+    invoke_on_load=True)
 
 
 # Boolean controller whether the Python implementation of IBM floating points
@@ -27,9 +71,17 @@ except ImportError:
 force_python_ibm_floats = False
 
 
-def _unpack_ibm_floats_py(data, num_items):
-    return [IBMFloat.from_bytes(data[i: i+4])
-            for i in range(0, num_items * 4, 4)]
+def _active_packer():
+    def foo(ext, data):
+        print('ext', ext, ext.obj)
+
+    _EXTENSION_MANAGER.map(foo, '')
+
+    name = 'python'
+    if 'cpp' in _EXTENSION_MANAGER and not force_python_ibm_floats:
+        name = 'cpp'
+
+    return _EXTENSION_MANAGER[name].obj
 
 
 def unpack_ibm_floats(data, num_items):
@@ -42,15 +94,8 @@ def unpack_ibm_floats(data, num_items):
     Returns:
         A sequence of floats.
     """
-    if force_python_ibm_floats or not _unpack_ibm_floats_cpp:
-        return _unpack_ibm_floats_py(data, num_items)
-    else:
-        return _unpack_ibm_floats_cpp(data, num_items)
 
-
-def _pack_ibm_floats_py(values):
-    return EMPTY_BYTE_STRING.join(bytes(IBMFloat.from_real(value))
-                                  for value in values)
+    return _active_packer().unpack(data, num_items)
 
 
 def pack_ibm_floats(values):
@@ -62,7 +107,4 @@ def pack_ibm_floats(values):
     Returns:
         A sequence of bytes.
     """
-    if force_python_ibm_floats or not _pack_ibm_floats_cpp:
-        return _pack_ibm_floats_py(values)
-    else:
-        return _pack_ibm_floats_cpp(values)
+    return _active_packer().pack(values)

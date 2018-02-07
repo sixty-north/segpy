@@ -66,18 +66,20 @@ class TestPackImplementationSelection:
     """This tests whether the correct pack implementation is selected.
     """
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_python_pack_used_when_forced(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_python_pack_used_when_forced(self, python_packer, mgr):
         # Let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=True)
 
         data = byte_arrays_of_floats().example()
         with test.util.force_python_ibm_float(True):
             ibm_float_packer.pack_ibm_floats(data)
-            mgr.__getitem__.assert_called_once_with('python')
-            mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+            mgr.__getitem__.assert_not_called()
+            python_packer.return_value.pack.assert_called_with(data)
 
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_cpp_pack_used_when_available(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_cpp_pack_used_when_available(self, python_packer, mgr):
         # Let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=True)
 
@@ -86,34 +88,37 @@ class TestPackImplementationSelection:
             ibm_float_packer.pack_ibm_floats(data)
             mgr.__getitem__.assert_called_once_with('cpp')
             mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+            python_packer.return_value.pack.assert_not_called()
 
 
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_python_pack_used_as_fallback(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_python_pack_used_as_fallback(self, python_packer, mgr):
         # Don't let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=False)
 
         data = byte_arrays_of_floats()
         with test.util.force_python_ibm_float(False):
             ibm_float_packer.pack_ibm_floats(data)
-            mgr.__getitem__.assert_called_once_with('python')
-            mgr.__getitem__.return_value.obj.pack.assert_called_with(data)
+            python_packer.return_value.pack.assert_called_with(data)
 
 
 class TestUnpackImplementationSelection:
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_python_unpack_used_when_forced(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_python_unpack_used_when_forced(self, python_packer, mgr):
         # Let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=True)
 
         data = byte_arrays_of_floats().example()
         with test.util.force_python_ibm_float(True):
             ibm_float_packer.unpack_ibm_floats(*data)
-            mgr.__getitem__.assert_called_once_with('python')
-            mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)
+            mgr.__getitem__.assert_not_called()
+            python_packer.return_value.unpack.assert_called_with(*data)
 
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_cpp_unpack_used_when_available(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_cpp_unpack_used_when_available(self, python_packer, mgr):
         # Let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=True)
 
@@ -122,14 +127,16 @@ class TestUnpackImplementationSelection:
             ibm_float_packer.unpack_ibm_floats(*data)
             mgr.__getitem__.assert_called_once_with('cpp')
             mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)
+            python_packer.return_value.unpack.assert_not_called()
 
     @patch('segpy.ibm_float_packer._EXTENSION_MANAGER')
-    def test_python_unpack_used_as_fallback(self, mgr):
+    @patch('segpy.ibm_float_packer.Packer')
+    def test_python_unpack_used_as_fallback(self, python_packer, mgr):
         # Don't let the manager report that it contains 'cpp'
         mgr.__contains__ = MagicMock(return_value=False)
 
         data = byte_arrays_of_floats().example()
         with test.util.force_python_ibm_float(False):
             ibm_float_packer.unpack_ibm_floats(*data)
-            mgr.__getitem__.assert_called_once_with('python')
-            mgr.__getitem__.return_value.obj.unpack.assert_called_with(*data)
+            mgr.__getitem__.assert_not_called()
+            python_packer.return_value.unpack.assert_called_with(*data)

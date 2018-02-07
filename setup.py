@@ -113,9 +113,6 @@ setup(
     entry_points={
         'console_scripts': [
             'segpy = segpy.cli:main',
-        ],
-        'segpy.ibm_float_packer': [
-            'python = segpy.ibm_float_packer:Packer'
         ]
     }
 )

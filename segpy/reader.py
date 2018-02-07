@@ -11,6 +11,7 @@ from pathlib import Path
 import logging
 
 from segpy import __version__
+from segpy.binary_reel_header import BinaryReelHeader
 from segpy.dataset import Dataset
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
@@ -37,6 +38,7 @@ log.setLevel('INFO')
 def create_reader(
         fh,
         encoding=None,
+        binary_reel_header_format=BinaryReelHeader,
         trace_header_format=TraceHeaderRev1,
         endian='>',
         progress=None,
@@ -59,6 +61,9 @@ def create_reader(
         encoding: An optional text encoding for the textual headers. If
             None (the default) a heuristic will be used to guess the
             header encoding.
+
+        binary_reel_header_format: An optional class defining the layout
+            of the binary reel-header. Defaults to BinaryReelHeader.
 
         trace_header_format: An optional class defining the layout of the
             trace header. Defaults to TraceHeaderRev1.
@@ -137,14 +142,15 @@ def create_reader(
     cache_file_path = None
 
     if cache_directory is not None:
-        sha1 = hash_for_file(fh, encoding, trace_header_format, endian)
+        sha1 = hash_for_file(fh, encoding, binary_reel_header_format, trace_header_format, endian)
         seg_y_path = filename_from_handle(fh)
         cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
         if cache_file_path is not None:
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, trace_header_format, endian, progress_callback, dimensionality)
+        reader = _make_reader(fh, encoding, binary_reel_header_format, trace_header_format,
+                              endian, progress_callback, dimensionality)
         if cache_file_path is not None:
             _save_reader_to_cache(reader, cache_file_path)
 
@@ -243,13 +249,13 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     return reader
 
 
-def _make_reader(fh, encoding, trace_header_format, endian, progress, dimensionality):
+def _make_reader(fh, encoding, binary_reel_header_format, trace_header_format, endian, progress, dimensionality):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
     if encoding is None:
         encoding = ASCII
     textual_reel_header = read_textual_reel_header(fh, encoding)
-    binary_reel_header = read_binary_reel_header(fh, endian)
+    binary_reel_header = read_binary_reel_header(fh, binary_reel_header_format, endian=endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     bps = bytes_per_sample(binary_reel_header)
 

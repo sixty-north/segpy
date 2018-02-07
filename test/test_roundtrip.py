@@ -22,7 +22,7 @@ class TestBinaryReelHeader:
             written_stream = write_stream.getvalue()
 
         with BytesIO(written_stream) as read_stream:
-            read_header = read_binary_reel_header(read_stream, endian)
+            read_header = read_binary_reel_header(read_stream, endian=endian)
 
         assert are_equal(write_header, read_header)
 

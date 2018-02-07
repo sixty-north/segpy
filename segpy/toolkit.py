@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from array import array
 from collections import OrderedDict
 from itertools import zip_longest, count
@@ -14,13 +12,12 @@ from segpy.catalog import CatalogBuilder
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
 from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
 from segpy.header import SubFormatMeta
-from segpy.ibm_float import IBMFloat
 from segpy.ibm_float_packer import pack_ibm_floats, unpack_ibm_floats
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING, \
-    restored_position_seek
+from segpy.util import (file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS,
+                        EMPTY_BYTE_STRING, restored_position_seek)
 
 
 HEADER_NEWLINE = '\r\n'
@@ -168,18 +165,20 @@ def read_textual_reel_header(fh, encoding):
     return lines
 
 
-def read_binary_reel_header(fh, endian='>'):
+def read_binary_reel_header(fh, binary_reel_header_format=BinaryReelHeader, endian='>'):
     """Read the SEG Y binary reel header.
 
     Args:
         fh: A file-like object open in binary mode. Binary header is assumed to
             be at an offset of 3200 bytes from the beginning of the file.
 
+        binary_reel_header_format: The class defining the binary reel-header layout.
+
         endian: '>' for big-endian data (the standard and default), '<' for
             little-endian (non-standard)
     """
-    header_packer = make_header_packer(BinaryReelHeader, endian)
-    buffer = fh.read(BinaryReelHeader.LENGTH_IN_BYTES)
+    header_packer = make_header_packer(binary_reel_header_format, endian)
+    buffer = fh.read(binary_reel_header_format.LENGTH_IN_BYTES)
     reel_header = header_packer.unpack(buffer)
     return reel_header
 

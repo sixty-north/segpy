@@ -3,6 +3,7 @@ from hypothesis import given
 from hypothesis.strategies import sampled_from
 from pytest import raises
 
+import segpy
 from segpy.field_types import Int32, NNInt32
 from segpy.header import Header, field, are_equal
 from segpy.packer import compile_struct, make_header_packer, BijectiveHeaderPacker, SurjectiveHeaderPacker
@@ -225,6 +226,6 @@ class TestHeaderPacker:
     def test_pickle_versioning_mismatch_raises_type_error(self):
         packer1 = make_header_packer(PickleableHeader, endian='>')
         s = pickle.dumps(packer1)
-        s = s.replace(b'2.0.0', b'xxxxx')
+        s = s.replace(segpy.__version__.encode('ascii'), b'xxxxx')
         with raises(TypeError):
             pickle.loads(s)

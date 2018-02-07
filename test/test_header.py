@@ -7,6 +7,7 @@ from pytest import raises
 from hypothesis import given, assume
 from hypothesis.strategies import integers
 
+import segpy
 from segpy.header import field, Header, are_equal
 from segpy.field_types import Int32, NNInt32
 from segpy.datatypes import LIMITS, SegYType
@@ -132,7 +133,7 @@ class TestHeader:
     def test_pickle_versioning_mismatch_raises_type_error(self, a, b, c):
         h1 = ExampleHeader(a, b, c)
         s = pickle.dumps(h1)
-        s = s.replace(b'2.0.0', b'xxxxx')
+        s = s.replace(segpy.__version__.encode('ascii'), b'xxxxx')
         with raises(TypeError):
             pickle.loads(s)
 

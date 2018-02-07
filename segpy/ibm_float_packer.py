@@ -72,11 +72,10 @@ force_python_ibm_floats = False
 
 
 def _active_packer():
-    name = 'python'
-    if 'cpp' in _EXTENSION_MANAGER and not force_python_ibm_floats:
-        name = 'cpp'
+    if force_python_ibm_floats or 'cpp' not in _EXTENSION_MANAGER:
+        return Packer()
 
-    return _EXTENSION_MANAGER[name].obj
+    return _EXTENSION_MANAGER['cpp'].obj
 
 
 def unpack_ibm_floats(data, num_items):

@@ -18,6 +18,7 @@ class IntFieldMeta(type):
                 seg_y_type,
                 min_value=None,
                 max_value=None,
+                size=None,
                 **kwargs):
 
         bases = bases + ((int,) if int not in bases else ())
@@ -28,11 +29,14 @@ class IntFieldMeta(type):
         if max_value is None:
             max_value = LIMITS[seg_y_type].max
 
+        if size is None:
+            size = size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type])
+
         namespace.update({
             'SEG_Y_TYPE': seg_y_type,
             'MINIMUM': min_value,
             'MAXIMUM': max_value,
-            'SIZE': size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type]),
+            'SIZE': size,
             '__new__': cls.class_new,
         })
         return super().__new__(cls, name, bases, namespace, **kwargs)

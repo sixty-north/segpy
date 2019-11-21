@@ -187,39 +187,40 @@ class BinaryReelHeader(Header):
     START_OFFSET_IN_BYTES = 3201
     LENGTH_IN_BYTES = 400
 
-    job_id_num = field(
-        Int32, offset=3201, default=0, documentation=
-        "Job identification number")
+    # job_id_num = field(
+    #     Int32, offset=3201, default=0, documentation=
+    #     "Job identification number")
+    #
 
     line_num = field(
         NNInt32, offset=3205, default=0, documentation=
         "Line number. For 3-D poststack data, this will typically contain the in-line number."
     )
-
-    reel_num = field(
-        Int32, offset=3209, default=0, documentation=
-        "Reel number."
-    )
-
-    data_traces_per_ensemble = field(
-        NNInt16, offset=3213, default=0, documentation=
-        "Number of data traces per ensemble. Mandatory for prestack data."
-    )
-
-    auxiliary_traces_per_ensemble = field(
-        NNInt16, offset=3215, default=0, documentation=
-        "Number of auxiliary traces per ensemble. Mandatory for prestack data."
-    )
+    #
+    # reel_num = field(
+    #     Int32, offset=3209, default=0, documentation=
+    #     "Reel number."
+    # )
+    #
+    # data_traces_per_ensemble = field(
+    #     NNInt16, offset=3213, default=0, documentation=
+    #     "Number of data traces per ensemble. Mandatory for prestack data."
+    # )
+    #
+    # auxiliary_traces_per_ensemble = field(
+    #     NNInt16, offset=3215, default=0, documentation=
+    #     "Number of auxiliary traces per ensemble. Mandatory for prestack data."
+    # )
 
     sample_interval = field(
         NNInt16, offset=3217, default=0, documentation=
         "Sample interval in microseconds (μs). Mandatory for all data types."
     )
 
-    original_field_sample_interval = field(
-        NNInt16, offset=3219, default=0, documentation=
-        "Sample interval in microseconds (μs) of original field recording."
-    )
+    # original_field_sample_interval = field(
+    #     NNInt16, offset=3219, default=0, documentation=
+    #     "Sample interval in microseconds (μs) of original field recording."
+    # )
 
     num_samples = field(
         NNInt16, offset=3221, default=0, documentation=
@@ -238,95 +239,95 @@ class BinaryReelHeader(Header):
         documentation=DataSampleFormat.__doc__
     )
 
-    ensemble_fold = field(
-        NNInt16, offset=3227, default=0, documentation=
-        """Ensemble fold. The expected number of data traces per trace ensemble (e.g. the CMP fold).
-        Highly recommended for all types of data."""
-    )
+    # ensemble_fold = field(
+    #     NNInt16, offset=3227, default=0, documentation=
+    #     """Ensemble fold. The expected number of data traces per trace ensemble (e.g. the CMP fold).
+    #     Highly recommended for all types of data."""
+    # )
 
     trace_sorting = field(
         TraceSortingField, offset=3229, default=0,
         documentation=TraceSorting.__doc__)
 
-    vertical_sum_code = field(
-        NNInt16, offset=3231, default=0, documentation=
-        """Vertical sum code:
-        1 = no sum,
-        2 = two sum,
-        ...,
-        N=M-1 sum (M=2to32,767)."""
-    )
-
-    sweep_frequency_at_start = field(
-        NNInt16, offset=3233, default=0, documentation=
-        "Sweep frequency at start (Hz)."
-    )
-
-    sweep_frequency_at_end = field(
-        NNInt16, offset=3235, default=0, documentation=
-        "Sweep frequency at end (Hz)."
-    )
-
-    sweep_length = field(
-        NNInt16, offset=3237, default=0, documentation=
-        "Sweep length in milliseconds."
-    )
-
-    sweep_type = field(
-        segpy.trace_header.SweepTypeField, offset=3239, default=0,
-        documentation=segpy.trace_header.SweepType.__doc__
-    )
-
-    sweep_trace_number = field(
-        Int16, offset=3241, default=0, documentation=
-        "Trace number of sweep channel."
-    )
-
-    sweep_trace_taper_length_at_start = field(
-        NNInt16, offset=3243, default=0, documentation=
-        "Sweep trace taper length at start in milliseconds."
-    )
-
-    sweep_trace_taper_length_at_end = field(
-        NNInt16, offset=3245, default=0, documentation=
-        "Sweep trace taper length at end in milliseconds."
-    )
-
-    taper_type = field(
-        segpy.trace_header.TaperTypeField, offset=3247, default=0,
-        documentation=segpy.trace_header.TaperType.__doc__
-    )
-
-    correlated_data_traces = field(
-        CorrelatedDataTracesField, offset=3249, default=0,
-        documentation=CorrelatedDataTraces.__doc__
-    )
-
-    binary_gain_recovered = field(
-        BinaryGainRecoveredField, offset=3251, default=0,
-        documentation=BinaryGainRecovered.__doc__
-    )
-
-    amplitude_recovery_method = field(
-        AmplitudeRecoveryMethodField, offset=3253, default=0,
-        documentation=AmplitudeRecoveryMethod.__doc__
-    )
-
-    measurement_system = field(
-        MeasurementSystemField, offset=3255, default=0,
-        documentation=MeasurementSystem.__doc__
-    )
-
-    impulse_signal_polarity = field(
-        ImpulseSignalPolarityField, offset=3257, default=0,
-        documentation=ImpulseSignalPolarity.__doc__
-    )
-
-    vibratory_polarity_code = field(
-        VibratoryPolarityCodeField,
-        offset=3259, default=0,
-        documentation=VibratoryPolarityCode.__doc__
-    )
+    # vertical_sum_code = field(
+    #     NNInt16, offset=3231, default=0, documentation=
+    #     """Vertical sum code:
+    #     1 = no sum,
+    #     2 = two sum,
+    #     ...,
+    #     N=M-1 sum (M=2to32,767)."""
+    # )
+    #
+    # sweep_frequency_at_start = field(
+    #     NNInt16, offset=3233, default=0, documentation=
+    #     "Sweep frequency at start (Hz)."
+    # )
+    #
+    # sweep_frequency_at_end = field(
+    #     NNInt16, offset=3235, default=0, documentation=
+    #     "Sweep frequency at end (Hz)."
+    # )
+    #
+    # sweep_length = field(
+    #     NNInt16, offset=3237, default=0, documentation=
+    #     "Sweep length in milliseconds."
+    # )
+    #
+    # sweep_type = field(
+    #     segpy.trace_header.SweepTypeField, offset=3239, default=0,
+    #     documentation=segpy.trace_header.SweepType.__doc__
+    # )
+    #
+    # sweep_trace_number = field(
+    #     Int16, offset=3241, default=0, documentation=
+    #     "Trace number of sweep channel."
+    # )
+    #
+    # sweep_trace_taper_length_at_start = field(
+    #     NNInt16, offset=3243, default=0, documentation=
+    #     "Sweep trace taper length at start in milliseconds."
+    # )
+    #
+    # sweep_trace_taper_length_at_end = field(
+    #     NNInt16, offset=3245, default=0, documentation=
+    #     "Sweep trace taper length at end in milliseconds."
+    # )
+    #
+    # taper_type = field(
+    #     segpy.trace_header.TaperTypeField, offset=3247, default=0,
+    #     documentation=segpy.trace_header.TaperType.__doc__
+    # )
+    #
+    # correlated_data_traces = field(
+    #     CorrelatedDataTracesField, offset=3249, default=0,
+    #     documentation=CorrelatedDataTraces.__doc__
+    # )
+    #
+    # binary_gain_recovered = field(
+    #     BinaryGainRecoveredField, offset=3251, default=0,
+    #     documentation=BinaryGainRecovered.__doc__
+    # )
+    #
+    # amplitude_recovery_method = field(
+    #     AmplitudeRecoveryMethodField, offset=3253, default=0,
+    #     documentation=AmplitudeRecoveryMethod.__doc__
+    # )
+    #
+    # measurement_system = field(
+    #     MeasurementSystemField, offset=3255, default=0,
+    #     documentation=MeasurementSystem.__doc__
+    # )
+    #
+    # impulse_signal_polarity = field(
+    #     ImpulseSignalPolarityField, offset=3257, default=0,
+    #     documentation=ImpulseSignalPolarity.__doc__
+    # )
+    #
+    # vibratory_polarity_code = field(
+    #     VibratoryPolarityCodeField,
+    #     offset=3259, default=0,
+    #     documentation=VibratoryPolarityCode.__doc__
+    # )
 
     format_revision_num = field(
         FormatRevisionNumField, offset=3501, default=0x100, documentation=

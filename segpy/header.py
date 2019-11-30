@@ -298,8 +298,9 @@ class HeaderFieldDescriptor:
         try:
             self._instance_data[instance] = self._named_field._value_type(value)
         except ValueError as e:
-            raise ValueError("Assigned value {!r} for {} attribute must be convertible to {}: {}"
-                             .format(value, self._name, self._named_field._value_type.__name__, e)) from e
+           # self._instance_data[instance] = self._named_field._value_type(self.df)
+  #          raise ValueError("Assigned value {!r} for {} attribute must be convertible to {}: {}"
+  #                           .format(value, self._name, self._named_field._value_type.__name__, e)) from e
 
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))

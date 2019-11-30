@@ -309,3 +309,4 @@ class HeaderFieldDescriptor:
 class Header(BaseHeader, metaclass=FormatMeta):
     """A base class for header definition classes."""
     pass
+

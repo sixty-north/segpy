@@ -298,7 +298,7 @@ class HeaderFieldDescriptor:
         try:
             self._instance_data[instance] = self._named_field._value_type(value)
         except ValueError as e:
-           # self._instance_data[instance] = self._named_field._value_type(self.df)
+            self._instance_data[instance] = self._named_field.default
   #          raise ValueError("Assigned value {!r} for {} attribute must be convertible to {}: {}"
   #                           .format(value, self._name, self._named_field._value_type.__name__, e)) from e
 

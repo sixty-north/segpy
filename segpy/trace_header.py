@@ -497,11 +497,11 @@ class TraceHeaderRev0(Header):
         particularly crucial for the correct processing of SEG Y data in disk
         files (see Appendix C). If the fixed length trace flag in bytes
         3503-3504 of the Binary File Header is set, the sample interval and
-        #TODO: field names instead of byte offsets number of samples in every
-        trace in the SEG Y file must be the same as the values recorded in the
-        Binary File Header. If the fixed length trace flag is not set, the
-        sample interval and number of samples may vary from trace to trace.
-        Highly recommended for all types of data."""
+        number of samples in every trace in the SEG Y file must be the same
+        as the values recorded in the Binary File Header. If the fixed length
+        trace flag is not set, the sample interval and number of samples may vary
+        from trace to trace. Highly recommended for all types of data.
+        """
     )
 
     gain_type_of_field_instruments = field(

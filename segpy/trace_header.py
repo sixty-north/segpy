@@ -517,6 +517,7 @@ class TraceHeaderRev0(Header):
     instrument_initial_gain = field(
         Int16, offset=123, default=0, documentation=
         "Instrument early or initial gain (dB)."
+        "Instrument early or initial gain (dB)."
     )
 
     correlated = field(

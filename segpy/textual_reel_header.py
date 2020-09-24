@@ -45,6 +45,9 @@ C39 { unassigned17                                                             }
 C40 { end_marker                                                               }
 """
 
+# Multiple-choice entries like 'SAMPLE CODE' in card 8 are intended to have the appropriate choice
+# (such as 'FLOATING PT') marked with an 'X'.
+
 TEMPLATE = ''.join(_TEMPLATE.splitlines(keepends=False)[1:])
 
 END_TEXTUAL_HEADER = 'END TEXTUAL HEADER'

@@ -22,6 +22,15 @@ class Dataset(metaclass=ABCMeta):
     @property
     @abstractmethod
     def extended_textual_header(self):
+        """
+        An iterables series of sequences of Unicode strings, where the outer iterable
+        represents 3200 byte pages, each comprised of a sequence of exactly 40 strings of
+        nominally 80 characters each. Although Unicode strings are accepted, when encoded
+        they should result in exact 80 bytes sequences.
+
+        When overriding, to produce a valid data structure
+        for pages, consider using format_extended_textual_header().
+        """
         raise NotImplementedError
 
     @property

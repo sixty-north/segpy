@@ -40,7 +40,6 @@ class Dataset(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def trace_indexes(self):
         """An iterator over zero-based trace_samples indexes.
 
@@ -48,7 +47,7 @@ class Dataset(metaclass=ABCMeta):
             An iterator which yields integers in the range zero to
             num_traces - 1
         """
-        raise NotImplementedError
+        return range(0, self.num_traces())
 
     @abstractmethod
     def num_traces(self):

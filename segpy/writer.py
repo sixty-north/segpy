@@ -21,7 +21,7 @@ def write_segy(fh,
         trace_header_format: The class which defines the layout of the trace header. Defaults to TraceHeaderRev1.
 
         encoding: Optional encoding for text data. Typically 'cp037' for EBCDIC or 'ascii' for ASCII. If omitted, the
-            seg_y_data object will be queries for an encoding property.
+            dataset object will be queried for an encoding property.
 
         endian: Big endian by default. If omitted, the dataset object will be queried for an encoding property.
 

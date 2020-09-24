@@ -395,7 +395,7 @@ class TraceHeaderRev0(Header):
 
     group_y = field(
         Int32, offset=85, default=0, documentation=
-        """Source coordinate - Y. The xy_scalar applies to this value. The coordinate
+        """Group coordinate - Y. The xy_scalar applies to this value. The coordinate
         reference system should be identified through an extended header
         Location Data stanza. If the coordinate units are in seconds of arc,
         decimal degrees or DMS, the Y values represent latitude. A positive

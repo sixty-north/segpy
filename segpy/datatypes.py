@@ -84,6 +84,18 @@ CTYPE_TO_SIZE = dict(
     ibm=4)
 
 
+def data_sample_format_size_in_bytes(data_sample_format: DataSampleFormat):
+    """The size in bytes per sample of a data sample format.
+    """
+    return CTYPE_TO_SIZE[SEG_Y_TYPE_TO_CTYPE[DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[data_sample_format]]]
+
+
+def data_sample_format_description(data_sample_format: DataSampleFormat):
+    """A textual description of the data sample format.
+    """
+    return SEG_Y_TYPE_DESCRIPTION[DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[data_sample_format]]
+
+
 def size_in_bytes(ctype):
     """The size in bytes of a ctype.
     """

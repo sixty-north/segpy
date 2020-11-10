@@ -2,12 +2,11 @@
 Segpy 2
 =======
 
+This is the SSIO port of SEGPY and is maintained by SSIO.
+
 Segpy is open source software created by Sixty North and licensed under the GNU Affero General Public License.
 
-Alternative commercial license terms are available from Sixty North AS if you wish to redistribute Segpy as
-part of a proprietary closed source product or deliver software software-as-a-service (SaaS) using Segpy as part
-of a proprietary closed source service.
-
+As such it is free to use for any purposes as defined in the Affero GPU License hereto attached.
 Status
 ======
 

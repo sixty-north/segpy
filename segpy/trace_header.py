@@ -8,6 +8,10 @@ class DataUse(IntEnum):
     """Data use:
     1 = Production,
     2 = Test"""
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
+    UNKNOWN = 0
     PRODUCTION = 1
     TEST = 2
 
@@ -26,6 +30,9 @@ class ScalarFactor(IntEnum):
     Scalar = 1, +10, +100, +1000, or +10,000. If positive, scalar is used as a
     multiplier; if negative, scalar is used as a divisor.
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     POS_1 = 1
     POS_10 = 10
@@ -51,6 +58,9 @@ class CoordinateUnits(IntEnum):
     to 1; To encode ±DDDMMSS.ss this value equals ±DDD*106 + MM*104 + SS*102
     with xy_scalar set to -100.
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     LENGTH = 1
     SECONDS_OF_ARC = 2
@@ -64,7 +74,11 @@ class CoordinateUnitsField(metaclass=IntEnumFieldMeta,
 
 
 class Correlated(IntEnum):
-    "Correlated: 1 = no, 2 = yes."
+    """Correlated: 0 = unknown, 1 = no, 2 = yes"""
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
+    UNKNOWN = 0
     NO = 1
     YES = 2
 
@@ -81,6 +95,9 @@ class SweepType(IntEnum):
     3 = exponential
     4 = other.
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     LINEAR = 1
     PARABOLIC = 2
@@ -99,6 +116,9 @@ class TaperType(IntEnum):
     2 = cos2,
     3 = other
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     LINEAR = 1
     COS_SQUARED = 2
@@ -147,6 +167,9 @@ class TimeBasisCode(IntEnum):
     be explained in a user defined stanza in the Extended Textual File Header,
     4 = UTC (Coordinated Universal Time).
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     LOCAL = 1
     GMT = 2
@@ -164,6 +187,9 @@ class OverTravel(IntEnum):
     1 = down (or behind)
     2 = up (or ahead)
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     UNKNOWN = 0
     DOWN = 1
     UP = 2
@@ -187,6 +213,11 @@ class SampleUnit(IntEnum):
     8 = Newton (N),
     9 = Watt (W)
     """
+
+    @classmethod
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     OTHER = -1
     UNKNOWN = 0
     PASCAL = 1
@@ -198,7 +229,6 @@ class SampleUnit(IntEnum):
     METERS_PER_SECOND_SQUARED = 7
     NEWTON = 8
     WATT = 9
-
 
 class SampleUnitField(metaclass=IntEnumFieldMeta,
                       enum=SampleUnit):
@@ -238,6 +268,9 @@ class SourceMeasurementUnit(IntEnum):
     5 = Newton (N),
     6 = Kilograms (kg)
     """
+    def _missing_(cls, name):
+        return cls.UNKNOWN
+
     OTHER = -1
     UNKNOWN = 0
     JOULE = 1

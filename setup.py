@@ -88,7 +88,7 @@ setup(
     # You can install these using the following syntax, for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['check-manifest', 'wheel', 'twine'],
+        'dev': ['check-manifest', 'wheel', 'twine', 'bumpversion'],
         'doc': ['sphinx', 'cartouche', 'sphinx_rtd_theme'],
         'test': ['coverage', 'hypothesis', 'pytest'],
     },

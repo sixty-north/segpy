@@ -52,15 +52,15 @@ Here's a short example which converts non-standard little-endian SEG-Y to standa
 
   from segpy.reader import create_reader
   from segpy.writer import write_segy
-  
+
   with open('seismic_little.sgy', 'rb') as segy_in_file:
       # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
       seg_y_dataset = create_reader(segy_in_file, endian='<')  # Non-standard Rev 1 little-endian
-      print(seg_y_dataset.num_traces()) 
+      print(seg_y_dataset.num_traces())
       # Write the seg_y_dataset out to another file, in big-endian format
       with open('seismic_big.sgy', 'wb') as segy_out_file:
           write_segy(segy_out_file, seg_y_dataset, endian='>')  #  Standard Rev 1 big-endian
-          
+
 The ``create_reader()`` function creates `Dataset` which lazily fetches traces from the file, which is why the
 file must stay open for read for the duration of use of this dataset.  We override the default endian paramers, to
 specify that the SEG-Y file we're reading is in non-standard little-endian byte order.  On the last line of the
@@ -91,3 +91,15 @@ Segpy 2.0 is a complete re-imagining of a SEG-Y reader in Python 3 and represent
 versions of Segpy.  No attempt has been made to maintain API compatibility with earlier versions of Segpy and no code is
 shared across versions.  Although earlier versions of Segpy were open source, they were never 'released' as such.
 Earlier versions of Segpy are deprecated and completely unsupported.
+
+Development
+===========
+
+Deployment
+----------
+
+  $ pip install -e .[dev]
+  $ bumpversion minor
+  $ python setup.py sdist bdist_wheel
+  $ twine upload --config-file <path>/sixty-north.pypirc dist/*
+  $ git push origin

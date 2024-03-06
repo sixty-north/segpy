@@ -8,7 +8,13 @@ Rather than constructing Catalog subtypes directly, prefer to use
 the CatalogBuilder class which will analyse the contents of the
 mapping to find a space and time efficient representation.
 """
-from collections import Mapping, Sequence, OrderedDict, Iterable
+import sys
+if sys.version_info >= (3, 10):
+  from collections.abc import Mapping, Sequence, Iterable
+  from collections import OrderedDict
+else:
+  from collections import Mapping, Sequence, OrderedDict, Iterable
+
 from fractions import Fraction
 from itertools import product
 
